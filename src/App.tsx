@@ -1093,10 +1093,7 @@ function SecPage(p:SecProps) {
         {p.tab==="trajectory" && <TrajectoryView shots={p.shots} activeShot={p.active} playing={p.playing} onSelectShot={p.onSelectShot} onPlay={p.onPlay} onPlayDone={p.onPlayDone}/>}
         {p.tab==="physics"    && <PhysicsView/>}
         {p.tab==="kalman"     && <KalmanView/>}
-<<<<<<< HEAD
-=======
         {p.tab==="model"      && <ModelView/>}
->>>>>>> master
         {p.tab==="accuracy"   && <AccuracyView shots={p.shots} tmReady={p.tmReady}/>}
         {p.tab==="shots"      && <ShotLogView shots={p.shots} activeShot={p.active} onSelectShot={s=>{p.onSelectShot(s);}} onClear={p.onClear} onExport={p.onExport}/>}
         {p.tab==="input"      && <InputDataView selectedClub={p.club} onAddShot={p.onAddShot} onNotify={p.onNotify}/>}
