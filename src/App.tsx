@@ -56,10 +56,7 @@ const MORE_NAV: {id:TabId; label:string}[] = [
   {id:"trajectory", label:"Trajectory"},
   {id:"physics",    label:"Physics Validator"},
   {id:"kalman",     label:"Kalman Tester"},
-<<<<<<< HEAD
-=======
   {id:"model",      label:"Model Tester"},
->>>>>>> master
   {id:"trend",      label:"Trend Charts"},
   {id:"sessions",   label:"All Sessions"},
   {id:"input",      label:"Input Data"},
