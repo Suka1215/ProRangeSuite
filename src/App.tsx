@@ -21,6 +21,7 @@ const CompareView     = lazy(() => import("./views/CompareView"));
 const AllSessionsView = lazy(() => import("./views/AllSessionsView"));
 const PhysicsView     = lazy(() => import("./components/modules/PhysicsValidator").then(m=>({default:m.PhysicsValidator})));
 const KalmanView      = lazy(() => import("./components/modules/KalmanTester").then(m=>({default:m.KalmanTester})));
+const ModelView       = lazy(() => import("./components/modules/ModelTester").then(m=>({default:m.ModelTester})));
 const NewSessionModal = lazy(() => import("./components/modules/NewSessionModal"));
 
 /* ── global CSS ─────────────────────────────────────────────────────── */
@@ -55,6 +56,10 @@ const MORE_NAV: {id:TabId; label:string}[] = [
   {id:"trajectory", label:"Trajectory"},
   {id:"physics",    label:"Physics Validator"},
   {id:"kalman",     label:"Kalman Tester"},
+<<<<<<< HEAD
+=======
+  {id:"model",      label:"Model Tester"},
+>>>>>>> master
   {id:"trend",      label:"Trend Charts"},
   {id:"sessions",   label:"All Sessions"},
   {id:"input",      label:"Input Data"},
@@ -1091,6 +1096,10 @@ function SecPage(p:SecProps) {
         {p.tab==="trajectory" && <TrajectoryView shots={p.shots} activeShot={p.active} playing={p.playing} onSelectShot={p.onSelectShot} onPlay={p.onPlay} onPlayDone={p.onPlayDone}/>}
         {p.tab==="physics"    && <PhysicsView/>}
         {p.tab==="kalman"     && <KalmanView/>}
+<<<<<<< HEAD
+=======
+        {p.tab==="model"      && <ModelView/>}
+>>>>>>> master
         {p.tab==="accuracy"   && <AccuracyView shots={p.shots} tmReady={p.tmReady}/>}
         {p.tab==="shots"      && <ShotLogView shots={p.shots} activeShot={p.active} onSelectShot={s=>{p.onSelectShot(s);}} onClear={p.onClear} onExport={p.onExport}/>}
         {p.tab==="input"      && <InputDataView selectedClub={p.club} onAddShot={p.onAddShot} onNotify={p.onNotify}/>}

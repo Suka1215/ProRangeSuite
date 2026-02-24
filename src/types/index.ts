@@ -7,6 +7,7 @@ export type TabId =
   | "trajectory"
   | "physics"
   | "kalman"
+  | "model"
   | "accuracy"
   | "shots"
   | "input"
