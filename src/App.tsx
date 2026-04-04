@@ -1,1250 +1,1637 @@
-import React, { useState, lazy, Suspense, useCallback } from "react";
-import { useSessions }       from "./hooks/useSessions";
-import { useNotification }   from "./hooks/useNotification";
-import { useLiveShots }      from "./hooks/useLiveShots";
-import type { LiveStatus }   from "./hooks/useLiveShots";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { CLUB_NAMES } from "./constants";
 import { NotificationToast } from "./components/ui/NotificationToast";
-import { generateSyntheticShot, exportShotsToCSV } from "./utils/shotData";
+import { useLiveShots } from "./hooks/useLiveShots";
+import type { LiveStatus } from "./hooks/useLiveShots";
+import { useNotification } from "./hooks/useNotification";
+import { useSessions } from "./hooks/useSessions";
+import type { Session, Shot, TabId } from "./types";
+import { exportShotsToCSV, generateSyntheticShot } from "./utils/shotData";
 import { calcSessionStats, pctError } from "./utils/stats";
-import { VERSION_COLORS } from "./constants";
-import type { Shot, Session, TabId } from "./types";
 
-/* ── lazy views ─────────────────────────────────────────────────────── */
-const FrameScrubberView = lazy(() => import('./views/FrameScrubberView'));
-const TrajectoryView  = lazy(() => import("./views/TrajectoryView"));
-const AccuracyView    = lazy(() => import("./views/AccuracyView"));
-const ShotLogView     = lazy(() => import("./views/ShotLogView"));
-const InputDataView   = lazy(() => import("./views/InputDataView"));
-const ProgressView    = lazy(() => import("./views/ProgressView"));
-const TrendView       = lazy(() => import("./views/TrendView"));
-const CompareView     = lazy(() => import("./views/CompareView"));
+const FrameScrubberView = lazy(() => import("./views/FrameScrubberView"));
+const TrajectoryView = lazy(() => import("./views/TrajectoryView"));
+const AccuracyView = lazy(() => import("./views/AccuracyView"));
+const ShotLogView = lazy(() => import("./views/ShotLogView"));
+const InputDataView = lazy(() => import("./views/InputDataView"));
+const ProgressView = lazy(() => import("./views/ProgressView"));
+const TrendView = lazy(() => import("./views/TrendView"));
+const CompareView = lazy(() => import("./views/CompareView"));
 const AllSessionsView = lazy(() => import("./views/AllSessionsView"));
-const PhysicsView     = lazy(() => import("./components/modules/PhysicsValidator").then(m=>({default:m.PhysicsValidator})));
-const KalmanView      = lazy(() => import("./components/modules/KalmanTester").then(m=>({default:m.KalmanTester})));
-const ModelView       = lazy(() => import("./components/modules/ModelTester").then(m=>({default:m.ModelTester})));
+const PhysicsView = lazy(() =>
+  import("./components/modules/PhysicsValidator").then((mod) => ({ default: mod.PhysicsValidator }))
+);
+const KalmanView = lazy(() =>
+  import("./components/modules/KalmanTester").then((mod) => ({ default: mod.KalmanTester }))
+);
+const ModelView = lazy(() =>
+  import("./components/modules/ModelTester").then((mod) => ({ default: mod.ModelTester }))
+);
 const NewSessionModal = lazy(() => import("./components/modules/NewSessionModal"));
 
-/* ── global CSS ─────────────────────────────────────────────────────── */
-const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html,body,#root{height:100%;overflow:hidden}
-  body{font-family:'DM Sans',sans-serif;background:#f6f6f6;color:#1a1d2e}
-  ::-webkit-scrollbar{width:4px}
-  ::-webkit-scrollbar-thumb{background:#d0d4de;border-radius:4px}
-  button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;outline:none}
-  button:active{opacity:.85;transform:scale(.97)}
-  @keyframes fadeDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes ping{0%{transform:scale(1);opacity:.7}70%{transform:scale(2.2);opacity:0}100%{opacity:0}}
-`;
+const PRIMARY_NAV = [
+  { id: "dashboard", label: "Home", icon: IconCluster },
+  { id: "accuracy", label: "Accuracy", icon: IconTarget },
+  { id: "shots", label: "Shot Log", icon: IconSheets },
+  { id: "compare", label: "Compare", icon: IconCompare },
+  { id: "progress", label: "Progress", icon: IconTrend },
+  { id: "sessions", label: "Sessions", icon: IconCalendar },
+] as const satisfies { id: TabId; label: string; icon: IconComponent }[];
 
-const CLUBS = ["Driver","3-Wood","5-Iron","7-Iron","9-Iron","PW","SW"];
+const MORE_NAV = [
+  { id: "trajectory", label: "Trajectory Replay", icon: IconOrbit },
+  { id: "physics", label: "Physics Validator", icon: IconPulse },
+  { id: "kalman", label: "Kalman Tester", icon: IconWave },
+  { id: "model", label: "Model Tester", icon: IconModel },
+  { id: "trend", label: "Trend Charts", icon: IconTrend },
+  { id: "input", label: "Input Lab", icon: IconDots },
+  { id: "frames", label: "Frame Scrubber", icon: IconFrames },
+] as const satisfies { id: TabId; label: string; icon: IconComponent }[];
 
-/* nav items — primary tabs shown in nav bar */
-const PRIMARY_NAV: {id:TabId; label:string; chevron?:boolean}[] = [
-  {id:"dashboard",  label:"Dashboard"},
-  {id:"accuracy",   label:"Accuracy",   chevron:true},
-  {id:"shots",      label:"Shot Log",   chevron:true},
-  {id:"compare",    label:"Compare"},
-  {id:"progress",   label:"Progress",   chevron:true},
-];
+const HOME_FILTERS = [
+  { id: "all", label: "All" },
+  { id: "advice", label: "Advice" },
+  { id: "tests", label: "Tests" },
+  { id: "labs", label: "Labs" },
+  { id: "docs", label: "Docs" },
+] as const;
 
-/* overflow items in ≡ menu */
-const MORE_NAV: {id:TabId; label:string}[] = [
-  {id:"trajectory", label:"Trajectory"},
-  {id:"physics",    label:"Physics Validator"},
-  {id:"kalman",     label:"Kalman Tester"},
-  {id:"model",      label:"Model Tester"},
-  {id:"trend",      label:"Trend Charts"},
-  {id:"sessions",   label:"All Sessions"},
-  {id:"input",      label:"Input Data"},
-];
+const BRAND_INK = "#262930";
+const BRAND_GREEN = "#6ad87c";
 
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  APP                                                             ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
+const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: string }> = {
+  dashboard: {
+    eyebrow: "Landing",
+    title: "Performance Home",
+    description: "A calmer overview that keeps live capture, validation, and session history within reach.",
+  },
+  accuracy: {
+    eyebrow: "Analysis",
+    title: "Accuracy Dashboard",
+    description: "Review ProRange error against TrackMan with a cleaner visual frame around the existing tools.",
+  },
+  shots: {
+    eyebrow: "Capture",
+    title: "Shot Log",
+    description: "Inspect live shots, select a capture, and jump into the deeper replay and validation tools.",
+  },
+  compare: {
+    eyebrow: "Sessions",
+    title: "Session Comparison",
+    description: "Compare version-to-version behavior and spot where a calibration change actually moved the needle.",
+  },
+  progress: {
+    eyebrow: "Trends",
+    title: "Progress View",
+    description: "See how recent work stacks up over time without leaving the redesigned shell.",
+  },
+  sessions: {
+    eyebrow: "Archive",
+    title: "All Sessions",
+    description: "Browse and manage saved runs from the new homepage schedule strip.",
+  },
+  trajectory: {
+    eyebrow: "Replay",
+    title: "Trajectory Replay",
+    description: "Open the latest shot path and play it back from the sculptural hero into the full trajectory view.",
+  },
+  physics: {
+    eyebrow: "Lab",
+    title: "Physics Validator",
+    description: "Deep-dive into the physical model when the home surface suggests the calibration needs work.",
+  },
+  kalman: {
+    eyebrow: "Lab",
+    title: "Kalman Tester",
+    description: "Validate filtering and smoothing behavior inside the same redesigned workspace.",
+  },
+  model: {
+    eyebrow: "Lab",
+    title: "Model Tester",
+    description: "Check model behavior and confidence when a session looks suspicious from the home page.",
+  },
+  trend: {
+    eyebrow: "Reference",
+    title: "Trend Charts",
+    description: "Open longer-horizon charts from the same high-level home workflow.",
+  },
+  input: {
+    eyebrow: "Reference",
+    title: "Input Lab",
+    description: "Create or inspect manual input rows from the new reference-oriented home variants.",
+  },
+  frames: {
+    eyebrow: "Replay",
+    title: "Frame Scrubber",
+    description: "Jump directly from the home hero into frame-level inspection when you need it.",
+  },
+};
+
+type HomeFilter = (typeof HOME_FILTERS)[number]["id"];
+type IconComponent = (props: IconProps) => React.JSX.Element;
+
+interface IconProps {
+  className?: string;
+}
+
+interface InsightCardData {
+  owner: string;
+  role: string;
+  title: string;
+  meta: string;
+  accent: string;
+  series: number[];
+  onClick: () => void;
+}
+
+interface ActionTileData {
+  index: string;
+  title: string;
+  value: string;
+  subtitle: string;
+  accent: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}
+
+interface HeroActionData {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  active?: boolean;
+}
+
 export default function App() {
-  const [tab,     setTab]    = useState<TabId>("dashboard");
-  const [club,    setClub]   = useState("7-Iron");
-  const [moreOpen,setMoreOpen] = useState(false);
-  const [clubOpen,setClubOpen] = useState(false);
-  const [modal,   setModal]  = useState(false);
-  const [playing, setPlaying]= useState(false);
-  const [tlOff,   setTlOff]  = useState(0);
-
-  const [active, setActive] = useState<Shot|null>(null);
+  const [tab, setTab] = useState<TabId>("dashboard");
+  const [club, setClub] = useState<string>("7-Iron");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [clubOpen, setClubOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [activeShot, setActiveShot] = useState<Shot | null>(null);
+  const [homeFilter, setHomeFilter] = useState<HomeFilter>("all");
+  const [weekPage, setWeekPage] = useState(0);
 
   const {
-    sessions, liveShots, liveSession, tmReady,
-    addSession, deleteSession, resetToSeed,
-    addLiveShot, clearLiveShots,
+    sessions,
+    liveShots,
+    tmReady,
+    addSession,
+    deleteSession,
+    resetToSeed,
+    addLiveShot,
+    clearLiveShots,
   } = useSessions();
-  const {notification, notify} = useNotification();
+  const { notification, notify } = useNotification();
 
-  // shots = live shots from iPhone (persisted in useSessions)
-  // We use liveShots directly for trajectory/shot-log views
+  const handleLiveShot = (shot: Shot) => {
+    addLiveShot(shot);
+    setActiveShot(shot);
+  };
+
+  const {
+    status: liveStatus,
+    shotCount: liveShotCount,
+    connect: liveConnect,
+    disconnect: liveDisconnect,
+  } = useLiveShots({ onShot: handleLiveShot, onNotify: notify });
+
   const shots = liveShots;
 
-  const handleLiveShot = (s: Shot) => {
-    addLiveShot(s);   // persists to localStorage + adds to live session
-    setActive(s);
-  };
-
-  const { status: liveStatus, shotCount: liveShotCount, connect: liveConnect, disconnect: liveDisconnect } =
-    useLiveShots({ onShot: handleLiveShot, onNotify: notify });
-
   const addShot = () => {
-    const s = generateSyntheticShot(club);
-    addLiveShot(s); setActive(s); notify("Shot generated ✓");
+    const shot = generateSyntheticShot(club);
+    addLiveShot(shot);
+    setActiveShot(shot);
+    notify("Synthetic shot logged");
   };
 
-  const moreActive = MORE_NAV.some(n=>n.id===tab);
+  const openTab = (nextTab: TabId) => {
+    setTab(nextTab);
+    setClubOpen(false);
+    setMoreOpen(false);
+  };
+
+  const openTrajectory = () => {
+    setPlaying(true);
+    openTab("trajectory");
+  };
+
+  const toggleLive = () => {
+    if (liveStatus === "connected") {
+      liveDisconnect();
+      return;
+    }
+    liveConnect();
+  };
+
+  const moreActive = MORE_NAV.some((item) => item.id === tab);
+  const sectionCopy = TAB_COPY[tab];
 
   return (
-    <div style={{height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden",background:"#f6f6f6"}}>
-      <style>{CSS}</style>
-      <NotificationToast notification={notification}/>
+    <div className="pr-page">
+      <NotificationToast notification={notification} />
 
-      {/* ════════════════════════════════════════════════════════════
-          NAV BAR  — exact match to reference image
-          • #f6f6f6 background (same as page — no visible bar)
-          • each item = its own rounded pill with light gray bg
-          • active item = solid #1a6bff pill
-          • logo = rounded square icon, NO text
-          • right side = club pill + blue "+ Shot" + outlined "+ Session"
-      ════════════════════════════════════════════════════════════ */}
-      <header style={{
-        flexShrink:0,
-        background:"#f6f6f6",
-        padding:"14px 24px",
-        display:"flex",
-        alignItems:"center",
-        gap:8,
-      }}>
-
-        {/* Logo icon */}
-        <div style={{
-          width:42, height:42,
-          borderRadius:13,
-          background:"linear-gradient(140deg,#1a6bff,#0038b8)",
-          display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:20,
-          boxShadow:"0 4px 14px rgba(26,107,255,.35)",
-          flexShrink:0,
-          marginRight:4,
-        }}>⛳</div>
-
-        {/* ── Primary nav pills ── */}
-        {PRIMARY_NAV.map(({id,label,chevron}) => {
-          const isActive = tab === id;
-          return (
-            <button
-              key={id}
-              onClick={()=>setTab(id)}
-              style={{
-                /* each button is an independent floating pill */
-                background: isActive ? "#1a6bff" : "rgba(0,0,0,.07)",
-                color:      isActive ? "#fff"    : "#444",
-                borderRadius: 100,
-                padding:    "10px 18px",
-                fontSize:   14,
-                fontWeight: isActive ? 700 : 500,
-                display:    "flex",
-                alignItems: "center",
-                gap:        6,
-                transition: "all .15s",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {label}
-              {chevron && (
-                <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
-                  <path d="M1 1.5l4.5 4 4.5-4" stroke={isActive?"rgba(255,255,255,.7)":"#888"}
-                    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-            </button>
-          );
-        })}
-
-        {/* ≡ More menu pill */}
-        <div style={{position:"relative"}}>
-          <button
-            onClick={()=>setMoreOpen(v=>!v)}
-            style={{
-              background: moreActive ? "#1a6bff" : "rgba(0,0,0,.07)",
-              color:      moreActive ? "#fff"    : "#444",
-              borderRadius: 100,
-              padding:    "10px 16px",
-              fontSize:   14,
-              fontWeight: 500,
-              display:    "flex", alignItems:"center", gap:7,
-              transition: "all .15s",
+      <div className="pr-shell">
+        <div className="pr-frame">
+          <HeaderBar
+            tab={tab}
+            club={club}
+            tmReady={tmReady}
+            liveStatus={liveStatus}
+            liveShotCount={liveShotCount}
+            moreActive={moreActive}
+            moreOpen={moreOpen}
+            clubOpen={clubOpen}
+            onOpenTab={openTab}
+            onToggleMore={() => {
+              setClubOpen(false);
+              setMoreOpen((current) => !current);
             }}
-          >
-            {/* Hamburger lines */}
-            <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
-              <rect y="0"   width="18" height="2.2" rx="1.1" fill={moreActive?"#fff":"#555"}/>
-              <rect y="5.9" width="12" height="2.2" rx="1.1" fill={moreActive?"#fff":"#555"}/>
-              <rect y="11.8" width="15" height="2.2" rx="1.1" fill={moreActive?"#fff":"#555"}/>
-            </svg>
-            <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
-              <path d="M1 1.5l4.5 4 4.5-4" stroke={moreActive?"rgba(255,255,255,.7)":"#888"}
-                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+            onToggleClub={() => {
+              setMoreOpen(false);
+              setClubOpen((current) => !current);
+            }}
+            onSelectClub={(nextClub) => {
+              setClub(nextClub);
+              setClubOpen(false);
+            }}
+            onAddShot={addShot}
+            onNewSession={() => setModalOpen(true)}
+            onToggleLive={toggleLive}
+          />
 
-          {moreOpen && (
-            <div style={{
-              position:"absolute", top:"calc(100% + 10px)", left:0, zIndex:999,
-              background:"#fff", borderRadius:18, padding:"8px",
-              minWidth:220,
-              boxShadow:"0 12px 48px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.06)",
-              border:"1px solid rgba(0,0,0,.06)",
-              animation:"fadeDown .18s ease",
-            }}>
-              {MORE_NAV.map(({id,label}) => (
-                <button key={id} onClick={()=>{setTab(id);setMoreOpen(false);}} style={{
-                  display:"block", width:"100%", padding:"10px 16px",
-                  borderRadius:12, textAlign:"left",
-                  background: tab===id ? "#eff6ff" : "transparent",
-                  color:      tab===id ? "#1a6bff" : "#333",
-                  fontSize:   14, fontWeight: tab===id ? 700 : 500,
-                  transition: "background .12s",
-                }}>{label}</button>
-              ))}
-              <div style={{height:1,background:"#f0f0f0",margin:"6px 0"}}/>
-              <button onClick={()=>{exportShotsToCSV(shots);notify("Exported ✓");setMoreOpen(false);}} style={{
-                display:"block",width:"100%",padding:"10px 16px",borderRadius:12,
-                textAlign:"left",background:"transparent",color:"#9ca3af",fontSize:13.5,
-              }}>↓ Export CSV</button>
-            </div>
+          {tab === "dashboard" ? (
+            <HomeView
+              filter={homeFilter}
+              club={club}
+              shots={shots}
+              sessions={sessions}
+              activeShot={activeShot}
+              liveStatus={liveStatus}
+              liveShotCount={liveShotCount}
+              weekPage={weekPage}
+              onFilterChange={setHomeFilter}
+              onOpenTab={openTab}
+              onOpenTrajectory={openTrajectory}
+              onAddShot={addShot}
+              onNewSession={() => setModalOpen(true)}
+              onExport={() => {
+                exportShotsToCSV(shots);
+                notify("CSV exported");
+              }}
+              onToggleLive={toggleLive}
+              onPrevWeek={() => setWeekPage((current) => current + 1)}
+              onNextWeek={() => setWeekPage((current) => Math.max(0, current - 1))}
+            />
+          ) : (
+            <section className="pr-secondary-stage">
+              <div className="pr-secondary-intro">
+                <div>
+                  <span className="pr-secondary-eyebrow">{sectionCopy.eyebrow}</span>
+                  <h1>{sectionCopy.title}</h1>
+                  <p>{sectionCopy.description}</p>
+                </div>
+                <button className="pr-secondary-home" onClick={() => openTab("dashboard")}>
+                  <IconChevronLeft />
+                  Home
+                </button>
+              </div>
+
+              <div className="pr-secondary-stage-inner">
+                <SecPage
+                  tab={tab}
+                  shots={shots}
+                  sessions={sessions}
+                  active={activeShot}
+                  playing={playing}
+                  club={club}
+                  tmReady={tmReady}
+                  onSelectShot={(shot) => {
+                    setActiveShot(shot);
+                    setPlaying(false);
+                    openTab("trajectory");
+                  }}
+                  onPlay={() => setPlaying(true)}
+                  onPlayDone={() => setPlaying(false)}
+                  onAddShot={(shot) => {
+                    addLiveShot(shot);
+                    setActiveShot(shot);
+                    notify("Shot logged");
+                  }}
+                  onNotify={notify}
+                  onDelete={(id) => {
+                    deleteSession(id);
+                    notify("Session deleted");
+                  }}
+                  onReset={() => {
+                    resetToSeed();
+                    notify("Seed data reset");
+                  }}
+                  onNew={() => setModalOpen(true)}
+                  onClear={() => {
+                    clearLiveShots();
+                    setActiveShot(null);
+                    notify("Live shots cleared");
+                  }}
+                  onExport={() => {
+                    exportShotsToCSV(shots);
+                    notify("CSV exported");
+                  }}
+                />
+              </div>
+            </section>
+          )}
+
+          {modalOpen && (
+            <Suspense fallback={null}>
+              <NewSessionModal
+                onSave={(session) => {
+                  addSession(session);
+                  setModalOpen(false);
+                  notify("Session saved");
+                }}
+                onClose={() => setModalOpen(false)}
+              />
+            </Suspense>
           )}
         </div>
-
-        {/* ── Spacer ── */}
-        <div style={{flex:1}}/>
-
-        {/* Club selector */}
-        <div style={{position:"relative"}}>
-          <button onClick={()=>setClubOpen(v=>!v)} style={{
-            background:"rgba(0,0,0,.07)", borderRadius:100,
-            padding:"10px 18px", fontSize:14, fontWeight:600, color:"#333",
-            display:"flex",alignItems:"center",gap:7,
-          }}>
-            {club}
-            <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
-              <path d="M1 1.5l4.5 4 4.5-4" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          {clubOpen && (
-            <div style={{
-              position:"absolute",top:"calc(100% + 10px)",right:0,zIndex:999,
-              background:"#fff",borderRadius:18,padding:"8px",minWidth:155,
-              boxShadow:"0 12px 48px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.06)",
-              border:"1px solid rgba(0,0,0,.06)",
-              animation:"fadeDown .18s ease",
-            }}>
-              {CLUBS.map(c=>(
-                <button key={c} onClick={()=>{setClub(c);setClubOpen(false);}} style={{
-                  display:"block",width:"100%",padding:"10px 16px",borderRadius:12,
-                  textAlign:"left",
-                  background:c===club?"#eff6ff":"transparent",
-                  color:c===club?"#1a6bff":"#333",
-                  fontSize:14,fontWeight:c===club?700:500,
-                }}>{c}</button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 📡 Live Connect button + TM DB status */}
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <LiveConnectButton
-            status={liveStatus}
-            shotCount={liveShotCount}
-            onConnect={liveConnect}
-            onDisconnect={liveDisconnect}
-          />
-          <div title={tmReady ? "TrackMan 10k reference DB loaded" : "Loading TM reference..."} style={{
-            display:"flex",alignItems:"center",gap:5,
-            background: tmReady ? "rgba(34,197,94,.12)" : "rgba(251,146,60,.12)",
-            borderRadius:100, padding:"6px 12px",
-            fontSize:11, fontWeight:700,
-            color: tmReady ? "#16a34a" : "#f97316",
-            border: tmReady ? "1px solid rgba(34,197,94,.25)" : "1px solid rgba(251,146,60,.25)",
-            transition:"all .4s",
-          }}>
-            <div style={{width:6,height:6,borderRadius:"50%",background:tmReady?"#22c55e":"#f97316",animation:tmReady?"none":"pulse 1.2s infinite"}}/>
-            {tmReady ? "TM DB ✓" : "TM loading…"}
-          </div>
-        </div>
-
-        {/* + Shot — solid blue pill */}
-        <button onClick={addShot} style={{
-          background:"linear-gradient(135deg,#1a6bff,#0038b8)",
-          color:"#fff", borderRadius:100, padding:"10px 24px",
-          fontSize:14, fontWeight:700,
-          boxShadow:"0 4px 16px rgba(26,107,255,.42)",
-        }}>+ Shot</button>
-
-        {/* + Session — outlined */}
-        <button onClick={()=>setModal(true)} style={{
-          background:"#fff", color:"#1a6bff",
-          borderRadius:100, padding:"10px 24px",
-          fontSize:14, fontWeight:700,
-          border:"2px solid #1a6bff",
-        }}>+ Session</button>
-      </header>
-
-      {/* ════════════════════════════════════════════════════════════
-          PAGE BODY
-      ════════════════════════════════════════════════════════════ */}
-      {tab === "dashboard"
-        ? <Dashboard
-            shots={shots} sessions={sessions} active={active}
-            tlOff={tlOff} onTlOff={setTlOff}
-            onPlay={()=>{setTab("trajectory");setPlaying(true);}}
-            onGoAccuracy={()=>setTab("accuracy")}
-            onGoShots={()=>setTab("shots")}
-            onNew={()=>setModal(true)}
-            onTab={setTab}
-            onExport={()=>{exportShotsToCSV(shots);notify("Exported ✓");}}
-          />
-        : <SecPage
-            tab={tab} shots={shots} sessions={sessions} active={active}
-            playing={playing} club={club} tmReady={tmReady}
-            onSelectShot={s=>{setActive(s);setTab("trajectory");}}
-            onPlay={()=>setPlaying(true)} onPlayDone={()=>setPlaying(false)}
-            onAddShot={s=>{addLiveShot(s);setActive(s);notify("Shot logged ✓");}}
-            onNotify={notify}
-            onDelete={id=>{deleteSession(id);notify("Deleted");}}
-            onReset={()=>{resetToSeed();notify("Reset");}}
-            onNew={()=>setModal(true)}
-            onClear={()=>{clearLiveShots();setActive(null);notify('Shot log cleared')}}
-            onExport={()=>{exportShotsToCSV(shots);notify("Exported ✓");}}
-          />
-      }
-
-      {modal && (
-        <Suspense fallback={null}>
-          <NewSessionModal
-            onSave={s=>{addSession(s);setModal(false);notify("Session saved ✓");}}
-            onClose={()=>setModal(false)}
-          />
-        </Suspense>
-      )}
+      </div>
     </div>
   );
 }
 
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  LIVE CONNECT BUTTON  — nav bar pill with status indicator        ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
-function LiveConnectButton({status,shotCount,onConnect,onDisconnect}:{
-  status:LiveStatus; shotCount:number; onConnect:()=>void; onDisconnect:()=>void;
-}) {
-  const isConnected   = status === "connected";
-  const isConnecting  = status === "connecting";
+interface HeaderBarProps {
+  tab: TabId;
+  club: string;
+  tmReady: boolean;
+  liveStatus: LiveStatus;
+  liveShotCount: number;
+  moreActive: boolean;
+  moreOpen: boolean;
+  clubOpen: boolean;
+  onOpenTab: (tab: TabId) => void;
+  onToggleMore: () => void;
+  onToggleClub: () => void;
+  onSelectClub: (club: string) => void;
+  onAddShot: () => void;
+  onNewSession: () => void;
+  onToggleLive: () => void;
+}
 
-  const dotColor = isConnected ? "#22c55e" : isConnecting ? "#f59e0b" : "#9ca3af";
-  const label    = isConnected
-    ? `Live · ${shotCount} shot${shotCount !== 1 ? "s" : ""}`
-    : isConnecting ? "Connecting…" : "Go Live";
+function HeaderBar({
+  tab,
+  club,
+  tmReady,
+  liveStatus,
+  liveShotCount,
+  moreActive,
+  moreOpen,
+  clubOpen,
+  onOpenTab,
+  onToggleMore,
+  onToggleClub,
+  onSelectClub,
+  onAddShot,
+  onNewSession,
+  onToggleLive,
+}: HeaderBarProps) {
+  return (
+    <header className="pr-header">
+      <button className="pr-brand" onClick={() => onOpenTab("dashboard")} aria-label="SpinVOT home">
+        <BrandMark />
+      </button>
+
+      <div className="pr-header-nav">
+        {PRIMARY_NAV.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              className={`pr-nav-btn ${tab === item.id ? "is-active" : ""}`}
+              onClick={() => onOpenTab(item.id)}
+              title={item.label}
+            >
+              <Icon />
+            </button>
+          );
+        })}
+
+        <div className="pr-menu-anchor">
+          <button
+            className={`pr-nav-btn ${moreActive ? "is-active" : ""}`}
+            onClick={onToggleMore}
+            title="More tools"
+          >
+            <IconDots />
+          </button>
+
+          {moreOpen && (
+            <div className="pr-menu">
+              {MORE_NAV.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    className={`pr-menu-item ${tab === item.id ? "is-active" : ""}`}
+                    onClick={() => onOpenTab(item.id)}
+                  >
+                    <Icon />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="pr-header-actions">
+        <button
+          className={`pr-live-pill ${
+            liveStatus === "connected"
+              ? "is-live"
+              : liveStatus === "connecting"
+              ? "is-connecting"
+              : ""
+          }`}
+          onClick={onToggleLive}
+        >
+          <span className="pr-live-dot" />
+          <span className="pr-live-copy">
+            <strong>
+              {liveStatus === "connected"
+                ? `Live ${liveShotCount}`
+                : liveStatus === "connecting"
+                ? "Linking"
+                : "Live Off"}
+            </strong>
+            <span>{tmReady ? "TrackMan ready" : "TrackMan loading"}</span>
+          </span>
+        </button>
+
+        <div className="pr-menu-anchor">
+          <button className="pr-club-pill" onClick={onToggleClub}>
+            <span>{club}</span>
+            <IconChevronDown />
+          </button>
+
+          {clubOpen && (
+            <div className="pr-menu pr-menu-club">
+              {CLUB_NAMES.map((clubName) => (
+                <button
+                  key={clubName}
+                  className={`pr-menu-item ${club === clubName ? "is-active" : ""}`}
+                  onClick={() => onSelectClub(clubName)}
+                >
+                  <IconBall />
+                  <span>{clubName}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button className="pr-header-icon" onClick={onAddShot} title="Generate shot">
+          <IconPlus />
+        </button>
+
+        <button className="pr-header-icon" onClick={onNewSession} title="Create session">
+          <IconCalendarPlus />
+        </button>
+
+        <button className="pr-profile">
+          <span className="pr-profile-copy">
+            <strong>Performance Lab</strong>
+            <span>{tmReady ? "Indoor bay calibrated" : "Syncing references"}</span>
+          </span>
+          <span className="pr-avatar">PR</span>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+interface HomeViewProps {
+  filter: HomeFilter;
+  club: string;
+  shots: Shot[];
+  sessions: Session[];
+  activeShot: Shot | null;
+  liveStatus: LiveStatus;
+  liveShotCount: number;
+  weekPage: number;
+  onFilterChange: (filter: HomeFilter) => void;
+  onOpenTab: (tab: TabId) => void;
+  onOpenTrajectory: () => void;
+  onAddShot: () => void;
+  onNewSession: () => void;
+  onExport: () => void;
+  onToggleLive: () => void;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+}
+
+function HomeView({
+  filter,
+  club,
+  shots,
+  sessions,
+  activeShot,
+  liveStatus,
+  liveShotCount,
+  weekPage,
+  onFilterChange,
+  onOpenTab,
+  onOpenTrajectory,
+  onAddShot,
+  onNewSession,
+  onExport,
+  onToggleLive,
+  onPrevWeek,
+  onNextWeek,
+}: HomeViewProps) {
+  const latestShot = activeShot ?? (shots.length ? shots[shots.length - 1] : null);
+  const latestSession = sessions.length ? sessions[sessions.length - 1] : null;
+  const latestStats = latestSession ? calcSessionStats(latestSession) : null;
+  const recentSpeed = lastValues(shots, (shot) => shot.pr.speed, [92, 95, 98, 101, 103, 100]);
+  const recentVla = lastValues(shots, (shot) => shot.pr.vla, [18.8, 19.4, 20.2, 20.8, 19.9, 20.4]);
+  const recentHla = lastValues(shots, (shot) => shot.pr.hla, [-0.8, -0.2, 0.4, 0.7, 0.1, -0.1]);
+  const recentCarry = lastValues(shots, (shot) => shot.pr.carry, [154, 161, 166, 170, 173, 168]);
+  const recentSpin = lastValues(shots, (shot) => shot.pr.spin, [6580, 6700, 6900, 6760, 6885, 7020]);
+
+  const vlaErrors = shots
+    .filter((shot) => shot.tm?.vla != null)
+    .map((shot) => pctError(shot.pr.vla, shot.tm!.vla!));
+
+  const passRate = latestStats?.vla?.passRate ?? null;
+  const carryAverage = Math.round(average(recentCarry, 172));
+  const speedAverage = average(recentSpeed, 100).toFixed(1);
+  const spinAverage = Math.round(average(recentSpin, 6820));
+  const dispersion = average(
+    shots.slice(-10).map((shot) => Math.abs(shot.pr.hla)),
+    1.4
+  ).toFixed(1);
+  const vlaBias = average(vlaErrors, 11.6);
+  const heroGrade = gradeFromPassRate(passRate);
+  const schedule = buildScheduleWeek(sessions, weekPage);
+  const overviewSpeed = latestShot?.pr.speed ?? average(recentSpeed, 100);
+  const overviewVla = latestShot?.pr.vla ?? average(recentVla, 20.1);
+  const overviewHla = latestShot?.pr.hla ?? average(recentHla, 0.2);
+  const overviewSpin = latestShot?.pr.spin ?? average(recentSpin, 6820);
+  const overviewCarry = latestShot?.pr.carry ?? average(recentCarry, 172);
+  const [animatedSpeed, setAnimatedSpeed] = useState(overviewSpeed);
+  const [isSpeedAnimating, setIsSpeedAnimating] = useState(false);
+  const hasMountedSpeed = useRef(false);
+  const latestShotKey = latestShot ? String(latestShot.id) : "";
+
+  useEffect(() => {
+    if (!latestShot) {
+      setAnimatedSpeed(0);
+      setIsSpeedAnimating(false);
+      hasMountedSpeed.current = true;
+      return;
+    }
+
+    if (!hasMountedSpeed.current) {
+      setAnimatedSpeed(overviewSpeed);
+      setIsSpeedAnimating(false);
+      hasMountedSpeed.current = true;
+      return;
+    }
+
+    let frameId = 0;
+    const start = performance.now();
+    const duration = 2800;
+
+    setAnimatedSpeed(0);
+    setIsSpeedAnimating(true);
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 0.5 - Math.cos(progress * Math.PI) / 2;
+      setAnimatedSpeed(overviewSpeed * eased);
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      } else {
+        setIsSpeedAnimating(false);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      setIsSpeedAnimating(false);
+    };
+  }, [latestShot, latestShotKey, overviewSpeed]);
+
+  const filterCopy = {
+    all: {
+      eyebrow: "Live practice command center",
+      heading: "SPIVOT Shot Lab",
+      detail: "Track ball speed, launch, spin, and carry inside a premium golf cockpit built for practice sessions, live capture, and calibration.",
+      sideTitle: "Shot Overview",
+    },
+    advice: {
+      eyebrow: "Coaching mode",
+      heading: "Guided Advice and Analysis",
+      detail: "Surface the next highest-leverage fixes before diving into charts, replays, or frame-level review.",
+      sideTitle: "Shot Overview",
+    },
+    tests: {
+      eyebrow: "Validation mode",
+      heading: "Personal Tests and Analysis",
+      detail: "Pin the current verification tools, replay surfaces, and live capture checkpoints in one sweep.",
+      sideTitle: "Shot Overview",
+    },
+    labs: {
+      eyebrow: "Lab mode",
+      heading: "Calibration Labs and Analysis",
+      detail: "Jump from the hero surface into physics, filtering, and model diagnostics without the old dashboard clutter.",
+      sideTitle: "Shot Overview",
+    },
+    docs: {
+      eyebrow: "Reference mode",
+      heading: "Reference Docs and Analysis",
+      detail: "Keep exports, archives, and version history closer to the home experience for quick review loops.",
+      sideTitle: "Shot Overview",
+    },
+  }[filter];
+
+  const insightCards: InsightCardData[] = {
+    all: [
+      {
+        owner: "AI Caddie",
+        role: "overview",
+        title: "Ball speed review",
+        meta: `${speedAverage} mph average across the latest live cluster`,
+        accent: BRAND_GREEN,
+        series: recentSpeed,
+        onClick: () => onOpenTab("shots"),
+      },
+      {
+        owner: "TrackMan",
+        role: "matched",
+        title: "Carry window",
+        meta: `${carryAverage} yd center line for ${club}`,
+        accent: BRAND_INK,
+        series: recentCarry,
+        onClick: () => onOpenTab("accuracy"),
+      },
+      {
+        owner: "Live Bay",
+        role: "capture",
+        title: "Spin stability",
+        meta: `${spinAverage.toLocaleString()} rpm through the latest swings`,
+        accent: BRAND_GREEN,
+        series: recentSpin,
+        onClick: onOpenTrajectory,
+      },
+    ],
+    advice: [
+      {
+        owner: "AI Coach",
+        role: "priority",
+        title: "VLA bias watch",
+        meta: `${formatSigned(vlaBias, "%")} against the matched TrackMan reference`,
+        accent: BRAND_GREEN,
+        series: recentCarry,
+        onClick: () => onOpenTab("compare"),
+      },
+      {
+        owner: "Start Line",
+        role: "control",
+        title: "Dispersion drift",
+        meta: `Current lateral spread sits around ${dispersion}°`,
+        accent: BRAND_INK,
+        series: recentSpeed,
+        onClick: () => onOpenTab("progress"),
+      },
+      {
+        owner: "Practice Plan",
+        role: "session",
+        title: "Next best action",
+        meta: latestSession ? `Replay ${latestSession.version} before adjusting the mount` : "Log one new session to build the next coaching note",
+        accent: BRAND_GREEN,
+        series: recentSpin,
+        onClick: onOpenTrajectory,
+      },
+    ],
+    tests: [
+      {
+        owner: "Accuracy",
+        role: "check",
+        title: "Tolerance pass rate",
+        meta: passRate !== null ? `${passRate}% of the latest session falls inside target` : "No matched session yet, start with a quick synthetic shot",
+        accent: BRAND_GREEN,
+        series: recentSpeed,
+        onClick: () => onOpenTab("accuracy"),
+      },
+      {
+        owner: "Replay",
+        role: "trajectory",
+        title: "Flight path ready",
+        meta: latestShot ? `${latestShot.trackPts ?? 0} tracked points available for the latest replay` : "Open trajectory replay once a shot lands",
+        accent: BRAND_INK,
+        series: recentCarry,
+        onClick: onOpenTrajectory,
+      },
+      {
+        owner: "Frames",
+        role: "inspection",
+        title: "Scrub candidate",
+        meta: shots.length ? `${shots.length} captured shots are ready for frame-level review` : "Capture a shot to open frame scrubbing",
+        accent: BRAND_GREEN,
+        series: recentSpin,
+        onClick: () => onOpenTab("frames"),
+      },
+    ],
+    labs: [
+      {
+        owner: "Physics",
+        role: "validator",
+        title: "Impact fit",
+        meta: latestSession ? `${latestSession.version} is the best candidate for physical-model validation` : "Seed one session and verify the launch fit",
+        accent: BRAND_GREEN,
+        series: recentCarry,
+        onClick: () => onOpenTab("physics"),
+      },
+      {
+        owner: "Kalman",
+        role: "filtering",
+        title: "Smoothing check",
+        meta: shots.length ? `Recent captures can stress the smoothing path right now` : "Generate a few shots to populate filter diagnostics",
+        accent: BRAND_INK,
+        series: recentSpeed,
+        onClick: () => onOpenTab("kalman"),
+      },
+      {
+        owner: "Model",
+        role: "confidence",
+        title: "Regression status",
+        meta: `${formatSigned(vlaBias, "%")} suggests the model path still needs inspection`,
+        accent: BRAND_GREEN,
+        series: recentSpin,
+        onClick: () => onOpenTab("model"),
+      },
+    ],
+    docs: [
+      {
+        owner: "Exports",
+        role: "backup",
+        title: "CSV snapshot",
+        meta: `${shots.length || 0} live shots are ready to export`,
+        accent: BRAND_GREEN,
+        series: recentCarry,
+        onClick: onExport,
+      },
+      {
+        owner: "Archive",
+        role: "history",
+        title: "Session log",
+        meta: `${sessions.length} saved sessions are available in the archive`,
+        accent: BRAND_INK,
+        series: recentSpeed,
+        onClick: () => onOpenTab("sessions"),
+      },
+      {
+        owner: "Versions",
+        role: "trend",
+        title: "Version history",
+        meta: latestSession ? `Latest run is ${latestSession.version}` : "No saved versions yet, create a session first",
+        accent: BRAND_GREEN,
+        series: recentSpin,
+        onClick: () => onOpenTab("trend"),
+      },
+    ],
+  }[filter];
+
+  const actionTiles: ActionTileData[] = [
+    {
+      index: "01",
+      title: "Speed",
+      value: `${animatedSpeed.toFixed(1)}`,
+      subtitle: "mph ball speed",
+      accent: BRAND_GREEN,
+      icon: <IconSpeed />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "02",
+      title: "VLA",
+      value: `${overviewVla.toFixed(1)}°`,
+      subtitle: "vertical launch",
+      accent: BRAND_INK,
+      icon: <IconVla />,
+      onClick: () => onOpenTab("accuracy"),
+    },
+    {
+      index: "03",
+      title: "HLA",
+      value: `${formatSigned(overviewHla, "°")}`,
+      subtitle: "horizontal launch",
+      accent: BRAND_GREEN,
+      icon: <IconHla />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "04",
+      title: "Spin",
+      value: `${Math.round(overviewSpin).toLocaleString()}`,
+      subtitle: "rpm back spin",
+      accent: BRAND_INK,
+      icon: <IconSpinMetric />,
+      onClick: onOpenTrajectory,
+    },
+    {
+      index: "05",
+      title: "Carry",
+      value: `${Math.round(overviewCarry)}`,
+      subtitle: "yd carry distance",
+      accent: BRAND_GREEN,
+      icon: <IconCarryMetric />,
+      onClick: onOpenTrajectory,
+    },
+    {
+      index: "06",
+      title: "Total",
+      value: String(shots.length || 0).padStart(2, "0"),
+      subtitle: "shots in the feed",
+      accent: BRAND_INK,
+      icon: <IconTotalMetric />,
+      onClick: () => onOpenTab("shots"),
+    },
+  ];
+
+  const heroActions: HeroActionData[] = [
+    {
+      label: "Accuracy",
+      icon: <IconTarget />,
+      onClick: () => onOpenTab("accuracy"),
+      active: false,
+    },
+    {
+      label: "Replay",
+      icon: <IconOrbit />,
+      onClick: onOpenTrajectory,
+      active: false,
+    },
+    {
+      label: liveStatus === "connected" ? "Disconnect" : "Go Live",
+      icon: <IconPulse />,
+      onClick: onToggleLive,
+      active: liveStatus === "connected" || liveStatus === "connecting",
+    },
+  ];
 
   return (
-    <button
-      onClick={isConnected ? onDisconnect : onConnect}
-      title={isConnected
-        ? "Click to disconnect from iPhone"
-        : "Connect to ProRange iPhone app over WiFi"}
-      style={{
-        background: isConnected ? "rgba(34,197,94,.12)" : "rgba(0,0,0,.07)",
-        border:     isConnected ? "1.5px solid rgba(34,197,94,.35)" : "1.5px solid transparent",
-        borderRadius: 100,
-        padding:    "9px 18px",
-        fontSize:   13.5,
-        fontWeight: 600,
-        color:      isConnected ? "#16a34a" : "#444",
-        display:    "flex", alignItems:"center", gap:7,
-        transition: "all .2s",
-      }}
-    >
-      {/* Animated dot */}
-      <span style={{
-        width:8, height:8, borderRadius:"50%",
-        background: dotColor,
-        flexShrink:0,
-        boxShadow: isConnected ? "0 0 0 3px rgba(34,197,94,.2)" : "none",
-        animation: isConnecting ? "spin .9s linear infinite" : "none",
-        display:"inline-block",
-      }}/>
-      {label}
-      {/* Pulsing ring when connected */}
-      {isConnected && (
-        <span style={{
-          width:8, height:8, borderRadius:"50%",
-          background:"rgba(34,197,94,.25)",
-          position:"absolute",
-          animation:"ping 1.4s ease-out infinite",
-        }}/>
-      )}
+    <section className="pr-home">
+      <div className="pr-home-stage">
+        <div className="pr-home-layout">
+          <div className="pr-copy-column">
+            {filter === "all" && (
+              <div className="pr-home-brandline">
+                <span className="pr-home-brand-pill">SPIVOT</span>
+                <span className="pr-home-brandline-copy">Golf Performance Intelligence</span>
+              </div>
+            )}
+            <span className="pr-home-eyebrow">{filterCopy.eyebrow}</span>
+            {filter === "all" ? (
+              <h1 className="pr-home-title-brand">
+                <span>Shot Lab</span>
+                <span className="is-accent">Range Intelligence</span>
+              </h1>
+            ) : (
+              <h1>{filterCopy.heading}</h1>
+            )}
+            <p className={filter === "all" ? "pr-home-lede" : undefined}>{filterCopy.detail}</p>
+
+            <div className="pr-filter-row">
+              {HOME_FILTERS.map((item) => (
+                <button
+                  key={item.id}
+                  className={`pr-filter-chip ${filter === item.id ? "is-active" : ""}`}
+                  onClick={() => onFilterChange(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="pr-home-microcopy">
+              <span>{shots.length} live shots</span>
+              <span>{sessions.length} saved sessions</span>
+              <span>{club} selected</span>
+            </div>
+
+            <div className="pr-insight-grid">
+              {insightCards.map((card) => (
+                <InsightCard key={`${filter}-${card.title}`} card={card} />
+              ))}
+            </div>
+          </div>
+
+          <div className="pr-hero-column">
+            <div className="pr-hero-metric">
+              <span className="pr-hero-grade">{heroGrade}</span>
+              <span className="pr-hero-label">Consistency</span>
+              <strong>{carryAverage}</strong>
+              <span className="pr-hero-unit">yd carry avg</span>
+            </div>
+
+            <div className="pr-hero-core">
+              <TrajectorySculpture spinActive={isSpeedAnimating} />
+
+              <div className="pr-hero-rail">
+                {heroActions.map((action) => (
+                  <button
+                    key={action.label}
+                    className={`pr-hero-rail-btn ${action.active ? "is-active" : ""}`}
+                    onClick={action.onClick}
+                    title={action.label}
+                  >
+                    {action.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pr-hero-speed">
+              <span className="pr-hero-speed-label">Ball Speed</span>
+              <div className="pr-hero-speed-value">
+                <strong>{animatedSpeed.toFixed(1)}</strong>
+                <span>mph</span>
+              </div>
+              <span className="pr-hero-speed-meta">
+                {liveStatus === "connected"
+                  ? `${liveShotCount} live shots in the feed`
+                  : `${club} profile active`}
+              </span>
+            </div>
+
+            <div className="pr-hero-pills">
+              <span className="pr-stat-pill">
+                <strong>{shots.length || 12}</strong>
+                <span>shots</span>
+              </span>
+              <span className="pr-stat-pill">
+                <strong>{sessions.length || 4}</strong>
+                <span>sessions</span>
+              </span>
+              <span className="pr-stat-pill">
+                <strong>{liveStatus === "connected" ? liveShotCount : club}</strong>
+                <span>{liveStatus === "connected" ? "live" : "club"}</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="pr-side-column">
+            <h2>Shot Overview</h2>
+            <p>Latest capture metrics from the active shot feed, staged as a clean six-card summary.</p>
+
+            <div className="pr-action-grid">
+              {actionTiles.map((tile) => (
+                <ActionTile key={tile.index} tile={tile} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ScheduleStrip
+        schedule={schedule}
+        onPrevWeek={onPrevWeek}
+        onNextWeek={onNextWeek}
+        onOpenSession={() => onOpenTab("compare")}
+        onNewSession={onNewSession}
+      />
+    </section>
+  );
+}
+
+function InsightCard({ card }: { card: InsightCardData }) {
+  return (
+    <button className="pr-insight-card" onClick={card.onClick}>
+      <div className="pr-insight-head">
+        <span className="pr-avatar-mini" style={{ backgroundColor: `${card.accent}20`, color: card.accent }}>
+          {initials(card.owner)}
+        </span>
+        <span>
+          <strong>{card.owner}</strong>
+          <span>{card.role}</span>
+        </span>
+      </div>
+
+      <div className="pr-insight-body">
+        <h3>{card.title}</h3>
+        <p>{card.meta}</p>
+      </div>
+
+      <MiniSparkline values={card.series} color={card.accent} />
     </button>
   );
 }
 
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  DASHBOARD  — 2×2 grid of 4 cards + session schedule below      ║
-   ║                                                                  ║
-   ║  TOP ROW:  [Shot Diagnosis]  [Suggested Fixes]                   ║
-   ║  BOTTOM ROW: [Metric Accuracy vs TM]  [Recent Shots]             ║  ← on separate tab now
-   ║  Actually: TOP 2 cards, BOTTOM = session timeline                ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
-interface DashProps {
-  shots:Shot[]; sessions:Session[]; active:Shot|null;
-  tlOff:number; onTlOff:(n:number)=>void;
-  onPlay:()=>void; onGoAccuracy:()=>void; onGoShots:()=>void;
-  onNew:()=>void; onTab:(t:TabId)=>void; onExport:()=>void;
-}
-
-function Dashboard({shots,sessions,active,tlOff,onTlOff,onPlay,onGoAccuracy,onGoShots,onNew,onTab,onExport}:DashProps) {
-  const withTM  = shots.filter(s=>s.tm?.vla);
-  const meanVla = withTM.length
-    ? withTM.map(s=>pctError(s.pr.vla,s.tm!.vla!)).reduce((a,b)=>a+b,0)/withTM.length
-    : null;
-  const latest = sessions[sessions.length-1];
+function ActionTile({ tile }: { tile: ActionTileData }) {
+  const ghostIcon = React.isValidElement(tile.icon)
+    ? React.cloneElement(tile.icon as React.ReactElement)
+    : tile.icon;
 
   return (
-    <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column",background:"#f6f6f6"}}>
+    <button className="pr-action-tile" onClick={tile.onClick}>
+      <span className="pr-action-index">{tile.index}</span>
+      <span className="pr-action-icon" style={{ color: tile.accent }}>
+        {tile.icon}
+      </span>
+      <span className="pr-action-ghost" style={{ color: tile.accent }} aria-hidden="true">
+        {ghostIcon}
+      </span>
+      <h3>{tile.title}</h3>
+      <strong>{tile.value}</strong>
+      <p>{tile.subtitle}</p>
+    </button>
+  );
+}
 
-      {/* Page title + action pills */}
-      <div style={{padding:"4px 28px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexShrink:0}}>
-        <div>
-          <h1 style={{fontSize:28,fontWeight:800,letterSpacing:"-.6px",color:"#1a1d2e",lineHeight:1.2}}>Shot Analysis</h1>
-          <p style={{color:"#9ca3af",fontSize:13.5,marginTop:4,fontWeight:500}}>
-            Your latest update · {shots.length} shots logged
-          </p>
-        </div>
-        <div style={{display:"flex",gap:10}}>
-          {/* floating button style — same pill style as nav */}
-          <button onClick={()=>onTab("compare")} style={{
-            background:"rgba(0,0,0,.07)",color:"#444",borderRadius:100,
-            padding:"10px 20px",fontSize:13.5,fontWeight:600,
-            display:"flex",alignItems:"center",gap:7,
-          }}>
-            Last session
-            <svg width="11" height="7" viewBox="0 0 11 7" fill="none"><path d="M1 1.5l4.5 4 4.5-4" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          <button onClick={onExport} style={{
-            background:"linear-gradient(135deg,#1a6bff,#0038b8)",
-            color:"#fff",borderRadius:100,padding:"10px 22px",
-            fontSize:13.5,fontWeight:700,
-            boxShadow:"0 4px 16px rgba(26,107,255,.4)",
-            display:"flex",alignItems:"center",gap:7,
-          }}>
-            ↑ Export
-            <svg width="11" height="7" viewBox="0 0 11 7" fill="none"><path d="M1 1.5l4.5 4 4.5-4" stroke="rgba(255,255,255,.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-        </div>
-      </div>
+function MiniSparkline({ values, color }: { values: number[]; color: string }) {
+  const series = values.length ? values : [1, 3, 2, 4, 2, 5];
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const points = series
+    .map((value, index) => {
+      const x = series.length === 1 ? 50 : (index / (series.length - 1)) * 100;
+      const y = max === min ? 18 : 30 - ((value - min) / (max - min)) * 24;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const last = points.split(" ").slice(-1)[0].split(",");
 
-      {/* ── 2-column card grid — equal height ── */}
-      <div style={{
-        padding:"0 28px",
-        display:"grid",
-        gridTemplateColumns:"1fr 1fr",
-        gap:16,
-        flexShrink:0,
-        alignItems:"stretch",   /* force equal height */
-      }}>
-        <CardShotDiagnosis shot={active} meanVla={meanVla} onPlay={onPlay} onView={onGoAccuracy}/>
-        <CardSuggestedFixes latest={latest} sessions={sessions} meanVla={meanVla} onExplore={()=>onTab("compare")}/>
-      </div>
+  return (
+    <svg className="pr-sparkline" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={last[0]} cy={last[1]} r="3.5" fill={color} />
+    </svg>
+  );
+}
 
-      {/* ── Session schedule — fixed height, no stretching ── */}
-      <div style={{
-        marginTop:16, padding:"0 28px 24px",
-        flexShrink:0,
-      }}>
-        <SessionSchedule
-          sessions={sessions} offset={tlOff}
-          onOffset={onTlOff} onNew={onNew} onTab={onTab}
+function TrajectorySculpture({ spinActive }: { spinActive: boolean }) {
+  return (
+    <div className="pr-sculpture">
+      <span className="pr-sculpture-halo" />
+      <span className="pr-sculpture-shadow" />
+
+      <div className="pr-golf-ball-wrap">
+        <img
+          src="/golf-ball.svg"
+          alt=""
+          className={`pr-golf-ball-image ${spinActive ? "is-spinning" : ""}`}
+          draggable={false}
         />
       </div>
     </div>
   );
 }
 
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  CARD 1 — SHOT DIAGNOSIS  (full height, animated, 5 metrics)     ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
-function CardShotDiagnosis({shot,meanVla,onPlay,onView}:{shot:Shot|null;meanVla:number|null;onPlay:()=>void;onView:()=>void}) {
-  const pass = meanVla!==null && Math.abs(meanVla)<=1;
-  const [animKey, setAnimKey] = React.useState(0);
-
-  // Re-trigger animation when shot changes
-  React.useEffect(() => { setAnimKey(k => k+1); }, [shot?.id]);
-
-  const metrics = [
-    {
-      icon: <IconBars/>,
-      label: "Ball Speed", sub: "Velocity",
-      value: shot ? `${shot.pr.speed} mph` : "— mph",
-      date: shot?.timestamp, color: "#1a6bff",
-    },
-    {
-      icon: <IconAngle/>,
-      label: "VLA", sub: "Vertical Launch Angle",
-      value: shot ? `${shot.pr.vla}°` : "—°",
-      date: shot?.timestamp, color: "#f97316",
-    },
-    {
-      icon: <IconHla/>,
-      label: "HLA", sub: "Horizontal Launch Angle",
-      value: shot ? `${shot.pr.hla > 0 ? "+" : ""}${shot.pr.hla}°` : "—°",
-      date: shot?.timestamp, color: "#8b5cf6",
-    },
-    {
-      icon: <IconCarry/>,
-      label: "Carry", sub: "Carry Distance",
-      value: shot ? `${shot.pr.carry} yds` : "— yds",
-      date: shot?.timestamp, color: "#06b6d4",
-    },
-    {
-      icon: <IconSpin/>,
-      label: "Spin Rate", sub: "Back Spin",
-      value: shot ? `${shot.pr.spin.toLocaleString()} rpm` : "— rpm",
-      date: shot?.timestamp, color: "#ec4899",
-    },
-  ];
-
-  return (
-    <div style={{
-      background:"#fff", borderRadius:22,
-      border:"1px solid rgba(0,0,0,.06)",
-      boxShadow:"0 2px 20px rgba(0,0,0,.06)",
-      padding:"22px 24px",
-      display:"flex", flexDirection:"column",
-      /* match height of blue card */
-      alignSelf:"stretch",
-    }}>
-      {/* Header */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexShrink:0}}>
-        <span style={{fontSize:15,fontWeight:800,color:"#1a1d2e"}}>Shot Diagnosis</span>
-        <span style={{fontSize:12,color:"#9ca3af",fontStyle:"italic"}}>
-          finished analyzing:{" "}
-          <button onClick={onPlay} style={{color:"#1a6bff",background:"none",fontWeight:700,fontSize:12,padding:0,fontStyle:"normal"}}>Retry</button>
-        </span>
-      </div>
-
-      {/* 2-col body — 50/50 split */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,flex:1}}>
-
-        {/* ── Ball viz + play button — fills full left half ── */}
-        <div style={{
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-          gap:16,
-          background:"#fff",
-          borderRadius:16,
-          padding:"20px 10px",
-          position:"relative",
-          overflow:"hidden",
-        }}>
-          {/* subtle decorative rings behind ball */}
-          <div style={{position:"absolute",width:220,height:220,borderRadius:"50%",border:"1px solid rgba(147,197,253,.25)",top:"50%",left:"50%",transform:"translate(-50%,-60%)",pointerEvents:"none"}}/>
-          <div style={{position:"absolute",width:280,height:280,borderRadius:"50%",border:"1px solid rgba(147,197,253,.12)",top:"50%",left:"50%",transform:"translate(-50%,-60%)",pointerEvents:"none"}}/>
-
-          <BallSVG shot={shot} animKey={animKey}/>
-
-          <button
-            onClick={()=>{onPlay(); setAnimKey(k=>k+1);}}
-            style={{
-              width:46,height:46,borderRadius:"50%",
-              background:"linear-gradient(135deg,#1a6bff,#0038b8)",
-              color:"#fff",fontSize:19,
-              boxShadow:"0 6px 22px rgba(26,107,255,.50)",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              transition:"transform .15s, box-shadow .15s",
-              zIndex:1,
-            }}
-            onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform="scale(1.08)";(e.currentTarget as HTMLButtonElement).style.boxShadow="0 8px 28px rgba(26,107,255,.65)";}}
-            onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform="scale(1)";(e.currentTarget as HTMLButtonElement).style.boxShadow="0 6px 22px rgba(26,107,255,.50)";}}
-          >▶</button>
-        </div>
-
-        {/* ── Metric rows with ↓ connectors ── */}
-        <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
-          {metrics.map((m, i) => {
-            const isLast = i === metrics.length - 1;
-            const isStatus = isLast;
-            return (
-              <React.Fragment key={m.label}>
-                <DiagRow
-                  icon={m.icon} label={m.label} sub={m.sub}
-                  value={m.value} date={m.date} color={m.color}
-                  animKey={animKey} delay={i*80}
-                  isStatus={isStatus} pass={pass} onView={onView} meanVla={meanVla}
-                />
-                {!isLast && (
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",paddingLeft:19,gap:0}}>
-                    {/* separator line */}
-                    <div style={{width:"100%",height:1,background:"#f4f5f8"}}/>
-                    {/* ↓ connector arrow */}
-                    <div style={{
-                      fontSize:13,color:"#d1d5db",lineHeight:1,
-                      marginTop:1,marginBottom:1,paddingLeft:2,
-                    }}>↓</div>
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+interface WeekSlot {
+  key: string;
+  date: Date;
+  label: string;
+  session: Session | null;
+  isToday: boolean;
+  isActive: boolean;
 }
 
-/* Individual diagnosis row — matches Heart Diagnosis card style */
-function DiagRow({icon,label,sub,value,date,color,animKey,delay,isStatus,pass,onView,meanVla}:{
-  icon:React.ReactNode; label:string; sub:string; value:string;
-  date?:string; color:string; animKey:number; delay:number;
-  isStatus:boolean; pass:boolean; onView:()=>void; meanVla:number|null;
+interface ScheduleData {
+  label: string;
+  slots: WeekSlot[];
+  canPrev: boolean;
+  canNext: boolean;
+}
+
+function ScheduleStrip({
+  schedule,
+  onPrevWeek,
+  onNextWeek,
+  onOpenSession,
+  onNewSession,
+}: {
+  schedule: ScheduleData;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  onOpenSession: () => void;
+  onNewSession: () => void;
 }) {
-  const [displayed, setDisplayed] = React.useState(value);
-  React.useEffect(() => {
-    const t = setTimeout(() => setDisplayed(value), delay);
-    return () => clearTimeout(t);
-  }, [value, animKey, delay]);
-
-  if (isStatus) {
-    return (
-      <div style={{
-        border:`1.5px solid ${pass?"#bbf7d0":"#fecaca"}`,
-        borderRadius:14, padding:"11px 14px",
-        background:pass?"#f0fdf4":"#fff8f8",
-        display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,
-        animation:`fadeDown .4s ease ${delay}ms both`,
-      }}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{
-            width:36,height:36,borderRadius:10,flexShrink:0,
-            background:pass?"#dcfce7":"#fee2e2",
-            display:"flex",alignItems:"center",justifyContent:"center",
-          }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="2" y="2" width="14" height="14" rx="3" stroke={pass?"#16a34a":"#ef4444"} strokeWidth="1.8"/>
-              <line x1="6" y1="9" x2="9" y2="12" stroke={pass?"#16a34a":"#ef4444"} strokeWidth="2" strokeLinecap="round"/>
-              <line x1="9" y1="12" x2="13" y2="6" stroke={pass?"#16a34a":"#ef4444"} strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{fontSize:14,fontWeight:800,color:pass?"#16a34a":"#dc2626"}}>
-              {meanVla!==null?`VLA ${meanVla>=0?"+":""}${meanVla.toFixed(1)}%`:"VLA Uncalibrated"}
-            </div>
-            <div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>
-              {pass?"Within ±1% tolerance":"Calibration Issue"}
-            </div>
-          </div>
-        </div>
-        <button onClick={onView} style={{
-          fontSize:11,color:pass?"#16a34a":"#dc2626",
-          background:"none",fontWeight:700,padding:0,whiteSpace:"nowrap",
-        }}>
-          {pass?"✓ Passing":"• Consult accuracy ›"}
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div style={{
-      display:"flex",alignItems:"center",gap:12,padding:"9px 0",
-      animation:`fadeDown .35s ease ${delay}ms both`,
-    }}>
-      {/* Icon box */}
-      <div style={{
-        width:40,height:40,borderRadius:11,flexShrink:0,
-        background:`${color}15`,
-        display:"flex",alignItems:"center",justifyContent:"center",
-      }}>{icon}</div>
+    <section className="pr-schedule">
+      <div className="pr-schedule-head">
+        <div className="pr-schedule-title">
+          <div className="pr-schedule-nav">
+            <button className="pr-inline-icon" onClick={onPrevWeek} disabled={!schedule.canPrev}>
+              <IconChevronLeft />
+            </button>
+            <strong>{schedule.label}</strong>
+            <button className="pr-inline-icon" onClick={onNextWeek} disabled={!schedule.canNext}>
+              <IconChevronRight />
+            </button>
+          </div>
+        </div>
 
-      {/* Label + sub */}
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontSize:14.5,fontWeight:700,color:"#1a1d2e"}}>{label}</div>
-        <div style={{fontSize:10.5,color:"#9ca3af",marginTop:1}}>
-          {sub}
-          {date && <span style={{marginLeft:8,color:"#e5e7eb"}}>· {date}</span>}
+        <div className="pr-schedule-actions">
+          <button className="pr-secondary-pill" onClick={onOpenSession}>
+            Compare
+          </button>
+          <button className="pr-primary-pill" onClick={onNewSession}>
+            New Session
+          </button>
         </div>
       </div>
 
-      {/* Value — animated */}
-      <span style={{
-        fontSize:13.5,fontWeight:700,color:"#374151",
-        fontFamily:"'DM Mono',monospace",
-        flexShrink:0,
-      }}>
-        {displayed}
-      </span>
-      <span style={{color:"#e5e7eb",fontSize:18,flexShrink:0}}>›</span>
-    </div>
-  );
-}
-
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  CARD 2 — SUGGESTED FIXES  (blue gradient card)                  ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
-function CardSuggestedFixes({latest,sessions,meanVla,onExplore}:{latest?:Session;sessions:Session[];meanVla:number|null;onExplore:()=>void}) {
-  const FIXES = [
-    {pri:"HIGH",   priCol:"rgba(239,68,68,.35)",  priTxt:"#fca5a5", label:"Z-depth recalibration",     desc:"Camera distance estimation off by ~12°"},
-    {pri:"HIGH",   priCol:"rgba(239,68,68,.35)",  priTxt:"#fca5a5", label:"Camera angle verification",  desc:"Physical mount angle adds systematic offset"},
-    {pri:"MEDIUM", priCol:"rgba(251,146,60,.35)", priTxt:"#fed7aa", label:"Retro-velocity tuning",      desc:"Impact window regression needs tighter window"},
-    {pri:"LOW",    priCol:"rgba(34,197,94,.3)",   priTxt:"#86efac", label:"Apex detection threshold",   desc:"May cut trajectory short on high-loft shots"},
-  ];
-
-  // Calculate trend: improving or worsening
-  const vlaHistory = sessions.map(s => {
-    const st = calcSessionStats(s);
-    return st.vla?.mean ?? null;
-  }).filter((v): v is number => v !== null);
-  const improving = vlaHistory.length >= 2
-    && Math.abs(vlaHistory[vlaHistory.length-1]) < Math.abs(vlaHistory[0]);
-  const totalDelta = vlaHistory.length >= 2
-    ? Math.abs(vlaHistory[0]) - Math.abs(vlaHistory[vlaHistory.length-1])
-    : null;
-
-  // Confidence score based on how many sessions + shot count
-  const totalShots = sessions.reduce((a,s) => a + s.shots.length, 0);
-  const confidence = Math.min(Math.round((totalShots / 80) * 100), 99);
-
-  // Next recommended action
-  const nextAction = meanVla !== null && Math.abs(meanVla) > 20
-    ? "Measure camera tilt with inclinometer"
-    : meanVla !== null && Math.abs(meanVla) > 10
-    ? "Check Z-depth calibration at 10ft"
-    : "Verify retro-velocity window size";
-
-  return (
-    <div style={{
-      background:"linear-gradient(150deg,#1660ee 0%,#003ab5 100%)",
-      borderRadius:22,
-      padding:"20px 22px",
-      color:"#fff",
-      display:"flex",flexDirection:"column",
-      position:"relative",overflow:"hidden",
-      boxShadow:"0 8px 32px rgba(26,107,255,.28)",
-    }}>
-      {/* decorative circles */}
-      <div style={{position:"absolute",top:-55,right:-55,width:220,height:220,borderRadius:"50%",background:"rgba(255,255,255,.06)",pointerEvents:"none"}}/>
-      <div style={{position:"absolute",bottom:-35,left:-20,width:140,height:140,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
-
-      {/* ── header row ── */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,position:"relative"}}>
-        <div>
-          <div style={{
-            display:"inline-flex",alignItems:"center",gap:6,
-            background:"rgba(0,0,0,.25)",borderRadius:100,
-            padding:"4px 13px",fontSize:11,fontWeight:700,marginBottom:10,
-          }}>⛳ Suggested Calibration Fixes</div>
-
-          <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:3}}>
-            <span style={{fontSize:12,opacity:.6}}>Version:</span>
-            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.3px"}}>{latest?.version??"v22.86"}</span>
-          </div>
-          <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:3}}>
-            <span style={{fontSize:12,opacity:.6}}>VLA error:</span>
-            <span style={{fontSize:16,fontWeight:800,color:meanVla!==null&&Math.abs(meanVla)<=1?"#86efac":"#fca5a5"}}>
-              {meanVla!==null ? `${meanVla>=0?"+":""}${meanVla.toFixed(1)}%` : "Uncalibrated"}
-            </span>
-          </div>
-          <div style={{fontSize:11,opacity:.5,marginTop:2}}>{sessions.length} sessions · click any to compare</div>
-        </div>
-        <div style={{fontSize:50,lineHeight:1,flexShrink:0}}>🏌️</div>
-      </div>
-
-      {/* ── stats row: trend + confidence + next action ── */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12,position:"relative"}}>
-        {/* Trend */}
-        <div style={{background:"rgba(255,255,255,.1)",borderRadius:10,padding:"8px 10px"}}>
-          <div style={{fontSize:9.5,opacity:.6,fontWeight:600,textTransform:"uppercase",letterSpacing:".4px",marginBottom:4}}>Trend</div>
-          <div style={{fontSize:13,fontWeight:800,color:improving?"#86efac":"#fca5a5"}}>
-            {improving ? "↓ Improving" : "↑ Worsening"}
-          </div>
-          <div style={{fontSize:10,opacity:.55,marginTop:2}}>
-            {totalDelta !== null ? `${improving?"-":"+"}${Math.abs(totalDelta).toFixed(1)}% overall` : "Not enough data"}
-          </div>
-        </div>
-
-        {/* Confidence */}
-        <div style={{background:"rgba(255,255,255,.1)",borderRadius:10,padding:"8px 10px"}}>
-          <div style={{fontSize:9.5,opacity:.6,fontWeight:600,textTransform:"uppercase",letterSpacing:".4px",marginBottom:4}}>Confidence</div>
-          <div style={{fontSize:13,fontWeight:800}}>{confidence}%</div>
-          <div style={{marginTop:5,height:3,background:"rgba(255,255,255,.15)",borderRadius:2,overflow:"hidden"}}>
-            <div style={{width:`${confidence}%`,height:"100%",background:confidence>70?"#86efac":"#fed7aa",borderRadius:2}}/>
-          </div>
-        </div>
-
-        {/* Shot count */}
-        <div style={{background:"rgba(255,255,255,.1)",borderRadius:10,padding:"8px 10px"}}>
-          <div style={{fontSize:9.5,opacity:.6,fontWeight:600,textTransform:"uppercase",letterSpacing:".4px",marginBottom:4}}>Shots Logged</div>
-          <div style={{fontSize:13,fontWeight:800}}>{totalShots}</div>
-          <div style={{fontSize:10,opacity:.55,marginTop:2}}>Need 100 for full cal.</div>
-        </div>
-      </div>
-
-      {/* ── fix items ── */}
-      <div style={{display:"flex",flexDirection:"column",gap:7,position:"relative"}}>
-        {FIXES.map((f,i)=>(
-          <div key={i} style={{
-            background:"rgba(255,255,255,.1)",
-            border:"1px solid rgba(255,255,255,.12)",
-            borderRadius:11,padding:"9px 13px",
-            display:"flex",alignItems:"center",gap:10,
-          }}>
-            <span style={{
-              flexShrink:0,padding:"2px 8px",borderRadius:20,
-              fontSize:9,fontWeight:800,letterSpacing:".5px",
-              background:f.priCol,color:f.priTxt,
-            }}>{f.pri}</span>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12.5,fontWeight:700}}>{f.label}</div>
-              <div style={{fontSize:10.5,opacity:.6,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.desc}</div>
-            </div>
-          </div>
+      <div className="pr-week-labels">
+        {schedule.slots.map((slot) => (
+          <span key={slot.key} className={slot.isToday ? "is-today" : ""}>
+            {slot.label}
+          </span>
         ))}
       </div>
 
-      {/* ── next recommended action ── */}
-      <div style={{
-        marginTop:10,padding:"9px 13px",
-        background:"rgba(255,255,255,.08)",
-        border:"1px solid rgba(255,255,255,.15)",
-        borderRadius:11,position:"relative",
-      }}>
-        <div style={{fontSize:9.5,opacity:.55,fontWeight:700,textTransform:"uppercase",letterSpacing:".4px",marginBottom:3}}>👉 Next Recommended Action</div>
-        <div style={{fontSize:12,fontWeight:700,opacity:.9}}>{nextAction}</div>
-      </div>
+      <div className="pr-week-grid">
+        {schedule.slots.map((slot) => {
+          const vlaMean = slot.session ? calcSessionStats(slot.session).vla?.mean ?? null : null;
+          const isPassing = vlaMean !== null ? Math.abs(vlaMean) <= 1 : false;
+          const detail = slot.session
+            ? `${slot.session.club} · ${slot.session.shots.length} shots`
+            : "Open slot";
 
-      <button onClick={onExplore} style={{
-        marginTop:10,width:"100%",padding:"10px",
-        background:"rgba(255,255,255,.13)",
-        border:"1.5px solid rgba(255,255,255,.25)",
-        borderRadius:12,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",
-        position:"relative",
-      }}>Explore session history</button>
-    </div>
+          return (
+            <button
+              key={slot.key}
+              className={`pr-week-card ${slot.isActive ? "is-active" : ""} ${slot.session ? "" : "is-empty"}`}
+              onClick={slot.session ? onOpenSession : onNewSession}
+            >
+              <div className="pr-week-card-top">
+                <strong>{slot.date.getDate()}</strong>
+                <span>
+                  {slot.session
+                    ? new Date(slot.session.createdAt).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      }).toLowerCase()
+                    : "open"}
+                </span>
+              </div>
+
+              <div className="pr-week-card-body">
+                <h3>{slot.session ? slot.session.version : "New session"}</h3>
+                <p>{detail}</p>
+                <span className={`pr-week-status ${isPassing ? "is-pass" : ""}`}>
+                  {slot.session
+                    ? vlaMean !== null
+                      ? `${formatSigned(vlaMean, "%")} VLA`
+                      : "No TM match"
+                    : "Tap to create"}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  SESSION SCHEDULE  — exact match to reference Plan Schedule       ║
-   ║  White background, 7-column with day-name headers,               ║
-   ║  date+time on same row, item icon+name below, blue active cell   ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
-function SessionSchedule({sessions,offset,onOffset,onNew,onTab}:{
-  sessions:Session[]; offset:number; onOffset:(n:number)=>void;
-  onNew:()=>void; onTab:(t:TabId)=>void;
-}) {
-  const COLS   = 7;
-  const actI   = sessions.length - 1;
-  const shown  = sessions.slice(offset, offset+COLS);
-  const canPrev = offset > 0;
-  const canNext = offset+COLS < sessions.length;
-
-  // Day names for column headers
-  const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-
-  // Map sessions to column positions (reuse day of week as column hint or just spread them)
-  const colItems = Array.from({length: COLS}, (_, ci) => {
-    const s = shown[ci] ?? null;
-    const gi = offset + ci;
-    return { s, gi, isActive: gi === actI };
-  });
-
-  // Color ring for version icons
-  const versionColors: Record<string,string> = {
-    "v22.74":"#ef4444","v22.77":"#f97316","v22.79":"#22c55e",
-    "v22.86":"#1a6bff","default":"#8b5cf6"
-  };
-
-  return (
-    <div style={{display:"flex",flexDirection:"column",gap:0,flex:1}}>
-
-      {/* ─── Header: "Session History" + nav + buttons ─── */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <span style={{fontSize:19,fontWeight:800,color:"#1a1d2e"}}>Session History</span>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={()=>canPrev&&onOffset(offset-1)} style={{
-              width:30,height:30,borderRadius:"50%",
-              border:"1.5px solid rgba(0,0,0,.15)",
-              background:canPrev?"#fff":"transparent",
-              color:canPrev?"#374151":"#ccc",
-              fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",
-              cursor:canPrev?"pointer":"default",
-            }}>‹</button>
-            <span style={{fontSize:14,fontWeight:700,color:"#1a1d2e"}}>
-              {shown[0]
-                ? new Date(shown[0].date+"T12:00").toLocaleDateString("en-US",{month:"long",year:"numeric"}).replace(" ",", ").split(",").map((p,i)=>
-                    i===1 ? <span key={i} style={{color:"#1a6bff"}}>,{p}</span> : p
-                  )
-                : "No sessions"}
-            </span>
-            <button onClick={()=>canNext&&onOffset(offset+1)} style={{
-              width:30,height:30,borderRadius:"50%",
-              border:"1.5px solid rgba(0,0,0,.15)",
-              background:canNext?"#fff":"transparent",
-              color:canNext?"#374151":"#ccc",
-              fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",
-              cursor:canNext?"pointer":"default",
-            }}>›</button>
-          </div>
-        </div>
-
-        <div style={{display:"flex",gap:10}}>
-          <button onClick={()=>onTab("compare")} style={{
-            background:"#fff",
-            border:"1.5px solid #1a6bff",
-            borderRadius:100,padding:"8px 22px",
-            fontSize:13,fontWeight:700,color:"#1a6bff",
-          }}>Add notes</button>
-          <button onClick={onNew} style={{
-            background:"linear-gradient(135deg,#1a6bff,#0038b8)",
-            borderRadius:100,padding:"8px 24px",
-            fontSize:13,fontWeight:700,color:"#fff",
-            boxShadow:"0 4px 14px rgba(26,107,255,.38)",
-          }}>+ Set Session</button>
-        </div>
-      </div>
-
-      {/* ─── Calendar container — white card, FIXED height ─── */}
-      <div style={{
-        background:"#fff",borderRadius:20,
-        border:"1px solid rgba(0,0,0,.06)",
-        boxShadow:"0 1px 8px rgba(0,0,0,.05)",
-        overflow:"hidden",
-        flexShrink:0,   /* ← never stretch */
-      }}>
-        {/* Day-name column headers */}
-        <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},1fr)`,padding:"16px 20px 12px"}}>
-          {colItems.map(({isActive},ci) => {
-            const dayName = shown[ci]
-              ? new Date(shown[ci]!.date+"T12:00").toLocaleDateString("en-US",{weekday:"short"})
-              : DAY_NAMES[ci];
-            return (
-              <div key={ci} style={{display:"flex",justifyContent:"center"}}>
-                {isActive ? (
-                  <div style={{
-                    width:40,height:40,borderRadius:"50%",
-                    background:"#1a6bff",
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    color:"#fff",fontSize:13,fontWeight:800,
-                  }}>{dayName}</div>
-                ) : (
-                  <span style={{fontSize:13,fontWeight:600,color:"#6b7280",lineHeight:"40px"}}>{dayName}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Horizontal divider — full width, like reference */}
-        <div style={{height:1,background:"#e8eaf0"}}/>
-
-        {/* Calendar cells — individual gray rounded cards like reference, with gap */}
-        <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},1fr)`,height:160,gap:10,padding:"0 16px 16px"}}>
-          {colItems.map(({s,gi,isActive},ci) => {
-            if (!s) {
-              return (
-                <div key={`empty-${ci}`} onClick={onNew}
-                  style={{
-                    background:"#f8f9fc",
-                    borderRadius:14,
-                    border:"1.5px dashed #dde0eb",
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    cursor:"pointer",height:"100%",
-                  }}>
-                  <div style={{fontSize:11,color:"#c4c8d4",fontWeight:600}}>+ Add session</div>
-                </div>
-              );
-            }
-
-            const st = calcSessionStats(s);
-            const ve = st.vla?.mean ?? null;
-            const pass = ve!==null&&Math.abs(ve)<=1;
-            const d = new Date(s.date+"T12:00");
-            const dateNum = d.getDate();
-            const timeStr = "3.00 pm";
-            const vColor = versionColors[s.version] ?? versionColors["default"];
-
-            return (
-              <div
-                key={s.id}
-                onClick={()=>onTab("compare")}
-                style={{
-                  background:isActive?"#1a6bff":"#f4f5f9",
-                  borderRadius:14,
-                  padding:"12px 13px",
-                  cursor:"pointer",
-                  display:"flex",flexDirection:"column",
-                  gap:6,
-                  position:"relative",
-                  height:"100%",
-                  boxSizing:"border-box",
-                  boxShadow:isActive?"0 6px 20px rgba(26,107,255,.35)":"none",
-                  border:isActive?"none":"1px solid rgba(0,0,0,.04)",
-                  transition:"transform .15s",
-                }}
-                onMouseEnter={e=>{if(!isActive)(e.currentTarget as HTMLDivElement).style.background="#eceef5";}}
-                onMouseLeave={e=>{if(!isActive)(e.currentTarget as HTMLDivElement).style.background="#f4f5f9";}}
-              >
-                {/* Date number + time on same row */}
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                  <span style={{
-                    fontSize:16,fontWeight:800,
-                    color:isActive?"#fff":"#1a1d2e",
-                    lineHeight:1,
-                  }}>{dateNum}</span>
-                  <span style={{
-                    fontSize:10.5,fontWeight:500,
-                    color:isActive?"rgba(255,255,255,.65)":"#9ca3af",
-                  }}>{timeStr}</span>
-                </div>
-
-                {/* Version icon row + label */}
-                <div style={{display:"flex",alignItems:"center",gap:7}}>
-                  {/* Colored avatar circle */}
-                  <div style={{
-                    width:26,height:26,borderRadius:"50%",
-                    background:isActive?"rgba(255,255,255,.25)":vColor+"18",
-                    border:`2px solid ${isActive?"rgba(255,255,255,.5)":vColor}`,
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    fontSize:10,fontWeight:800,
-                    color:isActive?"#fff":vColor,
-                    flexShrink:0,
-                  }}>
-                    {s.version.replace("v","").replace(".","").slice(0,3)}
-                  </div>
-                  <div>
-                    <div style={{
-                      fontSize:12.5,fontWeight:700,
-                      color:isActive?"#fff":"#1a1d2e",
-                      fontFamily:"'DM Mono',monospace",
-                      lineHeight:1.2,
-                    }}>{s.version}</div>
-                    <div style={{
-                      fontSize:10.5,fontWeight:700,
-                      fontFamily:"'DM Mono',monospace",
-                      color:isActive?"rgba(255,255,255,.8)":(pass?"#16a34a":"#ef4444"),
-                      marginTop:1,
-                    }}>
-                      {ve!==null?`${ve>=0?"+":""}${ve}%`:"—"}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Label/note */}
-                {s.label && (
-                  <div style={{
-                    fontSize:10.5,
-                    color:isActive?"rgba(255,255,255,.55)":"#9ca3af",
-                    overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                    fontStyle:"italic",
-                  }}>{s.label}</div>
-                )}
-
-                {/* PASS/FAIL badge — top right */}
-                <div style={{
-                  position:"absolute",top:12,right:12,
-                  fontSize:9,fontWeight:800,letterSpacing:".3px",
-                  padding:"2px 7px",borderRadius:20,
-                  background:pass
-                    ?(isActive?"rgba(34,197,94,.3)":"#f0fdf4")
-                    :(isActive?"rgba(239,68,68,.3)":"#fef2f2"),
-                  color:pass
-                    ?(isActive?"#a7f3d0":"#16a34a")
-                    :(isActive?"#fca5a5":"#ef4444"),
-                }}>{pass?"PASS":"FAIL"}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  SECONDARY VIEWS                                                  ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
 interface SecProps {
-  tab:TabId; shots:Shot[]; sessions:Session[]; active:Shot|null; playing:boolean; club:string; tmReady:boolean;
-  onSelectShot:(s:Shot)=>void; onPlay:()=>void; onPlayDone:()=>void;
-  onAddShot:(s:Shot)=>void; onNotify:(m:string,t?:"ok"|"err")=>void;
-  onDelete:(id:string)=>void; onReset:()=>void; onNew:()=>void;
-  onClear:()=>void; onExport:()=>void;
+  tab: TabId;
+  shots: Shot[];
+  sessions: Session[];
+  active: Shot | null;
+  playing: boolean;
+  club: string;
+  tmReady: boolean;
+  onSelectShot: (shot: Shot) => void;
+  onPlay: () => void;
+  onPlayDone: () => void;
+  onAddShot: (shot: Shot) => void;
+  onNotify: (message: string, type?: "ok" | "err") => void;
+  onDelete: (id: string) => void;
+  onReset: () => void;
+  onNew: () => void;
+  onClear: () => void;
+  onExport: () => void;
 }
-function SecPage(p:SecProps) {
+
+function SecPage({
+  tab,
+  shots,
+  sessions,
+  active,
+  playing,
+  club,
+  tmReady,
+  onSelectShot,
+  onPlay,
+  onPlayDone,
+  onAddShot,
+  onNotify,
+  onDelete,
+  onReset,
+  onNew,
+  onClear,
+  onExport,
+}: SecProps) {
   return (
-    <div style={{flex:1,overflow:"auto",padding:24,background:"#f6f6f6"}}>
-      <Suspense fallback={<Loader/>}>
-        {p.tab==="trajectory" && <TrajectoryView shots={p.shots} activeShot={p.active} playing={p.playing} onSelectShot={p.onSelectShot} onPlay={p.onPlay} onPlayDone={p.onPlayDone}/>}
-        {p.tab==="physics"    && <PhysicsView/>}
-        {p.tab==="kalman"     && <KalmanView/>}
-        {p.tab==="model"      && <ModelView/>}
-        {p.tab==="accuracy"   && <AccuracyView shots={p.shots} tmReady={p.tmReady}/>}
-        {p.tab==="shots"      && <ShotLogView shots={p.shots} activeShot={p.active} onSelectShot={s=>{p.onSelectShot(s);}} onClear={p.onClear} onExport={p.onExport}/>}
-        {p.tab==="input"      && <InputDataView selectedClub={p.club} onAddShot={p.onAddShot} onNotify={p.onNotify}/>}
-        {p.tab==="progress"   && <ProgressView sessions={p.sessions}/>}
-        {p.tab==="trend"      && <TrendView sessions={p.sessions}/>}
-        {p.tab==="compare"    && <CompareView sessions={p.sessions} selectedIds={p.sessions.map(s=>s.id)} onToggleSession={()=>{}}/>}
-        {p.tab==="frames"     && <FrameScrubberView shots={p.shots} activeShot={p.active} onSelectShot={p.onSelectShot}/>}
-        {p.tab==="sessions"   && <AllSessionsView sessions={p.sessions} onDelete={p.onDelete} onReset={p.onReset} onNew={p.onNew}/>}
+    <div className="pr-secondary-content">
+      <Suspense fallback={<Loader />}>
+        {tab === "trajectory" && (
+          <TrajectoryView
+            shots={shots}
+            activeShot={active}
+            playing={playing}
+            onSelectShot={onSelectShot}
+            onPlay={onPlay}
+            onPlayDone={onPlayDone}
+          />
+        )}
+        {tab === "physics" && <PhysicsView />}
+        {tab === "kalman" && <KalmanView />}
+        {tab === "model" && <ModelView />}
+        {tab === "accuracy" && <AccuracyView shots={shots} tmReady={tmReady} />}
+        {tab === "shots" && (
+          <ShotLogView
+            shots={shots}
+            activeShot={active}
+            onSelectShot={onSelectShot}
+            onClear={onClear}
+            onExport={onExport}
+          />
+        )}
+        {tab === "input" && <InputDataView selectedClub={club} onAddShot={onAddShot} onNotify={onNotify} />}
+        {tab === "progress" && <ProgressView sessions={sessions} />}
+        {tab === "trend" && <TrendView sessions={sessions} />}
+        {tab === "compare" && (
+          <CompareView sessions={sessions} selectedIds={sessions.map((session) => session.id)} onToggleSession={() => {}} />
+        )}
+        {tab === "frames" && <FrameScrubberView shots={shots} activeShot={active} onSelectShot={onSelectShot} />}
+        {tab === "sessions" && (
+          <AllSessionsView sessions={sessions} onDelete={onDelete} onReset={onReset} onNew={onNew} />
+        )}
       </Suspense>
     </div>
   );
 }
 
-/* ╔══════════════════════════════════════════════════════════════════╗
-   ║  SMALL REUSABLE COMPONENTS                                        ║
-   ╚══════════════════════════════════════════════════════════════════╝ */
+function Loader() {
+  return (
+    <div className="pr-loader">
+      <span className="pr-loader-dot" />
+      <span>Loading view…</span>
+    </div>
+  );
+}
 
-function BallSVG({shot, animKey=0}:{shot:Shot|null; animKey?:number}) {
-  const spd=shot?.pr.speed??91, vla=shot?.pr.vla??20, spn=shot?.pr.spin??7200;
-  const cx=140, cy=130, r=90;
+function BrandMark() {
+  return (
+    <img src="/spivot-logo.svg" alt="" className="pr-brand-logo" draggable={false} />
+  );
+}
 
-  // Generate dimple positions arranged in realistic golf ball rows
-  const dimples: {x:number,y:number,r:number}[] = [];
-  const rows = [
-    {lat:0,   count:10, rr:3.8},
-    {lat:22,  count:10, rr:3.6},
-    {lat:-22, count:10, rr:3.6},
-    {lat:42,  count:8,  rr:3.3},
-    {lat:-42, count:8,  rr:3.3},
-    {lat:60,  count:6,  rr:3.0},
-    {lat:-60, count:6,  rr:3.0},
-    {lat:75,  count:4,  rr:2.5},
-    {lat:-75, count:4,  rr:2.5},
-  ];
-  rows.forEach(({lat,count,rr}) => {
-    const latRad = (lat * Math.PI) / 180;
-    const rowRadius = r * Math.cos(latRad);
-    const rowY = cy - r * Math.sin(latRad);
-    for (let i=0; i<count; i++) {
-      const angle = (i / count) * 2 * Math.PI + (lat % 44 === 0 ? 0 : Math.PI/count);
-      const dx = rowRadius * Math.cos(angle);
-      // Only show dimples on the visible hemisphere (rough front-face cull)
-      if (dx > -rowRadius*0.85) {
-        dimples.push({x: cx + dx, y: rowY, r: rr});
-      }
-    }
+function initials(value: string) {
+  return value
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function average(values: number[], fallback: number) {
+  if (!values.length) {
+    return fallback;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function gradeFromPassRate(passRate: number | null) {
+  if (passRate === null) return "B";
+  if (passRate >= 95) return "A";
+  if (passRate >= 85) return "A-";
+  if (passRate >= 72) return "B";
+  if (passRate >= 58) return "C";
+  return "D";
+}
+
+function lastValues<T>(items: T[], getValue: (item: T) => number, fallback: number[]) {
+  const values = items.slice(-6).map(getValue);
+  return values.length ? values : fallback;
+}
+
+function formatSigned(value: number, suffix = "") {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}${suffix}`;
+}
+
+function buildScheduleWeek(sessions: Session[], weekPage: number): ScheduleData {
+  const sessionsByDay = new Map<string, Session>();
+  const ordered = [...sessions].sort(
+    (left, right) => left.date.localeCompare(right.date) || left.createdAt - right.createdAt
+  );
+
+  for (const session of ordered) {
+    sessionsByDay.set(session.date, session);
+  }
+
+  const weeks = Array.from(
+    new Set(
+      ordered.map((session) => toDateKey(startOfWeek(parseDate(session.date))))
+    )
+  );
+
+  const today = startOfWeek(new Date());
+  if (!weeks.length) {
+    weeks.push(toDateKey(today));
+  }
+
+  const safePage = Math.min(Math.max(weekPage, 0), weeks.length - 1);
+  const activeWeekKey = weeks[weeks.length - 1 - safePage];
+  const weekStart = parseDate(activeWeekKey);
+  const activeSessionDate = ordered.length ? ordered[ordered.length - 1].date : "";
+
+  const slots = Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(weekStart, index);
+    const key = toDateKey(date);
+    return {
+      key,
+      date,
+      label: date.toLocaleDateString("en-US", { weekday: "short" }),
+      session: sessionsByDay.get(key) ?? null,
+      isToday: key === toDateKey(new Date()),
+      isActive: key === activeSessionDate,
+    };
   });
 
+  return {
+    label: weekStart.toLocaleDateString("en-US", { month: "long", year: "numeric" }).replace(" ", ", "),
+    slots,
+    canPrev: safePage < weeks.length - 1,
+    canNext: safePage > 0,
+  };
+}
+
+function parseDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function startOfWeek(date: Date) {
+  const copy = new Date(date);
+  const weekday = (copy.getDay() + 6) % 7;
+  copy.setDate(copy.getDate() - weekday);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function addDays(date: Date, amount: number) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + amount);
+  return copy;
+}
+
+function IconCluster({ className }: IconProps) {
   return (
-    <svg
-      key={animKey}
-      viewBox="0 0 280 280"
-      style={{width:"100%", maxWidth:240, height:"auto", overflow:"visible"}}
-    >
-      <defs>
-        {/* Main ball gradient — white golf ball */}
-        <radialGradient id="ballFill" cx="38%" cy="30%" r="70%">
-          <stop offset="0%"   stopColor="#ffffff"/>
-          <stop offset="45%"  stopColor="#f0f4f8"/>
-          <stop offset="80%"  stopColor="#d8e4f0"/>
-          <stop offset="100%" stopColor="#c0cfe0"/>
-        </radialGradient>
-        {/* Dimple gradient — slightly darker concave look */}
-        <radialGradient id="dimpleFill" cx="60%" cy="40%" r="60%">
-          <stop offset="0%"   stopColor="#c8d8e8"/>
-          <stop offset="100%" stopColor="#a8b8cc"/>
-        </radialGradient>
-        {/* Drop shadow filter */}
-        <filter id="golfShadow" x="-25%" y="-20%" width="150%" height="150%">
-          <feDropShadow dx="2" dy="8" stdDeviation="14" floodColor="rgba(80,110,160,.28)"/>
-        </filter>
-        {/* Clip to circle */}
-        <clipPath id="ballClip">
-          <circle cx={cx} cy={cy} r={r}/>
-        </clipPath>
-      </defs>
-
-      {/* Ground shadow */}
-      <ellipse cx={cx} cy={cy+r+14} rx={62} ry={10} fill="rgba(0,0,0,.09)"/>
-
-      {/* Ball body */}
-      <circle cx={cx} cy={cy} r={r} fill="url(#ballFill)" filter="url(#golfShadow)"/>
-
-      {/* Dimples — clipped to ball */}
-      <g clipPath="url(#ballClip)">
-        {dimples.map((d,i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={d.r}
-            fill="url(#dimpleFill)"
-            opacity="0.7"
-          />
-        ))}
-      </g>
-
-      {/* Ball outline */}
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(160,180,210,.35)" strokeWidth="1"/>
-
-      {/* Primary specular highlight */}
-      <ellipse cx={cx-28} cy={cy-34} rx={22} ry={15}
-        fill="rgba(255,255,255,.72)"
-        transform={`rotate(-30,${cx-28},${cy-34})`}
-      />
-      {/* Secondary small highlight */}
-      <ellipse cx={cx-14} cy={cy-50} rx={8} ry={5}
-        fill="rgba(255,255,255,.45)"
-        transform={`rotate(-20,${cx-14},${cy-50})`}
-      />
-
-      {/* ── Speed badge (top-left) ── */}
-      <g>
-        <rect x={8} y={54} width={46} height={22} rx={11} fill="#1a6bff"/>
-        <text x={31} y={69} textAnchor="middle" fontSize="12" fill="#fff" fontWeight="800" fontFamily="DM Sans,sans-serif">{spd.toFixed(0)}</text>
-        <circle cx={62} cy={65} r={13} fill="#fff" stroke="#1a6bff" strokeWidth="2.5"/>
-        <text x={62} y={70} textAnchor="middle" fontSize="10" fontWeight="800" fill="#1a6bff" fontFamily="DM Sans,sans-serif">S</text>
-      </g>
-
-      {/* ── VLA badge (top-right) ── */}
-      <g>
-        <circle cx={178} cy={65} r={13} fill="#fff" stroke="#f97316" strokeWidth="2.5"/>
-        <text x={178} y={70} textAnchor="middle" fontSize="10" fontWeight="800" fill="#f97316" fontFamily="DM Sans,sans-serif">V</text>
-        <rect x={194} y={54} width={54} height={22} rx={11} fill="#f97316"/>
-        <text x={221} y={69} textAnchor="middle" fontSize="12" fill="#fff" fontWeight="800" fontFamily="DM Sans,sans-serif">{vla.toFixed(1)}°</text>
-      </g>
-
-      {/* ── Spin badge (bottom-center) ── */}
-      <g>
-        <circle cx={cx} cy={cy+r+6} r={13} fill="#fff" stroke="#8b5cf6" strokeWidth="2.5"/>
-        <text x={cx} y={cy+r+11} textAnchor="middle" fontSize="10" fontWeight="800" fill="#8b5cf6" fontFamily="DM Sans,sans-serif">R</text>
-        <rect x={cx-44} y={cy+r+22} width={88} height={22} rx={11} fill="#8b5cf6"/>
-        <text x={cx} y={cy+r+37} textAnchor="middle" fontSize="11.5" fill="#fff" fontWeight="800" fontFamily="DM Sans,sans-serif">{(spn/1000).toFixed(1)}k rpm</text>
-      </g>
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="6" cy="6" r="2.2" fill="currentColor" />
+      <circle cx="14" cy="6" r="2.2" fill="currentColor" />
+      <circle cx="6" cy="14" r="2.2" fill="currentColor" />
+      <circle cx="14" cy="14" r="2.2" fill="currentColor" />
     </svg>
   );
 }
 
-function IconBars(){
-  return <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><rect x="1" y="10" width="4" height="7" rx="1" fill="#1a6bff"/><rect x="7" y="6" width="4" height="11" rx="1" fill="#1a6bff" opacity=".6"/><rect x="13" y="2" width="4" height="15" rx="1" fill="#1a6bff" opacity=".4"/></svg>;
+function IconTarget({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="6.25" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="2.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 2v3M10 15v3M2 10h3M15 10h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
 }
-function IconAngle(){
-  return <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M2 15L10 3l8 12" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+function IconSheets({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="4.25" y="3.5" width="11.5" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
 }
-function IconHla(){
-  return <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M2 9h14M9 2l7 7-7 7" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+function IconCompare({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M5 5.5h4.5v9H5zM10.5 5.5H15v9h-4.5z" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8 8.5h.01M13 11.5h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
 }
-function IconCarry(){
-  return <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M2 14 Q9 4 16 14" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round"/><circle cx={16} cy={14} r={2} fill="#06b6d4"/></svg>;
+
+function IconTrend({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4 14.5 8.2 10l2.6 2.6 5-6.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13.4 6.5h2.8v2.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
-function IconSpin(){
-  return <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M9 2a7 7 0 0 1 7 7" stroke="#ec4899" strokeWidth="2" strokeLinecap="round"/><path d="M2 9a7 7 0 0 0 7 7" stroke="#ec4899" strokeWidth="2" strokeLinecap="round"/><path d="M16 9 13 7M16 9 13 11" stroke="#ec4899" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+function IconCalendar({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="3.75" y="5" width="12.5" height="11.25" rx="2.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 3v3M13.5 3v3M3.75 8h12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
 }
-function Loader(){
-  return <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:80,color:"#9ca3af",fontSize:14}}>
-    <span style={{animation:"spin .8s linear infinite",display:"inline-block",marginRight:10,fontSize:22}}>◌</span>Loading…
-  </div>;
+
+function IconCalendarPlus({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="3.75" y="5" width="12.5" height="11.25" rx="2.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 3v3M13.5 3v3M3.75 8h12.5M10 10.25v4M8 12.25h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconOrbit({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="2.1" fill="currentColor" />
+      <ellipse cx="10" cy="10" rx="7" ry="3.4" stroke="currentColor" strokeWidth="1.5" />
+      <ellipse cx="10" cy="10" rx="3.4" ry="7" stroke="currentColor" strokeWidth="1.5" transform="rotate(35 10 10)" />
+    </svg>
+  );
+}
+
+function IconPulse({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M2.5 10h3.3l1.6-3.5 2.3 7 2.1-4h5.7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconWave({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M2.5 11c1.3 0 1.3-4 2.6-4s1.3 6 2.6 6 1.3-8 2.6-8 1.3 10 2.6 10 1.3-4 2.6-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconModel({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4 6.25 10 3l6 3.25v7.5L10 17l-6-3.25v-7.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 3v14M4 6.25 16 13.75" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconDots({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="4.5" cy="10" r="1.6" fill="currentColor" />
+      <circle cx="10" cy="10" r="1.6" fill="currentColor" />
+      <circle cx="15.5" cy="10" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconFrames({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="3.5" y="4" width="13" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7 4v12M13 4v12" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function IconBall({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 7.4c.9-.7 2.2-1.2 3.5-1.2M7.2 10.7c1-.5 2.1-.7 3.3-.7M8 13.7c.8-.3 1.6-.5 2.4-.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSpeed({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M5 13a5 5 0 1 1 10 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="m10 10 3-2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="10" cy="10" r="1.25" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconVla({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M5 14.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7 12.5 13 6.5M13 6.5v4M13 6.5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconHla({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.5 10h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="m12.5 7 3 3-3 3M7.5 7l-3 3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconSpinMetric({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 4.25a5.75 5.75 0 1 1-4.58 2.27" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M5 3.75v3.5h3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconCarryMetric({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.5 14.5c2.2-3.7 5-5.7 8.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="m11.5 6.5 3-.5-.6 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 15h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity=".55" />
+    </svg>
+  );
+}
+
+function IconTotalMetric({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="4" y="4" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="11.5" y="4" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="4" y="11.5" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="11.5" y="11.5" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function IconPlus({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconExport({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 3.5v8.5M6.8 8.8 10 12l3.2-3.2M4.5 15.5h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconChevronDown({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="m5.5 7.75 4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconChevronLeft({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="m12 5.5-4.5 4.5 4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconChevronRight({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="m8 5.5 4.5 4.5-4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }

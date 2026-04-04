@@ -1,12 +1,26 @@
 import React from "react";
 
+type BadgeColor = "green" | "blue" | "orange" | "red" | "gray";
+
 interface BadgeProps {
   pass?: boolean;
   na?: boolean;
+  color?: BadgeColor;
   children: React.ReactNode;
 }
 
-export function Badge({ pass, na, children }: BadgeProps) {
+const BADGE_COLORS: Record<BadgeColor, { background: string; color: string }> = {
+  green: { background: "#f0fdf4", color: "#16a34a" },
+  blue: { background: "#eff6ff", color: "#2563eb" },
+  orange: { background: "#fff7ed", color: "#ea580c" },
+  red: { background: "#fef2f2", color: "#ef4444" },
+  gray: { background: "#f3f4f6", color: "#9ca3af" },
+};
+
+export function Badge({ pass, na, color, children }: BadgeProps) {
+  const resolvedColor: BadgeColor = color ?? (na ? "gray" : pass ? "green" : "red");
+  const palette = BADGE_COLORS[resolvedColor];
+
   const style: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -14,8 +28,8 @@ export function Badge({ pass, na, children }: BadgeProps) {
     borderRadius: 20,
     fontSize: 11,
     fontWeight: 600,
-    background: na ? "#f3f4f6" : pass ? "#f0fdf4" : "#fef2f2",
-    color:      na ? "#9ca3af" : pass ? "#16a34a" : "#ef4444",
+    background: palette.background,
+    color: palette.color,
   };
   return <span style={style}>{children}</span>;
 }

@@ -405,12 +405,14 @@ export function ModelTester() {
     }
   }, [results, detections, showKalman]);
 
-  const getStatusColor = (status: TestResults["status"]) => {
+  const getStatusColor = (status: TestResults["status"]): "green" | "blue" | "orange" | "red" => {
     switch (status) {
       case "excellent": return "green";
       case "good": return "blue";
       case "fair": return "orange";
-      case "poor": return "red";
+      case "poor":
+      default:
+        return "red";
     }
   };
 
@@ -712,8 +714,8 @@ export function ModelTester() {
                       Good performance with {results.expectedPoints} points. To reach 30+:
                     </div>
                     <ul style={{ marginLeft: "20px", marginTop: "4px" }}>
-                      {testMode === "crop" && cropSize < 400 && <li>Increase crop size to 400-450px</li>}
-                      {testMode === "confidence" && confidence > 0.12 && <li>Lower confidence threshold to 0.10-0.12</li>}
+                      {cropSize < 400 && <li>Increase crop size to 400-450px</li>}
+                      {confidence > 0.12 && <li>Lower confidence threshold to 0.10-0.12</li>}
                       <li>Add fallback to full-frame detection when crop fails</li>
                     </ul>
                   </div>
