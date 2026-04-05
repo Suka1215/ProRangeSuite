@@ -190,9 +190,6 @@ svg {
   min-height: 100vh;
   height: 100vh;
   border-radius: 0;
-  background:
-    radial-gradient(circle at 54% 34%, rgba(106, 216, 124, 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 245, 0.96) 100%);
   border: 0;
   box-shadow: none;
   overflow: hidden;
@@ -489,8 +486,8 @@ svg {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 6px 32px 22px;
+  gap: 14px;
+  padding: 4px 28px 16px;
   overflow: hidden;
 }
 
@@ -502,33 +499,55 @@ svg {
   padding: 0;
 }
 
+.pr-home-backdrop {
+  position: absolute;
+  inset: 0% 0% -30% -25%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.pr-home-backdrop-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  filter: drop-shadow(0 36px 48px rgba(38, 41, 48, 0.1));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .pr-home-layout {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.96fr) minmax(0, 0.88fr);
-  gap: 30px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr) minmax(320px, 0.92fr);
+  gap: 24px;
+  align-items: start;
   min-height: 0;
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .pr-copy-column,
 .pr-side-column {
   min-height: 0;
-  padding-top: 20px;
+  padding-top: 14px;
 }
 
 .pr-copy-column {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
 }
 
 .pr-home-brandline {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .pr-home-brand-pill {
@@ -561,7 +580,7 @@ svg {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--pr-green);
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .pr-copy-column h1,
@@ -573,8 +592,8 @@ svg {
 }
 
 .pr-copy-column h1 {
-  max-width: 470px;
-  font-size: clamp(2.8rem, 3.3vw, 4.1rem);
+  max-width: 440px;
+  font-size: clamp(2.45rem, 2.9vw, 3.6rem);
   line-height: 0.95;
 }
 
@@ -592,11 +611,11 @@ svg {
 .pr-copy-column p,
 .pr-side-column p,
 .pr-secondary-intro p {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   max-width: 470px;
   color: var(--pr-muted);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .pr-home-lede {
@@ -606,12 +625,12 @@ svg {
 .pr-filter-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 24px;
+  gap: 8px;
+  margin-top: 75px;
 }
 
 .pr-filter-chip {
-  padding: 10px 16px;
+  padding: 9px 14px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
@@ -627,10 +646,10 @@ svg {
 .pr-home-microcopy {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 12px;
   color: var(--pr-muted-soft);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -639,23 +658,26 @@ svg {
 .pr-insight-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: auto;
-  padding-top: 24px;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 0;
+  align-content: start;
 }
 
 .pr-insight-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  height: 214px;
   min-height: 0;
-  padding: 16px;
-  border-radius: 24px;
+  padding: 14px;
+  border-radius: 22px;
   border: 1px solid var(--pr-line);
   background: var(--pr-surface-strong);
   box-shadow: var(--pr-shadow-soft);
   text-align: left;
   transition: transform 180ms ease, box-shadow 180ms ease;
+  overflow: hidden;
 }
 
 .pr-insight-head {
@@ -682,7 +704,7 @@ svg {
 }
 
 .pr-insight-body {
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .pr-insight-body h3,
@@ -694,7 +716,7 @@ svg {
 }
 
 .pr-insight-body h3 {
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.08;
 }
 
@@ -709,8 +731,8 @@ svg {
 
 .pr-sparkline {
   width: 100%;
-  height: 42px;
-  margin-top: 14px;
+  height: 34px;
+  margin-top: 10px;
 }
 
 .pr-hero-column {
@@ -718,16 +740,16 @@ svg {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   justify-content: flex-start;
-  gap: 18px;
-  padding: 18px 0 8px;
+  gap: 10px;
+  padding: 14px 0 0;
 }
 
 .pr-hero-metric {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 12px;
+  left: 14px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -759,30 +781,24 @@ svg {
 
 .pr-hero-core {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 clamp(340px, 42vh, 470px);
+  min-height: 340px;
+  width: 100%;
   display: grid;
   place-items: center;
-  margin-top: -100px;
-  margin-bottom: -88px;
+  margin-top: 10px;
+  margin-bottom: -10px;
 }
 
 .pr-sculpture {
   position: relative;
-  width: min(100%, 960px);
-  height: min(74vh, 780px);
+  width: min(100%, 680px);
+  height: min(58vh, 560px);
   isolation: isolate;
 }
 
 .pr-sculpture-halo {
-  position: absolute;
-  inset: 2% -8% 6%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 48% 42%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.5) 36%, transparent 74%),
-    radial-gradient(circle at 60% 50%, rgba(106, 216, 124, 0.12), transparent 56%),
-    radial-gradient(circle at 34% 62%, rgba(38, 41, 48, 0.08), transparent 48%);
-  filter: blur(28px);
+  display: none;
 }
 
 .pr-sculpture-shadow {
@@ -800,9 +816,9 @@ svg {
 .pr-golf-ball-wrap {
   position: absolute;
   left: 50%;
-  top: 41%;
+  top: 47%;
   z-index: 2;
-  width: min(100%, 820px);
+  width: min(100%, 600px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
 }
@@ -867,6 +883,17 @@ svg {
   margin-top: 0;
   margin-inline: auto;
   text-align: center;
+}
+
+.pr-hero-speed-stack {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-left: 300px;
 }
 
 .pr-hero-speed-label {
@@ -955,19 +982,21 @@ svg {
 .pr-side-column {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
 }
 
 .pr-side-column h2 {
   max-width: 300px;
-  font-size: clamp(2rem, 2.45vw, 2.9rem);
+  font-size: clamp(1.85rem, 2.2vw, 2.5rem);
   line-height: 0.94;
 }
 
 .pr-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 12px;
+  align-content: start;
 }
 
 .pr-action-tile {
@@ -1058,8 +1087,8 @@ svg {
 
 .pr-schedule {
   flex-shrink: 0;
-  padding: 20px 22px;
-  border-radius: 30px;
+  padding: 16px 18px;
+  border-radius: 26px;
   border: 1px solid var(--pr-line);
   background: rgba(255, 255, 255, 0.68);
   box-shadow: var(--pr-shadow-soft);
@@ -1083,7 +1112,7 @@ svg {
 
 .pr-schedule-nav strong {
   font-family: "Outfit", sans-serif;
-  font-size: 30px;
+  font-size: 24px;
   letter-spacing: -0.05em;
 }
 
@@ -1128,7 +1157,7 @@ svg {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .pr-week-labels span {
@@ -1147,14 +1176,14 @@ svg {
 .pr-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .pr-week-card {
   min-height: 0;
-  padding: 13px;
-  border-radius: 20px;
+  padding: 10px;
+  border-radius: 18px;
   border: 1px solid rgba(106, 216, 124, 0.18);
   background: #dfedd9;
   box-shadow: var(--pr-shadow-soft);
@@ -1182,7 +1211,7 @@ svg {
 
 .pr-week-card-top strong {
   font-family: "Outfit", sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   letter-spacing: -0.05em;
 }
 
@@ -1194,11 +1223,11 @@ svg {
 }
 
 .pr-week-card-body {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .pr-week-card-body h3 {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.04;
 }
 
@@ -1231,7 +1260,15 @@ svg {
 .pr-secondary-stage {
   position: relative;
   z-index: 1;
+  flex: 1;
+  min-height: 0;
   padding: 8px 30px 28px;
+}
+
+.pr-secondary-stage.is-immersive {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 16px;
 }
 
 .pr-secondary-intro {
@@ -1256,17 +1293,25 @@ svg {
 .pr-secondary-stage-inner {
   min-height: 64vh;
   border-radius: 32px;
-  border: 1px solid var(--pr-line);
-  background: rgba(255, 255, 255, 0.58);
-  box-shadow: var(--pr-shadow-soft);
-  overflow: hidden;
   backdrop-filter: blur(16px);
+}
+
+.pr-secondary-stage-inner.is-immersive {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  border-radius: 36px;
 }
 
 .pr-secondary-content {
   height: 100%;
   padding: 24px;
   overflow: auto;
+}
+
+.pr-secondary-stage-inner.is-immersive .pr-secondary-content {
+  padding: 0;
+  overflow: hidden;
 }
 
 .pr-loader {

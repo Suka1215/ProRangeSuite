@@ -1,0 +1,1229 @@
+.shotiq-trackman-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  height: 214px;
+  padding: 14px;
+  border-radius: 28px;
+  border: 1px solid rgba(38, 41, 48, 0.06);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 40px rgba(38, 41, 48, 0.08);
+  color: #262930;
+  text-align: left;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  overflow: hidden;
+}
+
+.shotiq-trackman-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 44px rgba(38, 41, 48, 0.12);
+}
+
+.shotiq-trackman-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shotiq-trackman-avatar {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #dedfe3;
+  color: #262930;
+  font-family: "Outfit", sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.shotiq-trackman-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.shotiq-trackman-copy strong {
+  font-family: "Outfit", sans-serif;
+  font-size: 17px;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-trackman-copy span {
+  color: rgba(38, 41, 48, 0.62);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.shotiq-trackman-body {
+  margin-top: 12px;
+}
+
+.shotiq-trackman-body h3 {
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+  font-size: 1.5rem;
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
+.shotiq-trackman-body p {
+  margin: 10px 0 0;
+  color: rgba(38, 41, 48, 0.68);
+  font-size: 12px;
+  line-height: 1.38;
+}
+
+.shotiq-trackman-spark {
+  width: 100%;
+  height: 58px;
+  margin-top: 12px;
+  color: #262930;
+}
+
+.shotiq-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.shotiq-toolbar,
+.shotiq-toolbar-side,
+.shotiq-panel-head,
+.shotiq-summary-head,
+.shotiq-prompt-head,
+.shotiq-prompt-footer,
+.shotiq-range-row {
+  display: flex;
+  align-items: center;
+}
+
+.shotiq-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.shotiq-toolbar-side {
+  gap: 10px;
+}
+
+.shotiq-toolbar-side.is-right {
+  justify-content: flex-end;
+}
+
+.shotiq-toolbar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: #262930;
+  text-align: center;
+}
+
+.shotiq-toolbar-center span,
+.shotiq-toolbar-center em,
+.shotiq-floating-label,
+.shotiq-hero-score span,
+.shotiq-hero-score em,
+.shotiq-hero-tag span,
+.shotiq-drift-caption span,
+.shotiq-drift-caption em,
+.shotiq-prompt-head,
+.shotiq-panel-head span,
+.shotiq-score-card span,
+.shotiq-thumb-card span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.shotiq-toolbar-center span,
+.shotiq-toolbar-center em,
+.shotiq-floating-label,
+.shotiq-panel-head span,
+.shotiq-hero-score span,
+.shotiq-hero-score em,
+.shotiq-hero-tag span,
+.shotiq-drift-caption span,
+.shotiq-drift-caption em,
+.shotiq-score-card span,
+.shotiq-prompt-head,
+.shotiq-thumb-card span {
+  color: rgba(38, 41, 48, 0.56);
+  font-style: normal;
+}
+
+.shotiq-toolbar-center strong,
+.shotiq-mode-button strong,
+.shotiq-hero-score strong,
+.shotiq-hero-tag strong,
+.shotiq-score-card strong,
+.shotiq-thumb-card strong {
+  font-family: "Outfit", sans-serif;
+}
+
+.shotiq-toolbar-center strong {
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-toolbar-pill,
+.shotiq-toolbar-icon,
+.shotiq-select-pill,
+.shotiq-corner-button,
+.shotiq-grid-control,
+.shotiq-metric-chip,
+.shotiq-prompt-send,
+.shotiq-prompt-close,
+.shotiq-thumb-add {
+  border: 1px solid rgba(38, 41, 48, 0.07);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 32px rgba(38, 41, 48, 0.07);
+  color: #262930;
+}
+
+.shotiq-toolbar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.shotiq-toolbar-pill.is-trackman {
+  background: #ffcc3d;
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.shotiq-toolbar-pill-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #262930;
+}
+
+.shotiq-toolbar-icon,
+.shotiq-corner-button,
+.shotiq-prompt-send,
+.shotiq-prompt-close,
+.shotiq-thumb-add {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.shotiq-toolbar-icon.is-dark,
+.shotiq-prompt-send {
+  background: #262930;
+  color: #fff;
+}
+
+.shotiq-workbench {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 280px;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.shotiq-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.shotiq-panel {
+  border-radius: 30px;
+  padding: 14px;
+}
+
+.shotiq-session-picker-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.shotiq-panel-head,
+.shotiq-summary-head,
+.shotiq-prompt-head,
+.shotiq-prompt-footer {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shotiq-panel-head {
+  margin-bottom: 12px;
+}
+
+.shotiq-panel-head strong {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(38, 41, 48, 0.06);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.shotiq-session-picker-copy {
+  margin: 0 0 12px;
+  color: rgba(38, 41, 48, 0.62);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.shotiq-session-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(106, 216, 124, 0.14);
+}
+
+.shotiq-session-feature-head,
+.shotiq-session-card-meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shotiq-session-feature-label,
+.shotiq-session-rank,
+.shotiq-session-stamp,
+.shotiq-session-meta span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.shotiq-session-feature-label,
+.shotiq-session-rank,
+.shotiq-session-stamp {
+  color: rgba(38, 41, 48, 0.56);
+}
+
+.shotiq-session-feature strong,
+.shotiq-session-card strong {
+  font-family: "Outfit", sans-serif;
+}
+
+.shotiq-session-feature strong {
+  font-size: 1.15rem;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-session-feature p {
+  margin: 0;
+  color: rgba(38, 41, 48, 0.66);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.shotiq-session-list {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.shotiq-session-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.shotiq-session-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(38, 41, 48, 0.16);
+}
+
+.shotiq-session-card,
+.shotiq-session-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(38, 41, 48, 0.06);
+  background: rgba(38, 41, 48, 0.045);
+  text-align: left;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.shotiq-session-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(38, 41, 48, 0.08);
+}
+
+.shotiq-session-card.is-active {
+  background: rgba(106, 216, 124, 0.2);
+  border-color: rgba(106, 216, 124, 0.34);
+  box-shadow: 0 18px 36px rgba(106, 216, 124, 0.16);
+}
+
+.shotiq-session-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shotiq-session-color-dot {
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.84);
+  flex-shrink: 0;
+}
+
+.shotiq-session-card strong {
+  font-size: 1.1rem;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.shotiq-session-card p {
+  margin: 0;
+  color: rgba(38, 41, 48, 0.66);
+  font-size: 12px;
+  line-height: 1.42;
+}
+
+.shotiq-session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shotiq-session-meta span {
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(38, 41, 48, 0.64);
+}
+
+.shotiq-session-pass.is-good {
+  background: rgba(106, 216, 124, 0.18);
+  color: #4fa961;
+}
+
+.shotiq-session-pass.is-neutral {
+  background: rgba(38, 41, 48, 0.08);
+  color: rgba(38, 41, 48, 0.64);
+}
+
+.shotiq-session-empty {
+  justify-content: center;
+  min-height: 150px;
+  cursor: default;
+}
+
+.shotiq-session-empty strong {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-session-empty span {
+  color: rgba(38, 41, 48, 0.62);
+  font-size: 12px;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.shotiq-select-pill {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 18px;
+}
+
+.shotiq-select-pill button {
+  color: rgba(38, 41, 48, 0.58);
+}
+
+.shotiq-select-pill span {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.shotiq-mode-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shotiq-mode-button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(38, 41, 48, 0.045);
+  text-align: left;
+}
+
+.shotiq-mode-button strong {
+  font-size: 17px;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-mode-button span {
+  color: rgba(38, 41, 48, 0.62);
+  font-size: 11px;
+  line-height: 1.42;
+}
+
+.shotiq-mode-button.is-active {
+  background: rgba(106, 216, 124, 0.18);
+}
+
+.shotiq-range-row,
+.shotiq-range-note {
+  justify-content: space-between;
+  gap: 12px;
+  color: rgba(38, 41, 48, 0.58);
+  font-size: 11px;
+}
+
+.shotiq-range-bar {
+  position: relative;
+  height: 14px;
+  margin: 12px 0 10px;
+  border-radius: 999px;
+  background: rgba(38, 41, 48, 0.08);
+  overflow: hidden;
+}
+
+.shotiq-range-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #262930 0%, #6ad87c 100%);
+}
+
+.shotiq-range-note {
+  justify-content: flex-start;
+  line-height: 1.52;
+}
+
+.shotiq-thumb-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.shotiq-thumb-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 72px;
+  padding: 10px;
+  border-radius: 18px;
+  color: #262930;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(220, 224, 230, 0.88));
+}
+
+.shotiq-thumb-card.is-1 {
+  background: linear-gradient(145deg, #f2f4f6, #d3deef);
+}
+
+.shotiq-thumb-card.is-2 {
+  background: linear-gradient(145deg, #f8f1d7, #ead07a);
+}
+
+.shotiq-thumb-card strong {
+  margin-top: 10px;
+  font-size: 15px;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-stage {
+  min-height: 0;
+  padding: 16px;
+  border-radius: 38px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.shotiq-stage-topline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.shotiq-floating-card {
+  min-height: 86px;
+  padding: 14px 16px;
+  border-radius: 24px;
+}
+
+.shotiq-floating-card-pulse {
+  justify-self: end;
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.shotiq-floating-ai {
+  position: absolute;
+  left: 50%;
+  bottom: -16px;
+  transform: translateX(-50%);
+  min-width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(38, 41, 48, 0.06);
+  box-shadow: 0 16px 36px rgba(38, 41, 48, 0.08);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.shotiq-metric-chip-row,
+.shotiq-badge-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shotiq-metric-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.shotiq-metric-chip.is-active {
+  background: #6ad87c;
+}
+
+.shotiq-mini-badge {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(38, 41, 48, 0.07);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shotiq-mini-badge.is-good {
+  background: rgba(106, 216, 124, 0.16);
+}
+
+.shotiq-mini-badge.is-warn {
+  background: rgba(255, 204, 61, 0.24);
+}
+
+.shotiq-mini-badge.is-bad {
+  background: rgba(38, 41, 48, 0.12);
+}
+
+.shotiq-hero-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  align-self: start;
+  text-align: center;
+}
+
+.shotiq-hero-score strong {
+  font-size: clamp(3.6rem, 5vw, 4.9rem);
+  line-height: 0.88;
+  letter-spacing: -0.08em;
+}
+
+.shotiq-hero-score em.is-good,
+.shotiq-summary-delta.is-good {
+  color: #4fa961;
+}
+
+.shotiq-hero-score em.is-warn,
+.shotiq-summary-delta.is-warn {
+  color: #b07e12;
+}
+
+.shotiq-hero-score em.is-bad,
+.shotiq-summary-delta.is-bad {
+  color: #262930;
+}
+
+.shotiq-stage-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr) 94px;
+  gap: 16px;
+  align-items: center;
+}
+
+.shotiq-stage-tag-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.shotiq-stage-tag-stack.is-right {
+  align-items: flex-end;
+}
+
+.shotiq-hero-tag {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 14px 12px;
+  border-radius: 22px;
+}
+
+.shotiq-hero-tag strong {
+  font-size: 1.65rem;
+  letter-spacing: -0.05em;
+}
+
+.shotiq-hero-tag em {
+  color: rgba(38, 41, 48, 0.56);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.shotiq-hero-pip {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(38, 41, 48, 0.06);
+  box-shadow: 0 16px 36px rgba(38, 41, 48, 0.08);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.shotiq-drift-field {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+}
+
+.shotiq-hero-blob {
+  display: none;
+}
+
+.shotiq-drift-map-shell {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 560px);
+  max-height: 100%;
+}
+
+.shotiq-drift-map {
+  position: relative;
+  width: 100%;
+  max-height: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.shotiq-drift-frame {
+  fill: rgba(255, 255, 255, 0.82);
+}
+
+.shotiq-drift-grid-cell {
+  fill: rgba(223, 229, 255, 0.5);
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 2;
+}
+
+.shotiq-drift-origin-halo {
+  fill: rgba(106, 216, 124, 0.18);
+}
+
+.shotiq-drift-origin-ring {
+  fill: #ffffff;
+  stroke-width: 2;
+}
+
+.shotiq-drift-origin-ring.is-outer {
+  stroke: rgba(106, 216, 124, 0.48);
+}
+
+.shotiq-drift-origin-ring.is-inner {
+  stroke: rgba(106, 216, 124, 0.8);
+}
+
+.shotiq-drift-origin-core {
+  fill: #6ad87c;
+  stroke: #ffffff;
+  stroke-width: 2.5;
+}
+
+.shotiq-drift-shot-dot {
+  stroke: rgba(255, 255, 255, 0.94);
+  stroke-width: 3;
+}
+
+.shotiq-drift-point {
+  cursor: pointer;
+  outline: none;
+}
+
+.shotiq-drift-hit-area {
+  fill: transparent;
+}
+
+.shotiq-drift-point.is-hovered .shotiq-drift-shot-dot {
+  stroke: #262930;
+  stroke-width: 4;
+}
+
+.shotiq-drift-point.is-hovered .shotiq-drift-shot-glow {
+  opacity: 0.95;
+}
+
+.shotiq-drift-shot-dot.is-good {
+  fill: #72ec8e;
+}
+
+.shotiq-drift-shot-dot.is-okay {
+  fill: #ffc430;
+}
+
+.shotiq-drift-shot-dot.is-bad {
+  fill: #ff5959;
+}
+
+.shotiq-drift-shot-glow {
+  opacity: 0.72;
+}
+
+.shotiq-drift-shot-glow.is-good {
+  fill: rgba(114, 236, 142, 0.42);
+}
+
+.shotiq-drift-shot-glow.is-okay {
+  fill: rgba(255, 196, 48, 0.42);
+}
+
+.shotiq-drift-shot-glow.is-bad {
+  fill: rgba(255, 89, 89, 0.48);
+}
+
+.shotiq-drift-shot-label {
+  fill: #23262d;
+  font-family: "Outfit", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.shotiq-drift-tooltip-card {
+  position: absolute;
+  top: 14px;
+  right: 8px;
+  min-width: 188px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(38, 41, 48, 0.08);
+  box-shadow: 0 18px 38px rgba(38, 41, 48, 0.16);
+  pointer-events: none;
+}
+
+.shotiq-drift-tooltip-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #262930;
+  margin-bottom: 8px;
+}
+
+.shotiq-drift-tooltip-line {
+  font-family: "Outfit", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(38, 41, 48, 0.82);
+  line-height: 1.35;
+}
+
+.shotiq-drift-tooltip-line + .shotiq-drift-tooltip-line {
+  margin-top: 3px;
+}
+
+.shotiq-drift-caption {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  margin-top: -10px;
+}
+
+.shotiq-drift-caption strong {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.18rem;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-drift-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.shotiq-drift-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shotiq-drift-legend-dot {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.76);
+  flex-shrink: 0;
+}
+
+.shotiq-drift-legend-dot.is-good {
+  background: #72ec8e;
+}
+
+.shotiq-drift-legend-dot.is-okay {
+  background: #ffc430;
+}
+
+.shotiq-drift-legend-dot.is-bad {
+  background: #ff5959;
+}
+
+.shotiq-drift-legend .is-good {
+  color: #4fa961;
+  background: rgba(106, 216, 124, 0.14);
+}
+
+.shotiq-drift-legend .is-okay {
+  color: #b07e12;
+  background: rgba(255, 196, 48, 0.18);
+}
+
+.shotiq-drift-legend .is-bad {
+  color: #c14444;
+  background: rgba(255, 89, 89, 0.14);
+}
+
+.shotiq-prompt-card {
+  position: relative;
+  width: min(100%, 720px);
+  padding: 14px 18px 14px;
+  margin: 0 auto;
+  border-radius: 28px;
+}
+
+.shotiq-prompt-card p {
+  margin: 12px 0 8px;
+  color: #262930;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.shotiq-prompt-subcopy {
+  color: rgba(38, 41, 48, 0.58);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.shotiq-prompt-footer {
+  gap: 10px;
+  margin-top: 14px;
+  color: rgba(38, 41, 48, 0.58);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shotiq-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.shotiq-status-dot.is-good {
+  background: #6ad87c;
+}
+
+.shotiq-status-dot.is-warn {
+  background: #ffcc3d;
+}
+
+.shotiq-status-dot.is-bad {
+  background: #262930;
+}
+
+.shotiq-prompt-send {
+  margin-left: auto;
+}
+
+.shotiq-prompt-close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+}
+
+.shotiq-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.shotiq-score-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 106px;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(38, 41, 48, 0.045);
+  text-align: left;
+}
+
+.shotiq-score-card.is-active {
+  background: #ffcc3d;
+}
+
+.shotiq-score-card strong {
+  font-size: 1.85rem;
+  letter-spacing: -0.04em;
+}
+
+.shotiq-score-dots {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 38px;
+}
+
+.shotiq-score-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(38, 41, 48, 0.16);
+}
+
+.shotiq-score-dots.is-good span:nth-child(-n + 6) {
+  background: #6ad87c;
+}
+
+.shotiq-score-dots.is-warn span:nth-child(-n + 5) {
+  background: #ffcc3d;
+}
+
+.shotiq-score-dots.is-bad span:nth-child(-n + 4) {
+  background: #262930;
+}
+
+.shotiq-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shotiq-summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.shotiq-summary-head strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.shotiq-summary-delta {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.shotiq-summary-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(38, 41, 48, 0.06);
+  overflow: hidden;
+}
+
+.shotiq-summary-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #262930;
+}
+
+.shotiq-summary-bar span.is-good {
+  background: #6ad87c;
+}
+
+.shotiq-summary-bar span.is-warn {
+  background: #ffcc3d;
+}
+
+.shotiq-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.shotiq-grid-control {
+  padding: 12px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.shotiq-grid-control.is-active {
+  background: #fff;
+}
+
+@media (max-width: 1500px) {
+  .shotiq-workbench {
+    grid-template-columns: 240px minmax(0, 1fr) 248px;
+  }
+
+  .shotiq-stage-body {
+    grid-template-columns: 82px minmax(0, 1fr) 82px;
+  }
+
+  .shotiq-drift-map {
+    width: min(100%, 500px);
+  }
+}
+
+@media (max-width: 1220px) {
+  .shotiq-shell {
+    overflow: auto;
+  }
+
+  .shotiq-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .shotiq-toolbar-side,
+  .shotiq-toolbar-side.is-right {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .shotiq-workbench {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .shotiq-stage {
+    min-height: 720px;
+  }
+}
+
+@media (max-width: 760px) {
+  .shotiq-shell {
+    padding: 12px;
+  }
+
+  .shotiq-stage-topline {
+    grid-template-columns: 1fr;
+  }
+
+  .shotiq-stage-body {
+    grid-template-columns: 1fr;
+  }
+
+  .shotiq-stage-tag-stack,
+  .shotiq-stage-tag-stack.is-right {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shotiq-hero-pip {
+    display: none;
+  }
+
+  .shotiq-score-grid,
+  .shotiq-thumb-strip,
+  .shotiq-control-grid {
+    grid-template-columns: 1fr;
+  }
+}

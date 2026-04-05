@@ -1,6 +1,8 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { CLUB_NAMES } from "./constants";
+import bgGolfImage from "./assets/bg-golf.png";
 import { NotificationToast } from "./components/ui/NotificationToast";
+import TrackManPulseCard from "./features/shot-iq/components/TrackManPulseCard";
 import { useLiveShots } from "./hooks/useLiveShots";
 import type { LiveStatus } from "./hooks/useLiveShots";
 import { useNotification } from "./hooks/useNotification";
@@ -66,9 +68,9 @@ const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: str
     description: "A calmer overview that keeps live capture, validation, and session history within reach.",
   },
   accuracy: {
-    eyebrow: "Analysis",
-    title: "Accuracy Dashboard",
-    description: "Review ProRange error against TrackMan with a cleaner visual frame around the existing tools.",
+    eyebrow: "Shot IQ",
+    title: "TrackMan Intelligence",
+    description: "A matched-shot analysis studio with drift readouts, tendencies, and calibration scoring.",
   },
   shots: {
     eyebrow: "Capture",
@@ -142,6 +144,9 @@ interface InsightCardData {
   accent: string;
   series: number[];
   onClick: () => void;
+  variant?: "default" | "trackman";
+  matchedCount?: number;
+  totalCount?: number;
 }
 
 interface ActionTileData {
@@ -226,6 +231,7 @@ export default function App() {
 
   const moreActive = MORE_NAV.some((item) => item.id === tab);
   const sectionCopy = TAB_COPY[tab];
+  const isImmersiveStage = tab === "accuracy";
 
   return (
     <div className="pr-page">
@@ -266,12 +272,14 @@ export default function App() {
               club={club}
               shots={shots}
               sessions={sessions}
+              weekPage={weekPage}
               activeShot={activeShot}
               liveStatus={liveStatus}
               liveShotCount={liveShotCount}
-              weekPage={weekPage}
               onFilterChange={setHomeFilter}
               onOpenTab={openTab}
+              onPrevWeek={() => setWeekPage((current) => current + 1)}
+              onNextWeek={() => setWeekPage((current) => Math.max(current - 1, 0))}
               onOpenTrajectory={openTrajectory}
               onAddShot={addShot}
               onNewSession={() => setModalOpen(true)}
@@ -280,24 +288,24 @@ export default function App() {
                 notify("CSV exported");
               }}
               onToggleLive={toggleLive}
-              onPrevWeek={() => setWeekPage((current) => current + 1)}
-              onNextWeek={() => setWeekPage((current) => Math.max(0, current - 1))}
             />
           ) : (
-            <section className="pr-secondary-stage">
-              <div className="pr-secondary-intro">
-                <div>
-                  <span className="pr-secondary-eyebrow">{sectionCopy.eyebrow}</span>
-                  <h1>{sectionCopy.title}</h1>
-                  <p>{sectionCopy.description}</p>
+            <section className={`pr-secondary-stage ${isImmersiveStage ? "is-immersive" : ""}`}>
+              {!isImmersiveStage && (
+                <div className="pr-secondary-intro">
+                  <div>
+                    <span className="pr-secondary-eyebrow">{sectionCopy.eyebrow}</span>
+                    <h1>{sectionCopy.title}</h1>
+                    <p>{sectionCopy.description}</p>
+                  </div>
+                  <button className="pr-secondary-home" onClick={() => openTab("dashboard")}>
+                    <IconChevronLeft />
+                    Home
+                  </button>
                 </div>
-                <button className="pr-secondary-home" onClick={() => openTab("dashboard")}>
-                  <IconChevronLeft />
-                  Home
-                </button>
-              </div>
+              )}
 
-              <div className="pr-secondary-stage-inner">
+              <div className={`pr-secondary-stage-inner ${isImmersiveStage ? "is-immersive" : ""}`}>
                 <SecPage
                   tab={tab}
                   shots={shots}
@@ -345,6 +353,8 @@ export default function App() {
           {modalOpen && (
             <Suspense fallback={null}>
               <NewSessionModal
+                sourceShots={shots}
+                defaultClub={club}
                 onSave={(session) => {
                   addSession(session);
                   setModalOpen(false);
@@ -516,19 +526,19 @@ interface HomeViewProps {
   club: string;
   shots: Shot[];
   sessions: Session[];
+  weekPage: number;
   activeShot: Shot | null;
   liveStatus: LiveStatus;
   liveShotCount: number;
-  weekPage: number;
   onFilterChange: (filter: HomeFilter) => void;
   onOpenTab: (tab: TabId) => void;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
   onOpenTrajectory: () => void;
   onAddShot: () => void;
   onNewSession: () => void;
   onExport: () => void;
   onToggleLive: () => void;
-  onPrevWeek: () => void;
-  onNextWeek: () => void;
 }
 
 function HomeView({
@@ -536,23 +546,24 @@ function HomeView({
   club,
   shots,
   sessions,
+  weekPage,
   activeShot,
   liveStatus,
   liveShotCount,
-  weekPage,
   onFilterChange,
   onOpenTab,
+  onPrevWeek,
+  onNextWeek,
   onOpenTrajectory,
   onAddShot,
   onNewSession,
   onExport,
   onToggleLive,
-  onPrevWeek,
-  onNextWeek,
 }: HomeViewProps) {
   const latestShot = activeShot ?? (shots.length ? shots[shots.length - 1] : null);
   const latestSession = sessions.length ? sessions[sessions.length - 1] : null;
   const latestStats = latestSession ? calcSessionStats(latestSession) : null;
+  const schedule = buildScheduleWeek(sessions, weekPage);
   const recentSpeed = lastValues(shots, (shot) => shot.pr.speed, [92, 95, 98, 101, 103, 100]);
   const recentVla = lastValues(shots, (shot) => shot.pr.vla, [18.8, 19.4, 20.2, 20.8, 19.9, 20.4]);
   const recentHla = lastValues(shots, (shot) => shot.pr.hla, [-0.8, -0.2, 0.4, 0.7, 0.1, -0.1]);
@@ -573,7 +584,6 @@ function HomeView({
   ).toFixed(1);
   const vlaBias = average(vlaErrors, 11.6);
   const heroGrade = gradeFromPassRate(passRate);
-  const schedule = buildScheduleWeek(sessions, weekPage);
   const overviewSpeed = latestShot?.pr.speed ?? average(recentSpeed, 100);
   const overviewVla = latestShot?.pr.vla ?? average(recentVla, 20.1);
   const overviewHla = latestShot?.pr.hla ?? average(recentHla, 0.2);
@@ -677,6 +687,9 @@ function HomeView({
         meta: `${carryAverage} yd center line for ${club}`,
         accent: BRAND_INK,
         series: recentCarry,
+        variant: "trackman" as const,
+        matchedCount: shots.filter((shot) => shot.tm?.carry != null).length,
+        totalCount: shots.length,
         onClick: () => onOpenTab("accuracy"),
       },
       {
@@ -888,6 +901,8 @@ function HomeView({
   return (
     <section className="pr-home">
       <div className="pr-home-stage">
+        <FairwayBackdrop />
+
         <div className="pr-home-layout">
           <div className="pr-copy-column">
             {filter === "all" && (
@@ -940,49 +955,36 @@ function HomeView({
               <span className="pr-hero-unit">yd carry avg</span>
             </div>
 
-            <div className="pr-hero-core">
-              <TrajectorySculpture spinActive={isSpeedAnimating} />
+            <div className="pr-hero-core" aria-hidden="true" />
 
-              <div className="pr-hero-rail">
-                {heroActions.map((action) => (
-                  <button
-                    key={action.label}
-                    className={`pr-hero-rail-btn ${action.active ? "is-active" : ""}`}
-                    onClick={action.onClick}
-                    title={action.label}
-                  >
-                    {action.icon}
-                  </button>
-                ))}
+            <div className="pr-hero-speed-stack">
+              <div className="pr-hero-speed">
+                <span className="pr-hero-speed-label">Ball Speed</span>
+                <div className="pr-hero-speed-value">
+                  <strong>{animatedSpeed.toFixed(1)}</strong>
+                  <span>mph</span>
+                </div>
+                <span className="pr-hero-speed-meta">
+                  {liveStatus === "connected"
+                    ? `${liveShotCount} live shots in the feed`
+                    : `${club} profile active`}
+                </span>
               </div>
-            </div>
 
-            <div className="pr-hero-speed">
-              <span className="pr-hero-speed-label">Ball Speed</span>
-              <div className="pr-hero-speed-value">
-                <strong>{animatedSpeed.toFixed(1)}</strong>
-                <span>mph</span>
+              <div className="pr-hero-pills">
+                <span className="pr-stat-pill">
+                  <strong>{shots.length || 12}</strong>
+                  <span>shots</span>
+                </span>
+                <span className="pr-stat-pill">
+                  <strong>{sessions.length || 4}</strong>
+                  <span>sessions</span>
+                </span>
+                <span className="pr-stat-pill">
+                  <strong>{liveStatus === "connected" ? liveShotCount : club}</strong>
+                  <span>{liveStatus === "connected" ? "live" : "club"}</span>
+                </span>
               </div>
-              <span className="pr-hero-speed-meta">
-                {liveStatus === "connected"
-                  ? `${liveShotCount} live shots in the feed`
-                  : `${club} profile active`}
-              </span>
-            </div>
-
-            <div className="pr-hero-pills">
-              <span className="pr-stat-pill">
-                <strong>{shots.length || 12}</strong>
-                <span>shots</span>
-              </span>
-              <span className="pr-stat-pill">
-                <strong>{sessions.length || 4}</strong>
-                <span>sessions</span>
-              </span>
-              <span className="pr-stat-pill">
-                <strong>{liveStatus === "connected" ? liveShotCount : club}</strong>
-                <span>{liveStatus === "connected" ? "live" : "club"}</span>
-              </span>
             </div>
           </div>
 
@@ -1010,7 +1012,28 @@ function HomeView({
   );
 }
 
+function FairwayBackdrop() {
+  return (
+    <div className="pr-home-backdrop" aria-hidden="true">
+      <img src={bgGolfImage} alt="" className="pr-home-backdrop-image" draggable={false} />
+    </div>
+  );
+}
+
 function InsightCard({ card }: { card: InsightCardData }) {
+  if (card.variant === "trackman") {
+    return (
+      <TrackManPulseCard
+        title={card.title}
+        meta={card.meta}
+        series={card.series}
+        matchedCount={card.matchedCount}
+        totalCount={card.totalCount}
+        onClick={card.onClick}
+      />
+    );
+  }
+
   return (
     <button className="pr-insight-card" onClick={card.onClick}>
       <div className="pr-insight-head">
@@ -1262,7 +1285,7 @@ function SecPage({
         {tab === "physics" && <PhysicsView />}
         {tab === "kalman" && <KalmanView />}
         {tab === "model" && <ModelView />}
-        {tab === "accuracy" && <AccuracyView shots={shots} tmReady={tmReady} />}
+        {tab === "accuracy" && <AccuracyView shots={shots} sessions={sessions} tmReady={tmReady} />}
         {tab === "shots" && (
           <ShotLogView
             shots={shots}
@@ -1346,11 +1369,7 @@ function buildScheduleWeek(sessions: Session[], weekPage: number): ScheduleData 
     sessionsByDay.set(session.date, session);
   }
 
-  const weeks = Array.from(
-    new Set(
-      ordered.map((session) => toDateKey(startOfWeek(parseDate(session.date))))
-    )
-  );
+  const weeks = Array.from(new Set(ordered.map((session) => toDateKey(startOfWeek(parseDate(session.date))))));
 
   const today = startOfWeek(new Date());
   if (!weeks.length) {

@@ -69,6 +69,7 @@ export interface Session {
   version: string;
   label: string;
   club: string;
+  color?: string;
   shots: SessionShot[];
   createdAt: number;
 }
