@@ -6,13 +6,14 @@ export type LiveStatus = "disconnected" | "connecting" | "connected";
 interface UseLiveShotsOptions {
   onShot: (shot: Shot) => void;
   onNotify: (msg: string, type?: "ok" | "err") => void;
+  autoConnect?: boolean;
 }
 
-export function useLiveShots({ onShot, onNotify }: UseLiveShotsOptions) {
+export function useLiveShots({ onShot, onNotify, autoConnect = false }: UseLiveShotsOptions) {
   const [status,    setStatus]    = useState<LiveStatus>("disconnected");
   const [shotCount, setShotCount] = useState(0);
   const wsRef      = useRef<WebSocket | null>(null);
-  const activeRef  = useRef(true);   // start true — we auto-connect on mount
+  const activeRef  = useRef(autoConnect);
   const reconnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep callbacks in refs so WebSocket handlers always call the latest version
@@ -85,15 +86,16 @@ export function useLiveShots({ onShot, onNotify }: UseLiveShotsOptions) {
     connect();
   }, [connect]);
 
-  // Auto-connect on mount
   useEffect(() => {
-    connect();
+    if (autoConnect) {
+      connect();
+    }
     return () => {
       activeRef.current = false;
       if (reconnTimer.current) clearTimeout(reconnTimer.current);
       wsRef.current?.close();
     };
-  }, [connect]);
+  }, [autoConnect, connect]);
 
   return { status, shotCount, connect: reconnect, disconnect };
 }

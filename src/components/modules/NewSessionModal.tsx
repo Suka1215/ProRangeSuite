@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { CLUB_NAMES } from "../../constants";
-import { todayISO } from "../../utils/dates";
-import type { Session, SessionShot, Shot } from "../../types";
+import type { Shot } from "../../types";
 
 interface NewSessionModalProps {
   sourceShots: Shot[];
   defaultClub: string;
-  onSave: (session: Session) => void;
+  isSaving?: boolean;
+  error?: string | null;
+  onSave: (draft: { title: string; club: string; color: string }) => void;
   onClose: () => void;
 }
 
@@ -22,6 +24,8 @@ const SESSION_COLORS = [
 export default function NewSessionModal({
   sourceShots,
   defaultClub,
+  isSaving = false,
+  error = null,
   onSave,
   onClose,
 }: NewSessionModalProps) {
@@ -30,47 +34,38 @@ export default function NewSessionModal({
   const [color, setColor] = useState(SESSION_COLORS[0]);
 
   const liveShotCount = sourceShots.length;
-  const canSave = liveShotCount > 0;
+  const canSave = !isSaving;
   const sessionName = label.trim() || `${club} Session`;
 
   const helperCopy = useMemo(() => {
     if (!liveShotCount) {
-      return "Capture a few live shots first, then save them as a named session.";
+      return "Start a synced session now and new shots from the app or suite will land here automatically.";
     }
 
-    return `This will save the current live capture with ${liveShotCount} shot${liveShotCount === 1 ? "" : "s"}.`;
+    return `Start a synced session with ${liveShotCount} live shot${liveShotCount === 1 ? "" : "s"} currently loaded in the suite.`;
   }, [liveShotCount]);
 
   const handleSave = () => {
     if (!canSave) return;
-
-    const shots: SessionShot[] = sourceShots.map((shot, index) => ({
-      id: `session-${Date.now()}-${index}`,
-      shotNum: index + 1,
-      pr: shot.pr,
-      tm: shot.tm ?? null,
-      trackPts: shot.trackPts,
-    }));
-
-    onSave({
-      id: `session-${Date.now()}`,
-      date: todayISO(),
-      version: `${club} · ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-      label: sessionName,
-      club,
-      color,
-      shots,
-      createdAt: Date.now(),
-    });
+    onSave({ title: sessionName, club, color });
   };
 
-  return (
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  const modal = (
     <div style={overlayStyle}>
       <div style={cardStyle}>
         <div style={headerStyle}>
           <div>
             <div style={titleStyle}>Create Session</div>
-            <div style={subtitleStyle}>Pick the club, choose a color, and save the current capture cleanly.</div>
+            <div style={subtitleStyle}>Pick the club, choose a color, and start the next synced capture cleanly.</div>
           </div>
           <button onClick={onClose} style={closeButtonStyle} aria-label="Close create session modal">
             ×
@@ -78,10 +73,12 @@ export default function NewSessionModal({
         </div>
 
         <div style={bodyStyle}>
+          {error && <div style={errorStyle}>{error}</div>}
+
           <div style={sectionStyle}>
             <div style={sectionTextStyle}>
               <strong>Session name</strong>
-              <span>Give this saved capture a clean label.</span>
+              <span>Give the session a clean label before capture begins.</span>
             </div>
             <input
               value={label}
@@ -139,14 +136,14 @@ export default function NewSessionModal({
 
           <div style={summaryCardStyle}>
             <div style={summaryTopStyle}>
-              <span style={summaryEyebrowStyle}>Current capture</span>
+              <span style={summaryEyebrowStyle}>Next capture</span>
               <span style={{ ...summaryDotStyle, background: color }} />
             </div>
             <strong style={summaryTitleStyle}>{sessionName}</strong>
             <p style={summaryBodyStyle}>{helperCopy}</p>
             <div style={summaryMetaStyle}>
               <span>{club}</span>
-              <span>{liveShotCount} shots ready</span>
+              <span>{liveShotCount ? `${liveShotCount} live shots loaded` : "Ready for fresh shots"}</span>
             </div>
           </div>
         </div>
@@ -165,12 +162,14 @@ export default function NewSessionModal({
               cursor: canSave ? "pointer" : "not-allowed",
             }}
           >
-            Save Session
+            {isSaving ? "Creating..." : "Create Session"}
           </button>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
 
 const overlayStyle: React.CSSProperties = {
@@ -231,6 +230,18 @@ const closeButtonStyle: React.CSSProperties = {
 
 const bodyStyle: React.CSSProperties = {
   padding: "0 30px 24px",
+};
+
+const errorStyle: React.CSSProperties = {
+  marginBottom: 16,
+  padding: "12px 14px",
+  borderRadius: 16,
+  border: "1px solid rgba(215, 53, 53, 0.14)",
+  background: "rgba(255, 243, 240, 0.86)",
+  color: "#b42318",
+  fontSize: 13,
+  fontWeight: 700,
+  lineHeight: 1.5,
 };
 
 const sectionStyle: React.CSSProperties = {

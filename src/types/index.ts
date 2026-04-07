@@ -4,18 +4,12 @@ export type MetricKey = "speed" | "vla" | "hla" | "carry" | "spin";
 export type ClubName = "Driver" | "3-Wood" | "5-Wood" | "4-Iron" | "5-Iron" | "6-Iron" | "7-Iron" | "8-Iron" | "9-Iron" | "PW";
 export type TabId =
   | "dashboard"
-  | "trajectory"
-  | "physics"
-  | "kalman"
-  | "model"
   | "accuracy"
   | "shots"
-  | "input"
   | "progress"
-  | "trend"
   | "compare"
   | "sessions"
-  | "frames";
+  | "bridge";
 
 // ─── SHOT DATA ────────────────────────────────────────────────────────────────
 
@@ -25,6 +19,7 @@ export interface MetricSet {
   hla: number;
   carry: number;
   spin: number;
+  total?: number;
 }
 
 export interface TrajectoryPoint {
@@ -46,6 +41,7 @@ export interface Shot {
   id: number | string;
   club: string;
   timestamp: string;
+  capturedAt?: number;
   pr: MetricSet;
   tm: Partial<MetricSet> | null;
   trackPts: number | null;

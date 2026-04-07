@@ -1,36 +1,29 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "./auth/AuthProvider";
 import { CLUB_NAMES } from "./constants";
 import bgGolfImage from "./assets/bg-golf.png";
 import { NotificationToast } from "./components/ui/NotificationToast";
 import TrackManPulseCard from "./features/shot-iq/components/TrackManPulseCard";
 import { useLiveShots } from "./hooks/useLiveShots";
 import type { LiveStatus } from "./hooks/useLiveShots";
+import { useDesktopBridge } from "./hooks/useDesktopBridge";
 import { useNotification } from "./hooks/useNotification";
+import { useSessionLibrary } from "./hooks/useSessionLibrary";
 import { useSessions } from "./hooks/useSessions";
+import { useUserShots } from "./hooks/useUserShots";
+import { isDesktopApp } from "./lib/desktop";
+import type { SessionLibraryBucket } from "./hooks/useSessionLibrary";
 import type { Session, Shot, TabId } from "./types";
 import { exportShotsToCSV, generateSyntheticShot } from "./utils/shotData";
 import { calcSessionStats, pctError } from "./utils/stats";
+import NewSessionModal from "./components/modules/NewSessionModal";
+import BridgeConnectionsView from "./views/BridgeConnectionsView";
 
-const FrameScrubberView = lazy(() => import("./views/FrameScrubberView"));
-const TrajectoryView = lazy(() => import("./views/TrajectoryView"));
 const AccuracyView = lazy(() => import("./views/AccuracyView"));
 const ShotLogView = lazy(() => import("./views/ShotLogView"));
-const InputDataView = lazy(() => import("./views/InputDataView"));
 const ProgressView = lazy(() => import("./views/ProgressView"));
-const TrendView = lazy(() => import("./views/TrendView"));
 const CompareView = lazy(() => import("./views/CompareView"));
 const AllSessionsView = lazy(() => import("./views/AllSessionsView"));
-const PhysicsView = lazy(() =>
-  import("./components/modules/PhysicsValidator").then((mod) => ({ default: mod.PhysicsValidator }))
-);
-const KalmanView = lazy(() =>
-  import("./components/modules/KalmanTester").then((mod) => ({ default: mod.KalmanTester }))
-);
-const ModelView = lazy(() =>
-  import("./components/modules/ModelTester").then((mod) => ({ default: mod.ModelTester }))
-);
-const NewSessionModal = lazy(() => import("./components/modules/NewSessionModal"));
-
 const PRIMARY_NAV = [
   { id: "dashboard", label: "Home", icon: IconCluster },
   { id: "accuracy", label: "Accuracy", icon: IconTarget },
@@ -40,15 +33,12 @@ const PRIMARY_NAV = [
   { id: "sessions", label: "Sessions", icon: IconCalendar },
 ] as const satisfies { id: TabId; label: string; icon: IconComponent }[];
 
-const MORE_NAV = [
-  { id: "trajectory", label: "Trajectory Replay", icon: IconOrbit },
-  { id: "physics", label: "Physics Validator", icon: IconPulse },
-  { id: "kalman", label: "Kalman Tester", icon: IconWave },
-  { id: "model", label: "Model Tester", icon: IconModel },
-  { id: "trend", label: "Trend Charts", icon: IconTrend },
-  { id: "input", label: "Input Lab", icon: IconDots },
-  { id: "frames", label: "Frame Scrubber", icon: IconFrames },
-] as const satisfies { id: TabId; label: string; icon: IconComponent }[];
+
+const DESKTOP_BRIDGE_NAV = { id: "bridge", label: "Bridge Connections", icon: IconPulse } as const satisfies {
+  id: TabId;
+  label: string;
+  icon: IconComponent;
+};
 
 const HOME_FILTERS = [
   { id: "all", label: "All" },
@@ -92,40 +82,10 @@ const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: str
     title: "All Sessions",
     description: "Browse and manage saved runs from the new homepage schedule strip.",
   },
-  trajectory: {
-    eyebrow: "Replay",
-    title: "Trajectory Replay",
-    description: "Open the latest shot path and play it back from the sculptural hero into the full trajectory view.",
-  },
-  physics: {
-    eyebrow: "Lab",
-    title: "Physics Validator",
-    description: "Deep-dive into the physical model when the home surface suggests the calibration needs work.",
-  },
-  kalman: {
-    eyebrow: "Lab",
-    title: "Kalman Tester",
-    description: "Validate filtering and smoothing behavior inside the same redesigned workspace.",
-  },
-  model: {
-    eyebrow: "Lab",
-    title: "Model Tester",
-    description: "Check model behavior and confidence when a session looks suspicious from the home page.",
-  },
-  trend: {
-    eyebrow: "Reference",
-    title: "Trend Charts",
-    description: "Open longer-horizon charts from the same high-level home workflow.",
-  },
-  input: {
-    eyebrow: "Reference",
-    title: "Input Lab",
-    description: "Create or inspect manual input rows from the new reference-oriented home variants.",
-  },
-  frames: {
-    eyebrow: "Replay",
-    title: "Frame Scrubber",
-    description: "Jump directly from the home hero into frame-level inspection when you need it.",
+  bridge: {
+    eyebrow: "Desktop",
+    title: "Bridge Connections",
+    description: "Manage the GSPro bridge and premium offline companion pairing for the Electron desktop shell.",
   },
 };
 
@@ -166,16 +126,36 @@ interface HeroActionData {
   active?: boolean;
 }
 
+function normalizeShot(shot: Shot): Shot {
+  return {
+    ...shot,
+    capturedAt: shot.capturedAt ?? Date.now(),
+    pr: {
+      ...shot.pr,
+      total: shot.pr.total ?? shot.pr.carry,
+    },
+    tm: shot.tm
+      ? {
+          ...shot.tm,
+          total: shot.tm.total ?? shot.tm.carry,
+        }
+      : null,
+  };
+}
+
 export default function App() {
+  const { user, logOut } = useAuth();
+  const isDesktopShell = isDesktopApp();
   const [tab, setTab] = useState<TabId>("dashboard");
   const [club, setClub] = useState<string>("7-Iron");
-  const [moreOpen, setMoreOpen] = useState(false);
   const [clubOpen, setClubOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [activeShot, setActiveShot] = useState<Shot | null>(null);
   const [homeFilter, setHomeFilter] = useState<HomeFilter>("all");
   const [weekPage, setWeekPage] = useState(0);
+  const [newSessionModalOpen, setNewSessionModalOpen] = useState(false);
+  const [newSessionError, setNewSessionError] = useState<string | null>(null);
+  const [creatingSession, setCreatingSession] = useState(false);
 
   const {
     sessions,
@@ -188,10 +168,23 @@ export default function App() {
     clearLiveShots,
   } = useSessions();
   const { notification, notify } = useNotification();
+  const { shots: cloudShots, loading: cloudShotsLoading, error: cloudShotsError } = useUserShots(user?.uid);
+  const {
+    buckets: sessionBuckets,
+    activeSessionId,
+    loading: sessionLibraryLoading,
+    error: sessionLibraryError,
+    startSession,
+    endSession,
+    deleteBucket,
+  } = useSessionLibrary(user?.uid, club);
+  const desktopBridge = useDesktopBridge();
+  const primaryNav = isDesktopShell ? [...PRIMARY_NAV, DESKTOP_BRIDGE_NAV] : PRIMARY_NAV;
 
   const handleLiveShot = (shot: Shot) => {
-    addLiveShot(shot);
-    setActiveShot(shot);
+    const normalizedShot = normalizeShot(shot);
+    addLiveShot(normalizedShot);
+    setActiveShot(normalizedShot);
   };
 
   const {
@@ -199,26 +192,135 @@ export default function App() {
     shotCount: liveShotCount,
     connect: liveConnect,
     disconnect: liveDisconnect,
-  } = useLiveShots({ onShot: handleLiveShot, onNotify: notify });
+  } = useLiveShots({ onShot: handleLiveShot, onNotify: notify, autoConnect: false });
 
-  const shots = liveShots;
+  const shots = useMemo(() => {
+    const merged: Array<{ shot: Shot; order: number }> = [];
+    const seen = new Set<string>();
+    let order = 0;
+
+    for (const shot of cloudShots) {
+      const key = String(shot.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push({ shot: normalizeShot(shot), order: order++ });
+    }
+
+    for (const shot of liveShots) {
+      const key = String(shot.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push({ shot: normalizeShot(shot), order: order++ });
+    }
+
+    return merged
+      .sort((left, right) => {
+        const timeDelta = (left.shot.capturedAt ?? 0) - (right.shot.capturedAt ?? 0);
+        if (timeDelta !== 0) return timeDelta;
+        return left.order - right.order;
+      })
+      .map(({ shot }) => shot);
+  }, [cloudShots, liveShots]);
+
+  useEffect(() => {
+    if (!cloudShotsError) return;
+    notify(cloudShotsError, "err");
+  }, [cloudShotsError, notify]);
+
+  useEffect(() => {
+    if (!sessionLibraryError) return;
+    notify(sessionLibraryError, "err");
+  }, [sessionLibraryError, notify]);
+
+  useEffect(() => {
+    if (!shots.length) {
+      setActiveShot(null);
+      return;
+    }
+
+    if (tab === "dashboard") {
+      setActiveShot(shots[shots.length - 1]);
+      return;
+    }
+
+    if (!activeShot) {
+      setActiveShot(shots[shots.length - 1]);
+      return;
+    }
+
+    const stillExists = shots.some((shot) => String(shot.id) === String(activeShot.id));
+    if (!stillExists) {
+      setActiveShot(shots[shots.length - 1]);
+    }
+  }, [activeShot, shots]);
+
+  const profileName = user?.displayName || user?.email || desktopBridge.pairing?.deviceName || "SPIVOT User";
+  const profileSubtitle = user
+    ? cloudShotsLoading
+      ? "Syncing cloud shots"
+      : `${cloudShots.length} cloud ${cloudShots.length === 1 ? "shot" : "shots"} loaded`
+    : desktopBridge.premiumAccess
+      ? "Offline companion unlocked"
+      : desktopBridge.bridgeAccess
+        ? "Bridge-only access"
+        : "Desktop bridge available";
 
   const addShot = () => {
-    const shot = generateSyntheticShot(club);
+    const shot = normalizeShot(generateSyntheticShot(club));
     addLiveShot(shot);
     setActiveShot(shot);
     notify("Synthetic shot logged");
   };
 
+  const handleStartSession = async (draft: { title: string; club: string; color: string }) => {
+    if (!user?.uid) {
+      setNewSessionError("Offline mode is view-only right now. Sign in to create cloud sessions from the suite.");
+      notify("Sign in to create cloud sessions", "err");
+      return;
+    }
+
+    setCreatingSession(true);
+    setNewSessionError(null);
+
+    if (activeSessionId) {
+      try {
+        await endSession();
+      } catch (error) {
+        console.error("[Session] Failed to end active session before creating a new one:", error);
+      }
+    }
+
+    try {
+      setClub(draft.club);
+      await startSession(draft);
+      setNewSessionModalOpen(false);
+      openTab("shots");
+      notify(`${draft.title} started`);
+    } catch (error) {
+      console.error("[Session] Failed to create session:", error);
+      setNewSessionError(
+        "Firestore blocked session creation. Update your rules for users/{uid}/sessions/** and users/{uid}/sessionState/current."
+      );
+      notify("Session creation is blocked by Firestore rules", "err");
+    } finally {
+      setCreatingSession(false);
+    }
+  };
+
+  const handleEndSession = async () => {
+    await endSession();
+    notify("Session ended");
+  };
+
   const openTab = (nextTab: TabId) => {
     setTab(nextTab);
     setClubOpen(false);
-    setMoreOpen(false);
   };
 
-  const openTrajectory = () => {
-    setPlaying(true);
-    openTab("trajectory");
+  const openNewSessionModal = () => {
+    setClubOpen(false);
+    setNewSessionError(null);
+    setNewSessionModalOpen(true);
   };
 
   const toggleLive = () => {
@@ -229,13 +331,27 @@ export default function App() {
     liveConnect();
   };
 
-  const moreActive = MORE_NAV.some((item) => item.id === tab);
   const sectionCopy = TAB_COPY[tab];
-  const isImmersiveStage = tab === "accuracy";
+  const isImmersiveStage = tab === "accuracy" || tab === "shots";
 
   return (
     <div className="pr-page">
       <NotificationToast notification={notification} />
+      {newSessionModalOpen && (
+        <NewSessionModal
+          sourceShots={liveShots}
+          defaultClub={club}
+          isSaving={creatingSession}
+          error={newSessionError}
+          onClose={() => {
+            if (creatingSession) return;
+            setNewSessionModalOpen(false);
+          }}
+          onSave={(draft) => {
+            void handleStartSession(draft);
+          }}
+        />
+      )}
 
       <div className="pr-shell">
         <div className="pr-frame">
@@ -245,16 +361,10 @@ export default function App() {
             tmReady={tmReady}
             liveStatus={liveStatus}
             liveShotCount={liveShotCount}
-            moreActive={moreActive}
-            moreOpen={moreOpen}
             clubOpen={clubOpen}
+            primaryNav={primaryNav}
             onOpenTab={openTab}
-            onToggleMore={() => {
-              setClubOpen(false);
-              setMoreOpen((current) => !current);
-            }}
             onToggleClub={() => {
-              setMoreOpen(false);
               setClubOpen((current) => !current);
             }}
             onSelectClub={(nextClub) => {
@@ -262,8 +372,18 @@ export default function App() {
               setClubOpen(false);
             }}
             onAddShot={addShot}
-            onNewSession={() => setModalOpen(true)}
+            onNewSession={openNewSessionModal}
             onToggleLive={toggleLive}
+            profileName={profileName}
+            profileSubtitle={profileSubtitle}
+            onSignOut={() => {
+              if (user) {
+                void logOut();
+                return;
+              }
+
+              void desktopBridge.clearOfflineAccess();
+            }}
           />
 
           {tab === "dashboard" ? (
@@ -272,6 +392,8 @@ export default function App() {
               club={club}
               shots={shots}
               sessions={sessions}
+              sessionBuckets={sessionBuckets}
+              activeSessionId={activeSessionId}
               weekPage={weekPage}
               activeShot={activeShot}
               liveStatus={liveStatus}
@@ -280,9 +402,8 @@ export default function App() {
               onOpenTab={openTab}
               onPrevWeek={() => setWeekPage((current) => current + 1)}
               onNextWeek={() => setWeekPage((current) => Math.max(current - 1, 0))}
-              onOpenTrajectory={openTrajectory}
               onAddShot={addShot}
-              onNewSession={() => setModalOpen(true)}
+              onNewSession={openNewSessionModal}
               onExport={() => {
                 exportShotsToCSV(shots);
                 notify("CSV exported");
@@ -317,7 +438,6 @@ export default function App() {
                   onSelectShot={(shot) => {
                     setActiveShot(shot);
                     setPlaying(false);
-                    openTab("trajectory");
                   }}
                   onPlay={() => setPlaying(true)}
                   onPlayDone={() => setPlaying(false)}
@@ -335,7 +455,7 @@ export default function App() {
                     resetToSeed();
                     notify("Seed data reset");
                   }}
-                  onNew={() => setModalOpen(true)}
+                  onNew={openNewSessionModal}
                   onClear={() => {
                     clearLiveShots();
                     setActiveShot(null);
@@ -345,24 +465,21 @@ export default function App() {
                     exportShotsToCSV(shots);
                     notify("CSV exported");
                   }}
+                  sessionBuckets={sessionBuckets}
+                  sessionLibraryLoading={sessionLibraryLoading}
+                  sessionLibraryError={sessionLibraryError}
+                  activeSessionId={activeSessionId}
+                  onStartSession={openNewSessionModal}
+                  onEndSession={() => {
+                    void handleEndSession();
+                  }}
+                  onDeleteBucket={(bucketId) => {
+                    void deleteBucket(bucketId).then(() => notify(bucketId === "misc" ? "Misc shots deleted" : "Session deleted"));
+                  }}
+                  bridgeDesktop={desktopBridge}
                 />
               </div>
             </section>
-          )}
-
-          {modalOpen && (
-            <Suspense fallback={null}>
-              <NewSessionModal
-                sourceShots={shots}
-                defaultClub={club}
-                onSave={(session) => {
-                  addSession(session);
-                  setModalOpen(false);
-                  notify("Session saved");
-                }}
-                onClose={() => setModalOpen(false)}
-              />
-            </Suspense>
           )}
         </div>
       </div>
@@ -376,16 +493,17 @@ interface HeaderBarProps {
   tmReady: boolean;
   liveStatus: LiveStatus;
   liveShotCount: number;
-  moreActive: boolean;
-  moreOpen: boolean;
   clubOpen: boolean;
+  primaryNav: readonly { id: TabId; label: string; icon: IconComponent }[];
   onOpenTab: (tab: TabId) => void;
-  onToggleMore: () => void;
   onToggleClub: () => void;
   onSelectClub: (club: string) => void;
   onAddShot: () => void;
   onNewSession: () => void;
   onToggleLive: () => void;
+  profileName: string;
+  profileSubtitle: string;
+  onSignOut: () => void;
 }
 
 function HeaderBar({
@@ -394,16 +512,17 @@ function HeaderBar({
   tmReady,
   liveStatus,
   liveShotCount,
-  moreActive,
-  moreOpen,
   clubOpen,
+  primaryNav,
   onOpenTab,
-  onToggleMore,
   onToggleClub,
   onSelectClub,
   onAddShot,
   onNewSession,
   onToggleLive,
+  profileName,
+  profileSubtitle,
+  onSignOut,
 }: HeaderBarProps) {
   return (
     <header className="pr-header">
@@ -412,7 +531,7 @@ function HeaderBar({
       </button>
 
       <div className="pr-header-nav">
-        {PRIMARY_NAV.map((item) => {
+        {primaryNav.map((item) => {
           const Icon = item.icon;
           return (
             <button
@@ -426,33 +545,6 @@ function HeaderBar({
           );
         })}
 
-        <div className="pr-menu-anchor">
-          <button
-            className={`pr-nav-btn ${moreActive ? "is-active" : ""}`}
-            onClick={onToggleMore}
-            title="More tools"
-          >
-            <IconDots />
-          </button>
-
-          {moreOpen && (
-            <div className="pr-menu">
-              {MORE_NAV.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    className={`pr-menu-item ${tab === item.id ? "is-active" : ""}`}
-                    onClick={() => onOpenTab(item.id)}
-                  >
-                    <Icon />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="pr-header-actions">
@@ -509,12 +601,16 @@ function HeaderBar({
           <IconCalendarPlus />
         </button>
 
-        <button className="pr-profile">
+        <div className="pr-profile">
           <span className="pr-profile-copy">
-            <strong>Performance Lab</strong>
-            <span>{tmReady ? "Indoor bay calibrated" : "Syncing references"}</span>
+            <strong>{profileName}</strong>
+            <span>{profileSubtitle}</span>
           </span>
-          <span className="pr-avatar">PR</span>
+          <span className="pr-avatar">{initials(profileName)}</span>
+        </div>
+
+        <button className="pr-header-signout" onClick={onSignOut}>
+          Log out
         </button>
       </div>
     </header>
@@ -526,6 +622,8 @@ interface HomeViewProps {
   club: string;
   shots: Shot[];
   sessions: Session[];
+  sessionBuckets: SessionLibraryBucket[];
+  activeSessionId: string | null;
   weekPage: number;
   activeShot: Shot | null;
   liveStatus: LiveStatus;
@@ -534,7 +632,6 @@ interface HomeViewProps {
   onOpenTab: (tab: TabId) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
-  onOpenTrajectory: () => void;
   onAddShot: () => void;
   onNewSession: () => void;
   onExport: () => void;
@@ -546,6 +643,8 @@ function HomeView({
   club,
   shots,
   sessions,
+  sessionBuckets,
+  activeSessionId,
   weekPage,
   activeShot,
   liveStatus,
@@ -554,21 +653,25 @@ function HomeView({
   onOpenTab,
   onPrevWeek,
   onNextWeek,
-  onOpenTrajectory,
   onAddShot,
   onNewSession,
   onExport,
   onToggleLive,
 }: HomeViewProps) {
+  const savedSessionBuckets = sessionBuckets.filter((bucket) => bucket.kind === "session");
+  const savedSessionCount = savedSessionBuckets.length;
+  const latestSavedBucket = savedSessionBuckets[0] ?? null;
   const latestShot = activeShot ?? (shots.length ? shots[shots.length - 1] : null);
   const latestSession = sessions.length ? sessions[sessions.length - 1] : null;
   const latestStats = latestSession ? calcSessionStats(latestSession) : null;
-  const schedule = buildScheduleWeek(sessions, weekPage);
+  const latestSessionLabel = latestSavedBucket?.title ?? latestSession?.version ?? null;
+  const schedule = buildScheduleWeek(savedSessionBuckets, activeSessionId, weekPage);
   const recentSpeed = lastValues(shots, (shot) => shot.pr.speed, [92, 95, 98, 101, 103, 100]);
   const recentVla = lastValues(shots, (shot) => shot.pr.vla, [18.8, 19.4, 20.2, 20.8, 19.9, 20.4]);
   const recentHla = lastValues(shots, (shot) => shot.pr.hla, [-0.8, -0.2, 0.4, 0.7, 0.1, -0.1]);
   const recentCarry = lastValues(shots, (shot) => shot.pr.carry, [154, 161, 166, 170, 173, 168]);
   const recentSpin = lastValues(shots, (shot) => shot.pr.spin, [6580, 6700, 6900, 6760, 6885, 7020]);
+  const recentTotal = lastValues(shots, (shot) => shot.pr.total ?? shot.pr.carry, [165, 171, 177, 182, 185, 180]);
 
   const vlaErrors = shots
     .filter((shot) => shot.tm?.vla != null)
@@ -589,6 +692,7 @@ function HomeView({
   const overviewHla = latestShot?.pr.hla ?? average(recentHla, 0.2);
   const overviewSpin = latestShot?.pr.spin ?? average(recentSpin, 6820);
   const overviewCarry = latestShot?.pr.carry ?? average(recentCarry, 172);
+  const overviewTotal = latestShot?.pr.total ?? average(recentTotal, overviewCarry);
   const [animatedSpeed, setAnimatedSpeed] = useState(overviewSpeed);
   const [isSpeedAnimating, setIsSpeedAnimating] = useState(false);
   const hasMountedSpeed = useRef(false);
@@ -646,25 +750,25 @@ function HomeView({
     advice: {
       eyebrow: "Coaching mode",
       heading: "Guided Advice and Analysis",
-      detail: "Surface the next highest-leverage fixes before diving into charts, replays, or frame-level review.",
+      detail: "Surface the next highest-leverage fixes before diving into saved shots, comparisons, and progress review.",
       sideTitle: "Shot Overview",
     },
     tests: {
       eyebrow: "Validation mode",
       heading: "Personal Tests and Analysis",
-      detail: "Pin the current verification tools, replay surfaces, and live capture checkpoints in one sweep.",
+      detail: "Pin the current verification views, session checks, and live capture checkpoints in one sweep.",
       sideTitle: "Shot Overview",
     },
     labs: {
       eyebrow: "Lab mode",
       heading: "Calibration Labs and Analysis",
-      detail: "Jump from the hero surface into physics, filtering, and model diagnostics without the old dashboard clutter.",
+      detail: "Jump from the hero surface into session review, accuracy, and progress without the old dashboard clutter.",
       sideTitle: "Shot Overview",
     },
     docs: {
       eyebrow: "Reference mode",
       heading: "Reference Docs and Analysis",
-      detail: "Keep exports, archives, and version history closer to the home experience for quick review loops.",
+      detail: "Keep exports, archives, and session history closer to the home experience for quick review loops.",
       sideTitle: "Shot Overview",
     },
   }[filter];
@@ -699,7 +803,7 @@ function HomeView({
         meta: `${spinAverage.toLocaleString()} rpm through the latest swings`,
         accent: BRAND_GREEN,
         series: recentSpin,
-        onClick: onOpenTrajectory,
+        onClick: () => onOpenTab("shots"),
       },
     ],
     advice: [
@@ -725,10 +829,12 @@ function HomeView({
         owner: "Practice Plan",
         role: "session",
         title: "Next best action",
-        meta: latestSession ? `Replay ${latestSession.version} before adjusting the mount` : "Log one new session to build the next coaching note",
+        meta: latestSessionLabel
+          ? `Review ${latestSessionLabel} before adjusting the mount`
+          : "Log one new session to build the next coaching note",
         accent: BRAND_GREEN,
         series: recentSpin,
-        onClick: onOpenTrajectory,
+        onClick: () => onOpenTab("shots"),
       },
     ],
     tests: [
@@ -742,51 +848,53 @@ function HomeView({
         onClick: () => onOpenTab("accuracy"),
       },
       {
-        owner: "Replay",
-        role: "trajectory",
-        title: "Flight path ready",
-        meta: latestShot ? `${latestShot.trackPts ?? 0} tracked points available for the latest replay` : "Open trajectory replay once a shot lands",
+        owner: "Latest Shot",
+        role: "review",
+        title: "Capture ready",
+        meta: latestShot ? `${latestShot.trackPts ?? 0} tracked points available for the latest shot review` : "Open shot log once a shot lands",
         accent: BRAND_INK,
         series: recentCarry,
-        onClick: onOpenTrajectory,
+        onClick: () => onOpenTab("shots"),
       },
       {
-        owner: "Frames",
+        owner: "Session Review",
         role: "inspection",
-        title: "Scrub candidate",
-        meta: shots.length ? `${shots.length} captured shots are ready for frame-level review` : "Capture a shot to open frame scrubbing",
+        title: "Shot log ready",
+        meta: shots.length ? `${shots.length} captured shots are ready to inspect in the log` : "Capture a shot to start reviewing",
         accent: BRAND_GREEN,
         series: recentSpin,
-        onClick: () => onOpenTab("frames"),
+        onClick: () => onOpenTab("shots"),
       },
     ],
     labs: [
       {
-        owner: "Physics",
+        owner: "Session Review",
         role: "validator",
         title: "Impact fit",
-        meta: latestSession ? `${latestSession.version} is the best candidate for physical-model validation` : "Seed one session and verify the launch fit",
+        meta: latestSessionLabel
+          ? `${latestSessionLabel} is the best candidate for session review`
+          : "Seed one session and verify the launch fit",
         accent: BRAND_GREEN,
         series: recentCarry,
-        onClick: () => onOpenTab("physics"),
+        onClick: () => onOpenTab("compare"),
       },
       {
-        owner: "Kalman",
+        owner: "Progress",
         role: "filtering",
         title: "Smoothing check",
-        meta: shots.length ? `Recent captures can stress the smoothing path right now` : "Generate a few shots to populate filter diagnostics",
+        meta: shots.length ? `Recent captures can stress the consistency trend right now` : "Generate a few shots to populate session trends",
         accent: BRAND_INK,
         series: recentSpeed,
-        onClick: () => onOpenTab("kalman"),
+        onClick: () => onOpenTab("progress"),
       },
       {
-        owner: "Model",
+        owner: "Accuracy",
         role: "confidence",
         title: "Regression status",
-        meta: `${formatSigned(vlaBias, "%")} suggests the model path still needs inspection`,
+        meta: `${formatSigned(vlaBias, "%")} suggests the current setup still needs inspection`,
         accent: BRAND_GREEN,
         series: recentSpin,
-        onClick: () => onOpenTab("model"),
+        onClick: () => onOpenTab("accuracy"),
       },
     ],
     docs: [
@@ -803,19 +911,19 @@ function HomeView({
         owner: "Archive",
         role: "history",
         title: "Session log",
-        meta: `${sessions.length} saved sessions are available in the archive`,
+        meta: `${savedSessionCount} saved sessions are available in the archive`,
         accent: BRAND_INK,
         series: recentSpeed,
         onClick: () => onOpenTab("sessions"),
       },
       {
         owner: "Versions",
-        role: "trend",
+        role: "history",
         title: "Version history",
-        meta: latestSession ? `Latest run is ${latestSession.version}` : "No saved versions yet, create a session first",
+        meta: latestSessionLabel ? `Latest run is ${latestSessionLabel}` : "No saved versions yet, create a session first",
         accent: BRAND_GREEN,
         series: recentSpin,
-        onClick: () => onOpenTab("trend"),
+        onClick: () => onOpenTab("sessions"),
       },
     ],
   }[filter];
@@ -855,7 +963,7 @@ function HomeView({
       subtitle: "rpm back spin",
       accent: BRAND_INK,
       icon: <IconSpinMetric />,
-      onClick: onOpenTrajectory,
+      onClick: () => onOpenTab("shots"),
     },
     {
       index: "05",
@@ -864,13 +972,13 @@ function HomeView({
       subtitle: "yd carry distance",
       accent: BRAND_GREEN,
       icon: <IconCarryMetric />,
-      onClick: onOpenTrajectory,
+      onClick: () => onOpenTab("shots"),
     },
     {
       index: "06",
       title: "Total",
-      value: String(shots.length || 0).padStart(2, "0"),
-      subtitle: "shots in the feed",
+      value: `${Math.round(overviewTotal)}`,
+      subtitle: "yd total distance",
       accent: BRAND_INK,
       icon: <IconTotalMetric />,
       onClick: () => onOpenTab("shots"),
@@ -882,12 +990,6 @@ function HomeView({
       label: "Accuracy",
       icon: <IconTarget />,
       onClick: () => onOpenTab("accuracy"),
-      active: false,
-    },
-    {
-      label: "Replay",
-      icon: <IconOrbit />,
-      onClick: onOpenTrajectory,
       active: false,
     },
     {
@@ -936,7 +1038,7 @@ function HomeView({
 
             <div className="pr-home-microcopy">
               <span>{shots.length} live shots</span>
-              <span>{sessions.length} saved sessions</span>
+              <span>{savedSessionCount} saved sessions</span>
               <span>{club} selected</span>
             </div>
 
@@ -977,7 +1079,7 @@ function HomeView({
                   <span>shots</span>
                 </span>
                 <span className="pr-stat-pill">
-                  <strong>{sessions.length || 4}</strong>
+                  <strong>{savedSessionCount || 0}</strong>
                   <span>sessions</span>
                 </span>
                 <span className="pr-stat-pill">
@@ -1127,7 +1229,15 @@ interface WeekSlot {
   key: string;
   date: Date;
   label: string;
-  session: Session | null;
+  session: {
+    id: string;
+    title: string;
+    club: string;
+    shotCount: number;
+    createdAt: number;
+    vlaMean: number | null;
+    isActive: boolean;
+  } | null;
   isToday: boolean;
   isActive: boolean;
 }
@@ -1187,10 +1297,10 @@ function ScheduleStrip({
 
       <div className="pr-week-grid">
         {schedule.slots.map((slot) => {
-          const vlaMean = slot.session ? calcSessionStats(slot.session).vla?.mean ?? null : null;
+          const vlaMean = slot.session?.vlaMean ?? null;
           const isPassing = vlaMean !== null ? Math.abs(vlaMean) <= 1 : false;
           const detail = slot.session
-            ? `${slot.session.club} · ${slot.session.shots.length} shots`
+            ? `${slot.session.club} · ${slot.session.shotCount} shots`
             : "Open slot";
 
           return (
@@ -1212,7 +1322,7 @@ function ScheduleStrip({
               </div>
 
               <div className="pr-week-card-body">
-                <h3>{slot.session ? slot.session.version : "New session"}</h3>
+                <h3>{slot.session ? slot.session.title : "New session"}</h3>
                 <p>{detail}</p>
                 <span className={`pr-week-status ${isPassing ? "is-pass" : ""}`}>
                   {slot.session
@@ -1248,6 +1358,14 @@ interface SecProps {
   onNew: () => void;
   onClear: () => void;
   onExport: () => void;
+  sessionBuckets: import("./hooks/useSessionLibrary").SessionLibraryBucket[];
+  sessionLibraryLoading: boolean;
+  sessionLibraryError: string | null;
+  activeSessionId: string | null;
+  onStartSession: () => void;
+  onEndSession: () => void;
+  onDeleteBucket: (bucketId: string) => void;
+  bridgeDesktop: ReturnType<typeof useDesktopBridge>;
 }
 
 function SecPage({
@@ -1268,40 +1386,52 @@ function SecPage({
   onNew,
   onClear,
   onExport,
+  sessionBuckets,
+  sessionLibraryLoading,
+  sessionLibraryError,
+  activeSessionId,
+  onStartSession,
+  onEndSession,
+  onDeleteBucket,
+  bridgeDesktop,
 }: SecProps) {
   return (
     <div className="pr-secondary-content">
       <Suspense fallback={<Loader />}>
-        {tab === "trajectory" && (
-          <TrajectoryView
-            shots={shots}
-            activeShot={active}
-            playing={playing}
-            onSelectShot={onSelectShot}
-            onPlay={onPlay}
-            onPlayDone={onPlayDone}
-          />
-        )}
-        {tab === "physics" && <PhysicsView />}
-        {tab === "kalman" && <KalmanView />}
-        {tab === "model" && <ModelView />}
         {tab === "accuracy" && <AccuracyView shots={shots} sessions={sessions} tmReady={tmReady} />}
         {tab === "shots" && (
           <ShotLogView
-            shots={shots}
-            activeShot={active}
+            buckets={sessionBuckets}
+            loading={sessionLibraryLoading}
+            error={sessionLibraryError}
+            activeSessionId={activeSessionId}
             onSelectShot={onSelectShot}
-            onClear={onClear}
-            onExport={onExport}
+            onStartSession={onStartSession}
+            onEndSession={onEndSession}
+            onDeleteBucket={onDeleteBucket}
           />
         )}
-        {tab === "input" && <InputDataView selectedClub={club} onAddShot={onAddShot} onNotify={onNotify} />}
         {tab === "progress" && <ProgressView sessions={sessions} />}
-        {tab === "trend" && <TrendView sessions={sessions} />}
         {tab === "compare" && (
           <CompareView sessions={sessions} selectedIds={sessions.map((session) => session.id)} onToggleSession={() => {}} />
         )}
-        {tab === "frames" && <FrameScrubberView shots={shots} activeShot={active} onSelectShot={onSelectShot} />}
+        {tab === "bridge" && (
+          <BridgeConnectionsView
+            bridge={bridgeDesktop.bridge}
+            pairing={bridgeDesktop.pairing}
+            entitlement={bridgeDesktop.entitlement}
+            connectors={bridgeDesktop.connectors}
+            loading={bridgeDesktop.loading}
+            error={bridgeDesktop.error}
+            offlineAllowed={bridgeDesktop.premiumAccess}
+            bridgeOnly={bridgeDesktop.bridgeAccess && !bridgeDesktop.premiumAccess}
+            pairingUrl={bridgeDesktop.pairingUrl}
+            manualCode={bridgeDesktop.manualCode}
+            onConnectConnector={bridgeDesktop.connectConnector}
+            onRefresh={bridgeDesktop.refresh}
+            onClearOfflineAccess={bridgeDesktop.clearOfflineAccess}
+          />
+        )}
         {tab === "sessions" && (
           <AllSessionsView sessions={sessions} onDelete={onDelete} onReset={onReset} onNew={onNew} />
         )}
@@ -1359,27 +1489,48 @@ function formatSigned(value: number, suffix = "") {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}${suffix}`;
 }
 
-function buildScheduleWeek(sessions: Session[], weekPage: number): ScheduleData {
-  const sessionsByDay = new Map<string, Session>();
-  const ordered = [...sessions].sort(
-    (left, right) => left.date.localeCompare(right.date) || left.createdAt - right.createdAt
-  );
+function buildScheduleWeek(
+  sessionBuckets: SessionLibraryBucket[],
+  activeSessionId: string | null,
+  weekPage: number
+): ScheduleData {
+  const sessionsByDay = new Map<string, WeekSlot["session"]>();
+  const ordered = [...sessionBuckets]
+    .map((bucket) => {
+      const createdAt = bucket.createdAt || bucket.updatedAt || (bucket.id === activeSessionId ? Date.now() : 0);
+      if (!createdAt) {
+        return null;
+      }
+
+      const vlaSamples = bucket.shots
+        .filter((shot) => shot.tm?.vla != null)
+        .map((shot) => pctError(shot.pr.vla, shot.tm!.vla as number));
+      const vlaMean = vlaSamples.length
+        ? vlaSamples.reduce((sum, value) => sum + value, 0) / vlaSamples.length
+        : null;
+
+      return {
+        id: bucket.id,
+        title: bucket.title,
+        club: bucket.club,
+        shotCount: Math.max(bucket.shotCount, bucket.shots.length),
+        createdAt,
+        vlaMean,
+        isActive: bucket.id === activeSessionId,
+      };
+    })
+    .filter((session): session is NonNullable<typeof session> => Boolean(session))
+    .sort((left, right) => left.createdAt - right.createdAt);
 
   for (const session of ordered) {
-    sessionsByDay.set(session.date, session);
+    sessionsByDay.set(toDateKey(new Date(session.createdAt)), session);
   }
 
-  const weeks = Array.from(new Set(ordered.map((session) => toDateKey(startOfWeek(parseDate(session.date))))));
-
-  const today = startOfWeek(new Date());
-  if (!weeks.length) {
-    weeks.push(toDateKey(today));
-  }
-
-  const safePage = Math.min(Math.max(weekPage, 0), weeks.length - 1);
-  const activeWeekKey = weeks[weeks.length - 1 - safePage];
-  const weekStart = parseDate(activeWeekKey);
-  const activeSessionDate = ordered.length ? ordered[ordered.length - 1].date : "";
+  const safePage = Math.max(weekPage, 0);
+  const weekStart = startOfWeek(addDays(new Date(), safePage * -7));
+  const activeSession = ordered.find((session) => session.isActive) ?? null;
+  const activeSessionDate = activeSession ? toDateKey(new Date(activeSession.createdAt)) : "";
+  const labelAnchor = addDays(weekStart, 3);
 
   const slots = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(weekStart, index);
@@ -1395,16 +1546,11 @@ function buildScheduleWeek(sessions: Session[], weekPage: number): ScheduleData 
   });
 
   return {
-    label: weekStart.toLocaleDateString("en-US", { month: "long", year: "numeric" }).replace(" ", ", "),
+    label: labelAnchor.toLocaleDateString("en-US", { month: "long", year: "numeric" }).replace(" ", ", "),
     slots,
-    canPrev: safePage < weeks.length - 1,
+    canPrev: safePage < 51,
     canNext: safePage > 0,
   };
-}
-
-function parseDate(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day);
 }
 
 function toDateKey(date: Date) {
