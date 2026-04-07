@@ -1420,12 +1420,14 @@ function SecPage({
             bridge={bridgeDesktop.bridge}
             pairing={bridgeDesktop.pairing}
             entitlement={bridgeDesktop.entitlement}
+            connectors={bridgeDesktop.connectors}
             loading={bridgeDesktop.loading}
             error={bridgeDesktop.error}
             offlineAllowed={bridgeDesktop.premiumAccess}
             bridgeOnly={bridgeDesktop.bridgeAccess && !bridgeDesktop.premiumAccess}
             pairingUrl={bridgeDesktop.pairingUrl}
             manualCode={bridgeDesktop.manualCode}
+            onConnectConnector={bridgeDesktop.connectConnector}
             onRefresh={bridgeDesktop.refresh}
             onClearOfflineAccess={bridgeDesktop.clearOfflineAccess}
           />

@@ -29,9 +29,40 @@ export interface DesktopOfflineEntitlement {
   grantedAt: string;
 }
 
+export type DesktopConnectorId = "gspro" | "infinite-tee";
+export type DesktopConnectorState = "idle" | "establishing" | "connected" | "failed";
+
+export interface DesktopConnectorStatus {
+  id: DesktopConnectorId;
+  name: string;
+  status: DesktopConnectorState;
+  detail: string;
+  updatedAt: string;
+  commandLabel: string;
+  available: boolean;
+}
+
 interface OfflineStatusResponse {
   ok: boolean;
   pairing: DesktopOfflinePairingStatus;
+}
+
+interface ConnectorsStatusResponse {
+  ok: boolean;
+  connectors: DesktopConnectorStatus[];
+}
+
+interface ConnectConnectorSuccessResponse {
+  ok: true;
+  connector: DesktopConnectorStatus;
+  connectors?: DesktopConnectorStatus[];
+}
+
+interface ConnectConnectorFailureResponse {
+  ok: false;
+  error?: string;
+  connector?: DesktopConnectorStatus;
+  connectors?: DesktopConnectorStatus[];
 }
 
 function readEntitlement() {
@@ -98,11 +129,20 @@ function getBridgeBaseUrl() {
   return "";
 }
 
+function upsertConnector(
+  current: DesktopConnectorStatus[],
+  connector: DesktopConnectorStatus
+) {
+  const next = current.filter((item) => item.id !== connector.id);
+  return [...next, connector];
+}
+
 export function useDesktopBridge() {
   const desktop = isDesktopApp();
   const [bridge, setBridge] = useState<BridgeRuntimeStatus | null>(null);
   const [pairing, setPairing] = useState<DesktopOfflinePairingStatus | null>(null);
   const [entitlement, setEntitlement] = useState<DesktopOfflineEntitlement | null>(() => readEntitlement());
+  const [connectors, setConnectors] = useState<DesktopConnectorStatus[]>([]);
   const [loading, setLoading] = useState(desktop);
   const [error, setError] = useState<string | null>(null);
   const bridgeBaseUrl = useMemo(() => getBridgeBaseUrl(), [desktop]);
@@ -114,20 +154,23 @@ export function useDesktopBridge() {
     }
 
     try {
-      const [bridgeResponse, offlineResponse] = await Promise.all([
+      const [bridgeResponse, offlineResponse, connectorsResponse] = await Promise.all([
         fetch(`${bridgeBaseUrl}/api/status`),
         fetch(`${bridgeBaseUrl}/api/offline/status`),
+        fetch(`${bridgeBaseUrl}/api/connectors/status`),
       ]);
 
-      if (!bridgeResponse.ok || !offlineResponse.ok) {
+      if (!bridgeResponse.ok || !offlineResponse.ok || !connectorsResponse.ok) {
         throw new Error("The local bridge is unavailable.");
       }
 
       const bridgePayload = await bridgeResponse.json() as BridgeRuntimeStatus;
       const offlinePayload = await offlineResponse.json() as OfflineStatusResponse;
+      const connectorsPayload = await connectorsResponse.json() as ConnectorsStatusResponse;
 
       setBridge(bridgePayload);
       setPairing(offlinePayload.pairing);
+      setConnectors(connectorsPayload.connectors ?? []);
 
       if (isPairingPremium(offlinePayload.pairing)) {
         setEntitlement(persistEntitlement(offlinePayload.pairing));
@@ -215,11 +258,37 @@ export function useDesktopBridge() {
     }
   }, [bridgeBaseUrl, desktop, refresh]);
 
+  const connectConnector = useCallback(async (connectorId: DesktopConnectorId) => {
+    if (!desktop) return;
+
+    const response = await fetch(`${bridgeBaseUrl}/api/connectors/${connectorId}/connect`, {
+      method: "POST",
+    });
+
+    const payload = await response.json() as ConnectConnectorSuccessResponse | ConnectConnectorFailureResponse;
+
+    if (!response.ok || payload.ok === false) {
+      if (payload.connector) {
+        setConnectors((current) => upsertConnector(current, payload.connector!));
+      }
+      throw new Error(("error" in payload && payload.error) || "Failed to start connector.");
+    }
+
+    if (payload.connectors) {
+      setConnectors(payload.connectors);
+    } else {
+      setConnectors((current) => upsertConnector(current, payload.connector));
+    }
+
+    await refresh();
+  }, [bridgeBaseUrl, desktop, refresh]);
+
   return {
     isDesktop: desktop,
     bridge,
     pairing,
     entitlement,
+    connectors,
     loading,
     error,
     bridgeAccess,
@@ -227,6 +296,7 @@ export function useDesktopBridge() {
     offlineAllowed: premiumAccess,
     pairingUrl,
     manualCode,
+    connectConnector,
     refresh,
     clearOfflineAccess,
   };

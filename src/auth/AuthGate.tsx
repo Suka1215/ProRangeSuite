@@ -36,12 +36,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           bridge={desktopBridge.bridge}
           pairing={desktopBridge.pairing}
           entitlement={desktopBridge.entitlement}
+          connectors={desktopBridge.connectors}
           loading={desktopBridge.loading}
           error={desktopBridge.error}
           offlineAllowed={desktopBridge.premiumAccess}
           bridgeOnly={desktopBridge.bridgeAccess && !desktopBridge.premiumAccess}
           pairingUrl={desktopBridge.pairingUrl}
           manualCode={desktopBridge.manualCode}
+          onConnectConnector={desktopBridge.connectConnector}
           onRefresh={desktopBridge.refresh}
           onClearOfflineAccess={desktopBridge.clearOfflineAccess}
           compact={!desktopBridge.bridgeAccess}
