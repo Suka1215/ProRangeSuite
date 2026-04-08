@@ -122,6 +122,11 @@ function getBridgeBaseUrl() {
     return window.desktop.bridgeBaseUrl;
   }
 
+  const queryBridgeUrl = new URLSearchParams(window.location.search).get("bridgeUrl");
+  if (queryBridgeUrl) {
+    return queryBridgeUrl;
+  }
+
   if (/electron/i.test(window.navigator.userAgent) && window.location.port === "5173") {
     return DEFAULT_BRIDGE_BASE_URL;
   }

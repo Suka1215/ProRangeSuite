@@ -49,7 +49,10 @@ async function ensureBridge() {
 
 async function createMainWindow() {
   const bridgeHandle = await ensureBridge();
-  const appUrl = process.env.VITE_DEV_SERVER_URL || `http://127.0.0.1:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`;
+  const bridgeUrl = `http://127.0.0.1:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`;
+  const appUrl = new URL(process.env.VITE_DEV_SERVER_URL || bridgeUrl);
+  appUrl.searchParams.set("desktop", "1");
+  appUrl.searchParams.set("bridgeUrl", bridgeUrl);
 
   const window = new BrowserWindow({
     width: 1600,
@@ -74,7 +77,7 @@ async function createMainWindow() {
   });
 
   mainWindow = window;
-  await window.loadURL(appUrl);
+  await window.loadURL(appUrl.toString());
 }
 
 async function stopBridge() {
