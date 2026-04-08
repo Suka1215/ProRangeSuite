@@ -113,6 +113,48 @@ Then open http://localhost:5173
 
 ---
 
+## Desktop Builds
+
+You can package the Electron desktop app into downloadable installers from this repo.
+
+### Build a desktop app for your current machine
+```bash
+npm run desktop:dist
+```
+
+Artifacts are written to `release/`.
+
+### Build macOS downloadables
+```bash
+npm run desktop:dist:mac
+```
+
+This produces a `.dmg` and `.zip` in `release/`.
+
+### Build Windows downloadables
+```bash
+npm run desktop:dist:win
+```
+
+This produces an NSIS installer `.exe` and a `.zip` in `release/`.
+For the smoothest Windows result, run this command on a Windows machine.
+
+### Smoke-test the packaged app layout without making an installer
+```bash
+npm run desktop:pack
+```
+
+### GSPro helper note
+
+The desktop app looks for `gspro_bridge.py` in one of these ways:
+- a path you set with `GSPRO_BRIDGE_SCRIPT`
+- a bundled `gspro_bridge.py` shipped with the desktop app
+- the legacy local Mac fallback at `/Users/jmmiller/Downloads/gspro_bridge.py`
+
+If you want one-click GSPro setup in the downloadable app, bundle `gspro_bridge.py` with the desktop build or set `GSPRO_BRIDGE_SCRIPT` on the target machine.
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |

@@ -17,8 +17,10 @@ import { networkInterfaces } from "os";
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_HTTP_PORT = 3000;
 export const DEFAULT_SHOT_PORT = 9211;
-const DEFAULT_GSPRO_BRIDGE_SCRIPT = "/Users/jmmiller/Downloads/gspro_bridge.py";
 const CONNECTOR_TIMEOUT_MS = 30_000;
+const isWindows = process.platform === "win32";
+const DEFAULT_GSPRO_BRIDGE_SCRIPT_NAME = "gspro_bridge.py";
+const LEGACY_GSPRO_BRIDGE_SCRIPT = "/Users/jmmiller/Downloads/gspro_bridge.py";
 
 function getLocalIP() {
   const nets = networkInterfaces();
@@ -37,6 +39,25 @@ function resolveTMDatabasePath(baseDir) {
   ];
 
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
+function resolveGsproScriptPath(baseDir = MODULE_DIR, explicitPath) {
+  const override = explicitPath?.trim() || process.env.GSPRO_BRIDGE_SCRIPT?.trim();
+  if (override) return override;
+
+  const candidates = [
+    path.join(baseDir, DEFAULT_GSPRO_BRIDGE_SCRIPT_NAME),
+    typeof process.resourcesPath === "string"
+      ? path.join(process.resourcesPath, DEFAULT_GSPRO_BRIDGE_SCRIPT_NAME)
+      : null,
+    LEGACY_GSPRO_BRIDGE_SCRIPT,
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0] ?? LEGACY_GSPRO_BRIDGE_SCRIPT;
+}
+
+function getGsproUnavailableDetail() {
+  return "GSPro helper not configured. Bundle gspro_bridge.py with the app resources or set GSPRO_BRIDGE_SCRIPT.";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -220,12 +241,35 @@ function createPairingToken() {
   return crypto.randomBytes(16).toString("hex");
 }
 
+function resolveGsproPythonCommand() {
+  const override = process.env.GSPRO_PYTHON_BIN?.trim();
+  if (override) {
+    return {
+      command: override,
+      args: [],
+    };
+  }
+
+  if (isWindows) {
+    return {
+      command: "py",
+      args: ["-3"],
+    };
+  }
+
+  return {
+    command: "python3",
+    args: [],
+  };
+}
+
 export async function startBridgeServer(options = {}) {
   const baseDir = options.baseDir ?? MODULE_DIR;
   const httpPort = options.httpPort ?? DEFAULT_HTTP_PORT;
   const shotPort = options.shotPort ?? DEFAULT_SHOT_PORT;
   const staticDir = options.staticDir ?? path.join(baseDir, "dist");
-  const gsproScriptPath = options.gsproScriptPath ?? process.env.GSPRO_BRIDGE_SCRIPT ?? DEFAULT_GSPRO_BRIDGE_SCRIPT;
+  const gsproScriptPath = resolveGsproScriptPath(baseDir, options.gsproScriptPath);
+  const gsproHelperAvailable = fs.existsSync(gsproScriptPath);
   const tmAll = loadTMDatabase(baseDir);
   const clients = new Set();
   const offlinePairing = {
@@ -255,10 +299,10 @@ export async function startBridgeServer(options = {}) {
       id: "gspro",
       name: "GSPro",
       status: "idle",
-      detail: "Ready to start the GSPro bridge.",
+      detail: gsproHelperAvailable ? "Ready to start the GSPro bridge." : getGsproUnavailableDetail(),
       updatedAt: new Date().toISOString(),
       commandLabel: "Connect to GSPro",
-      available: fs.existsSync(gsproScriptPath),
+      available: gsproHelperAvailable,
       process: null,
       timer: null,
       connected: false,
@@ -389,14 +433,15 @@ export async function startBridgeServer(options = {}) {
     if (!fs.existsSync(gsproScriptPath)) {
       return updateConnector("gspro", {
         status: "failed",
-        detail: `GSPro bridge script not found at ${gsproScriptPath}.`,
+        detail: getGsproUnavailableDetail(),
         available: false,
       });
     }
 
     connector.available = true;
+    const python = resolveGsproPythonCommand();
 
-    const child = spawn("python3", ["-u", gsproScriptPath], {
+    const child = spawn(python.command, [...python.args, "-u", gsproScriptPath], {
       cwd: path.dirname(gsproScriptPath),
       stdio: ["ignore", "pipe", "pipe"],
     });

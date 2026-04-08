@@ -14,6 +14,8 @@ function spawnChild(command, args, extraEnv = {}) {
     cwd: rootDir,
     stdio: "inherit",
     env: { ...process.env, ...extraEnv },
+    shell: isWindows,
+    windowsHide: false,
   });
 
   children.add(child);

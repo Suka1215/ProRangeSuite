@@ -14,7 +14,10 @@
     "start": "npm run build && node server.js",
     "desktop:dev": "node electron/dev.mjs",
     "desktop:start": "npm run build && electron .",
-    "desktop:dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder"
+    "desktop:pack": "npm run build && electron-builder --dir",
+    "desktop:dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
+    "desktop:dist:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip",
+    "desktop:dist:win": "npm run build && electron-builder --win nsis zip"
   },
   "dependencies": {
     "firebase": "^12.11.0",
@@ -38,8 +41,11 @@
     "appId": "com.prorange.desktop",
     "productName": "ProRange Desktop",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "asar": true,
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -48,7 +54,21 @@
       "package.json"
     ],
     "mac": {
-      "category": "public.app-category.sports"
+      "category": "public.app-category.sports",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   }
 }

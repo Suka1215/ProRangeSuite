@@ -48,12 +48,12 @@ const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
     monogram: "GS",
     instructions: [
       "Open GSPro on this desktop and make sure the Open Connect window is available before you connect.",
-      "Click Connect to GSPro to start the Python bridge helper bundled with this desktop workflow.",
+      "Click Connect to GSPro to start the configured Python bridge helper for this desktop install.",
       "While GSPro is opening or waiting, the connector stays in Establishing for up to 30 seconds.",
       "If GSPro accepts the bridge, the button turns SPIVOT green and the status flips to Connected.",
       "If GSPro never comes online, SPIVOT marks the connection as failed so you can retry cleanly.",
     ],
-    instructionNote: "Phone shots keep flowing through the SPIVOT bridge once GSPro accepts the local helper.",
+    instructionNote: "The desktop app can use a bundled gspro_bridge.py helper or the path set in GSPRO_BRIDGE_SCRIPT.",
   },
   "infinite-tee": {
     id: "infinite-tee",
@@ -84,6 +84,10 @@ function formatPairingState(
 }
 
 function getConnectorActionLabel(connector: DesktopConnectorStatus) {
+  if (connector.id === "gspro" && !connector.available) {
+    return "Helper not configured";
+  }
+
   switch (connector.status) {
     case "connected":
       return `Connected to ${connector.name}`;
@@ -97,6 +101,10 @@ function getConnectorActionLabel(connector: DesktopConnectorStatus) {
 }
 
 function getConnectorBadgeText(connector: DesktopConnectorStatus) {
+  if (connector.id === "gspro" && !connector.available) {
+    return "Setup needed";
+  }
+
   switch (connector.status) {
     case "connected":
       return "Connected";
@@ -280,6 +288,7 @@ export default function BridgeConnectionsView({
   const selectedBadgeText = getConnectorBadgeText(selectedConnector);
   const selectedConnecting = selectedConnector.status === "establishing";
   const selectedConnected = selectedConnector.status === "connected";
+  const selectedActionDisabled = selectedConnecting || (selectedConnector.id === "gspro" && !selectedConnector.available);
 
   return (
     <section className="pr-bridge pr-connector-workspace">
@@ -399,7 +408,7 @@ export default function BridgeConnectionsView({
 
               <button
                 className={`pr-connector-connect-button ${selectedConnected ? "is-connected" : ""}`}
-                disabled={selectedConnecting}
+                disabled={selectedActionDisabled}
                 onClick={() => void onConnectConnector(selectedConnector.id)}
               >
                 {selectedActionLabel}
@@ -425,8 +434,8 @@ export default function BridgeConnectionsView({
               {selectedConnector.id === "gspro" && (
                 <div className="pr-connector-instruction-summary">
                   <div>
-                    <span>GSPro bridge script</span>
-                    <strong>/Users/jmmiller/Downloads/gspro_bridge.py</strong>
+                    <span>GSPro helper</span>
+                    <strong>{selectedConnector.available ? "Configured" : "Not configured"}</strong>
                   </div>
                   <div>
                     <span>Current state</span>
