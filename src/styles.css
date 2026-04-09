@@ -172,6 +172,17 @@ svg {
   }
 }
 
+@keyframes ballBurst {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translateY(-4px) scale(1.022);
+  }
+}
+
 .pr-page {
   min-height: 100vh;
   padding: 0;
@@ -514,25 +525,6 @@ svg {
   padding: 0;
 }
 
-.pr-home-backdrop {
-  position: absolute;
-  inset: 0% 0% -30% -25%;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 1;
-  overflow: hidden;
-}
-
-.pr-home-backdrop-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center center;
-  filter: drop-shadow(0 36px 48px rgba(38, 41, 48, 0.1));
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
 .pr-home-layout {
   flex: 1;
   display: grid;
@@ -757,18 +749,18 @@ svg {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 14px 0 0;
+  gap: 12px;
+  padding: 12px 0 0;
 }
 
 .pr-hero-metric {
-  position: absolute;
-  top: 12px;
-  left: 14px;
+  position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
 }
 
 .pr-hero-grade {
@@ -782,13 +774,13 @@ svg {
 .pr-hero-label,
 .pr-hero-unit {
   color: var(--pr-muted-soft);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .pr-hero-metric strong {
   font-family: "Outfit", sans-serif;
-  font-size: 34px;
+  font-size: 48px;
   line-height: 1;
   letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums lining-nums;
@@ -796,46 +788,51 @@ svg {
 
 .pr-hero-core {
   position: relative;
-  flex: 0 0 clamp(340px, 42vh, 470px);
-  min-height: 340px;
+  flex: 0 0 clamp(132px, 15vh, 180px);
+  min-height: clamp(132px, 15vh, 180px);
   width: 100%;
   display: grid;
   place-items: center;
-  margin-top: 10px;
-  margin-bottom: -10px;
+  margin-top: -8px;
+  margin-bottom: -2px;
+  overflow: visible;
 }
 
 .pr-sculpture {
   position: relative;
-  width: min(100%, 680px);
-  height: min(58vh, 560px);
+  width: min(100%, 378px);
+  height: min(100%, 216px);
   isolation: isolate;
-}
-
-.pr-sculpture-halo {
-  display: none;
 }
 
 .pr-sculpture-shadow {
   position: absolute;
   left: 50%;
-  bottom: 2%;
-  width: 520px;
-  height: 98px;
+  bottom: 0;
+  width: 252px;
+  height: 31px;
   border-radius: 50%;
   transform: translateX(-50%);
-  background: rgba(38, 41, 48, 0.14);
-  filter: blur(34px);
+  background: rgba(38, 41, 48, 0.08);
+  filter: blur(20px);
+}
+
+.pr-sculpture.is-active .pr-sculpture-shadow {
+  animation: shadowBreath 420ms ease-in-out infinite;
 }
 
 .pr-golf-ball-wrap {
   position: absolute;
   left: 50%;
-  top: 47%;
+  top: 80%;
   z-index: 2;
-  width: min(100%, 600px);
+  width: min(100%, 280px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
+}
+
+.pr-sculpture.is-active .pr-golf-ball-wrap {
+  animation: ballBurst 420ms ease-in-out infinite;
 }
 
 .pr-golf-ball-image {
@@ -851,10 +848,12 @@ svg {
   backface-visibility: hidden;
   animation: ballSpinContinuous 120ms linear infinite;
   animation-play-state: paused;
+  filter: drop-shadow(0 24px 36px rgba(38, 41, 48, 0.1));
 }
 
 .pr-golf-ball-image.is-spinning {
   animation-play-state: running;
+  animation-duration: 90ms;
 }
 
 .pr-hero-rail {
@@ -906,9 +905,9 @@ svg {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
-  margin-left: 300px;
+  margin-top: 100px;
 }
 
 .pr-hero-speed-label {
@@ -954,11 +953,11 @@ svg {
 
 .pr-hero-speed-meta {
   color: var(--pr-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
 .pr-hero-pills {
@@ -967,7 +966,7 @@ svg {
   display: flex;
   justify-content: center;
   gap: 18px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .pr-stat-pill {
@@ -4075,14 +4074,14 @@ svg {
   }
 
   .pr-hero-core {
-    min-height: 420px;
-    margin-top: -10px;
-    margin-bottom: -28px;
+    min-height: 132px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   .pr-sculpture {
-    width: min(100%, 520px);
-    height: min(56vh, 520px);
+    width: min(100%, 288px);
+    height: min(100%, 198px);
   }
 
   .pr-hero-speed {

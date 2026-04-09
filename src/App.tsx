@@ -1,7 +1,6 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./auth/AuthProvider";
 import { CLUB_NAMES } from "./constants";
-import bgGolfImage from "./assets/bg-golf.png";
 import { NotificationToast } from "./components/ui/NotificationToast";
 import TrackManPulseCard from "./features/shot-iq/components/TrackManPulseCard";
 import { useLiveShots } from "./hooks/useLiveShots";
@@ -1003,8 +1002,6 @@ function HomeView({
   return (
     <section className="pr-home">
       <div className="pr-home-stage">
-        <FairwayBackdrop />
-
         <div className="pr-home-layout">
           <div className="pr-copy-column">
             {filter === "all" && (
@@ -1057,7 +1054,9 @@ function HomeView({
               <span className="pr-hero-unit">yd carry avg</span>
             </div>
 
-            <div className="pr-hero-core" aria-hidden="true" />
+            <div className="pr-hero-core" aria-hidden="true">
+              <TrajectorySculpture spinActive={isSpeedAnimating} />
+            </div>
 
             <div className="pr-hero-speed-stack">
               <div className="pr-hero-speed">
@@ -1111,14 +1110,6 @@ function HomeView({
         onNewSession={onNewSession}
       />
     </section>
-  );
-}
-
-function FairwayBackdrop() {
-  return (
-    <div className="pr-home-backdrop" aria-hidden="true">
-      <img src={bgGolfImage} alt="" className="pr-home-backdrop-image" draggable={false} />
-    </div>
   );
 }
 
@@ -1209,8 +1200,7 @@ function MiniSparkline({ values, color }: { values: number[]; color: string }) {
 
 function TrajectorySculpture({ spinActive }: { spinActive: boolean }) {
   return (
-    <div className="pr-sculpture">
-      <span className="pr-sculpture-halo" />
+    <div className={`pr-sculpture ${spinActive ? "is-active" : ""}`}>
       <span className="pr-sculpture-shadow" />
 
       <div className="pr-golf-ball-wrap">
