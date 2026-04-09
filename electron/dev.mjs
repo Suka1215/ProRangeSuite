@@ -4,17 +4,18 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
-const isWindows = process.platform === "win32";
-const npmCmd = isWindows ? "npm.cmd" : "npm";
-const electronBin = path.join(rootDir, "node_modules", ".bin", isWindows ? "electron.cmd" : "electron");
+const nodeBin = process.execPath;
+const npmCli = process.env.npm_execpath;
+const electronCli = path.join(rootDir, "node_modules", "electron", "cli.js");
 const children = new Set();
+let shuttingDown = false;
 
 function spawnChild(command, args, extraEnv = {}) {
   const child = spawn(command, args, {
     cwd: rootDir,
     stdio: "inherit",
     env: { ...process.env, ...extraEnv },
-    shell: isWindows,
+    shell: false,
     windowsHide: false,
   });
 
@@ -45,6 +46,8 @@ async function waitForUrl(url, timeoutMs = 30000) {
 }
 
 function shutdown(code = 0) {
+  if (shuttingDown) return;
+  shuttingDown = true;
   for (const child of children) {
     if (!child.killed) child.kill("SIGTERM");
   }
@@ -54,19 +57,32 @@ function shutdown(code = 0) {
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 
-const vite = spawnChild(npmCmd, ["run", "dev", "--", "--host", "127.0.0.1"]);
-vite.on("exit", (code) => {
-  if (code && code !== 0) shutdown(code);
+if (!npmCli) {
+  throw new Error("npm_execpath is not available. Run this script through `npm run desktop:dev`.");
+}
+
+const vite = spawnChild(nodeBin, [npmCli, "run", "dev", "--", "--host", "127.0.0.1"]);
+let viteReady = false;
+vite.on("exit", async (code) => {
+  if (!code || code === 0 || shuttingDown) return;
+
+  try {
+    await waitForUrl("http://127.0.0.1:5173", 1500);
+    viteReady = true;
+  } catch {
+    shutdown(code);
+  }
 });
 
 try {
   await waitForUrl("http://127.0.0.1:5173");
+  viteReady = true;
 } catch (error) {
   console.error(`[desktop:dev] ${error.message}`);
   shutdown(1);
 }
 
-const electron = spawnChild(electronBin, ["."], {
+const electron = spawnChild(nodeBin, [electronCli, "."], {
   VITE_DEV_SERVER_URL: "http://127.0.0.1:5173",
 });
 

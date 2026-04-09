@@ -1421,6 +1421,7 @@ function SecPage({
             pairing={bridgeDesktop.pairing}
             entitlement={bridgeDesktop.entitlement}
             connectors={bridgeDesktop.connectors}
+            connectorLogs={bridgeDesktop.connectorLogs}
             loading={bridgeDesktop.loading}
             error={bridgeDesktop.error}
             offlineAllowed={bridgeDesktop.premiumAccess}
@@ -1428,6 +1429,7 @@ function SecPage({
             pairingUrl={bridgeDesktop.pairingUrl}
             manualCode={bridgeDesktop.manualCode}
             onConnectConnector={bridgeDesktop.connectConnector}
+            onSendGsproTestShot={bridgeDesktop.sendGsproTestShot}
             onRefresh={bridgeDesktop.refresh}
             onClearOfflineAccess={bridgeDesktop.clearOfflineAccess}
           />

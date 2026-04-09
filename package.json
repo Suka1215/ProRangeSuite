@@ -44,6 +44,12 @@
       "output": "release",
       "buildResources": "build"
     },
+    "extraResources": [
+      {
+        "from": "gspro_bridge.py",
+        "to": "gspro_bridge.py"
+      }
+    ],
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "asar": true,
     "files": [

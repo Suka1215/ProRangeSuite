@@ -10,7 +10,7 @@ Every shot you hit updates the dashboard in real time.
 ```
 iPhone (ProRange app)
         │
-        │  HTTP POST /shot  (GSPro protocol, port 9211)
+        │  HTTP POST /shot  (GSPro protocol, port 9210)
         │  same WiFi network
         ▼
 Mac (server.js — Node bridge)
@@ -61,7 +61,7 @@ You'll see something like:
 ║  LAN:      http://192.168.1.42:3000                   ║
 ╠═══════════════════════════════════════════════════════╣
 ║  iPhone → set GSPro IP to: 192.168.1.42               ║
-║  iPhone → set GSPro Port:  9211                       ║
+║  iPhone → set GSPro Port:  9210                       ║
 ╚═══════════════════════════════════════════════════════╝
 ```
 
@@ -71,7 +71,7 @@ Go to **http://localhost:3000** in your browser.
 ### Step 3 — Configure ProRange on your iPhone
 In the ProRange iOS app settings:
 - **GSPro IP Address** → your Mac's IP shown in the terminal (e.g. `192.168.1.42`)
-- **GSPro Port** → `9211`
+- **GSPro Port** → `9210`
 - Make sure your iPhone and Mac are on the **same WiFi network**
 
 > **Tip:** Your Mac's IP can change if you reconnect to WiFi.
@@ -161,7 +161,7 @@ If you want one-click GSPro setup in the downloadable app, bundle `gspro_bridge.
 |---------|-----|
 | "Go Live" stays orange | Server not running — check Terminal |
 | iPhone sends shots but browser doesn't update | Wrong IP in ProRange settings |
-| `EADDRINUSE` error | Port 9211 in use — kill the old process: `lsof -ti:9211 \| xargs kill` |
+| `EADDRINUSE` error | Port 9210 in use — kill the old process: `lsof -ti:9210 \| xargs kill` |
 | Shots come in but VLA looks wrong | That's the whole point — use the dashboard to track it! |
 
 ---
