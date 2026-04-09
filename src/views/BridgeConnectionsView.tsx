@@ -8,6 +8,12 @@ import type {
   DesktopOfflineEntitlement,
   DesktopOfflinePairingStatus,
 } from "../hooks/useDesktopBridge";
+import { isDesktopApp } from "../lib/desktop";
+
+const LOCAL_CONNECTOR_HOST = "127.0.0.1:3000";
+const DEFAULT_CONNECTOR_DOWNLOAD_URL = "https://github.com/Suka1215/ProRangeSuite/releases/latest";
+const CONNECTOR_DOWNLOAD_URL =
+  import.meta.env.VITE_CONNECTOR_DOWNLOAD_URL?.trim() || DEFAULT_CONNECTOR_DOWNLOAD_URL;
 
 interface BridgeConnectionsViewProps {
   bridge: BridgeRuntimeStatus | null;
@@ -51,12 +57,12 @@ const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
     monogram: "GS",
     instructions: [
       "Open GSPro on this desktop and make sure the Open Connect window is available before you connect.",
-      "Click Connect to GSPro to start the configured Python bridge helper for this desktop install.",
+      "Click Connect to GSPro to start the configured Python bridge helper on this machine.",
       "While GSPro is opening or waiting, the connector stays in Establishing for up to 30 seconds.",
       "If GSPro accepts the bridge, the button turns SPIVOT green and the status flips to Connected.",
       "If GSPro never comes online, SPIVOT marks the connection as failed so you can retry cleanly.",
     ],
-    instructionNote: "The desktop app can use a bundled gspro_bridge.py helper or the path set in GSPRO_BRIDGE_SCRIPT.",
+    instructionNote: "The Connector app can use a bundled gspro_bridge.py helper or the path set in GSPRO_BRIDGE_SCRIPT.",
   },
   "infinite-tee": {
     id: "infinite-tee",
@@ -133,7 +139,7 @@ function getConnectorFallback(
       status: bridge ? "idle" : "failed",
       detail: bridge
         ? "Ready to start the GSPro bridge."
-        : "The local bridge is offline. Start the desktop bridge before connecting GSPro.",
+        : "The local connector is offline. Start the Connector app before connecting GSPro.",
       updatedAt: new Date().toISOString(),
       commandLabel: "Connect to GSPro",
       available: Boolean(bridge),
@@ -143,11 +149,13 @@ function getConnectorFallback(
   return {
     id: connectorId,
     name: definition.vendor,
-    status: "idle",
-    detail: "Connector profile ready.",
+    status: bridge ? "idle" : "failed",
+    detail: bridge
+      ? "Connector profile ready."
+      : "The local connector is offline. Start the Connector app before preparing this profile.",
     updatedAt: new Date().toISOString(),
     commandLabel: "Connect to Infinite Tee",
-    available: true,
+    available: Boolean(bridge),
   };
 }
 
@@ -171,6 +179,7 @@ export default function BridgeConnectionsView({
   onSendGsproTestShot,
   compact = false,
 }: BridgeConnectionsViewProps) {
+  const desktopRuntime = isDesktopApp();
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [activeConnectorId, setActiveConnectorId] = useState<DesktopConnectorId | null>(null);
   const [sendingTestShot, setSendingTestShot] = useState(false);
@@ -217,6 +226,14 @@ export default function BridgeConnectionsView({
   const selectedConnector =
     connectorMap.get(selectedConnectorId) ?? getConnectorFallback(selectedConnectorId, bridge);
   const selectedDefinition = CONNECTOR_DEFINITIONS[selectedConnectorId];
+  const bridgeAvailable = Boolean(bridge);
+  const browserConnectorMissing = !desktopRuntime && !loading && !bridgeAvailable;
+  const downloadConnectorEnabled = Boolean(CONNECTOR_DOWNLOAD_URL);
+  const selectedDownloadsConnector =
+    !desktopRuntime &&
+    !bridgeAvailable &&
+    selectedConnector.id === "gspro" &&
+    downloadConnectorEnabled;
 
   if (compact) {
     const pairedDevice = pairing?.deviceName || entitlement?.deviceName || null;
@@ -290,11 +307,15 @@ export default function BridgeConnectionsView({
   }
 
   const pairingState = formatPairingState(pairing, offlineAllowed, bridgeOnly);
-  const selectedActionLabel = getConnectorActionLabel(selectedConnector);
+  const selectedActionLabel = selectedDownloadsConnector
+    ? "Download Connector"
+    : getConnectorActionLabel(selectedConnector);
   const selectedBadgeText = getConnectorBadgeText(selectedConnector);
   const selectedConnecting = selectedConnector.status === "establishing";
   const selectedConnected = selectedConnector.status === "connected";
-  const selectedActionDisabled = selectedConnecting || (selectedConnector.id === "gspro" && !selectedConnector.available);
+  const selectedActionDisabled =
+    !selectedDownloadsConnector &&
+    (selectedConnecting || (selectedConnector.id === "gspro" && !selectedConnector.available));
   const selectedLogs = connectorLogs[selectedConnector.id] ?? [];
 
   return (
@@ -304,7 +325,7 @@ export default function BridgeConnectionsView({
           <span className="pr-bridge-eyebrow">Bridge Connectors</span>
           <h1>Launch and monitor third-party connectors</h1>
           <p>
-            Pick a connector card, open its setup panel, and start the local bridge directly from SPIVOT Suite.
+            Pick a connector card, open its setup panel, and start or monitor the local connector directly from SPIVOT Suite.
           </p>
         </div>
 
@@ -320,7 +341,45 @@ export default function BridgeConnectionsView({
         </div>
       </div>
 
-      {error && <div className="pr-bridge-error">{error}</div>}
+      {error && !browserConnectorMissing && <div className="pr-bridge-error">{error}</div>}
+      {browserConnectorMissing && (
+        <div className="pr-connector-browser-card">
+          <div className="pr-connector-browser-copy">
+            <span className="pr-connector-panel-kicker">Local Connector Needed</span>
+            <h2>Start the SPIVOT Connector on this machine</h2>
+            <p>
+              {error ?? "The local connector is unavailable on http://127.0.0.1:3000."} Launch the Connector app on
+              this computer, then refresh this page. Once it is running, your phone can scan the QR shown in the
+              connector window to pair shots into GSPro.
+            </p>
+          </div>
+
+          <div className="pr-connector-browser-meta">
+            <div>
+              <span>Expected host</span>
+              <strong>{LOCAL_CONNECTOR_HOST}</strong>
+            </div>
+            <div>
+              <span>Pairing flow</span>
+              <strong>Scan the QR in the Connector window</strong>
+            </div>
+          </div>
+
+          <div className="pr-connector-browser-actions">
+            <button className="pr-secondary-pill" onClick={() => void onRefresh()}>
+              Retry localhost
+            </button>
+            <a
+              className="pr-secondary-pill pr-connector-download-pill"
+              href={CONNECTOR_DOWNLOAD_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Download Connector
+            </a>
+          </div>
+        </div>
+      )}
       <div className="pr-connector-selector-shell">
         <div className="pr-connector-selector-grid">
         {[gsproConnector, infiniteTeeConnector].map((connector) => {
@@ -328,7 +387,11 @@ export default function BridgeConnectionsView({
           const badgeText = getConnectorBadgeText(connector);
           const footerTitle = connector.id === "gspro" ? "Open Connect" : "Connector profile";
           const footerMeta =
-            connector.id === "gspro" ? "Local bridge + simulator" : "Third-party app";
+            connector.id === "gspro" ? "Local connector + simulator" : "Third-party app";
+          const cardActionLabel =
+            !desktopRuntime && !bridgeAvailable && connector.id === "gspro" && downloadConnectorEnabled
+              ? "Download"
+              : "Open setup";
 
           return (
             <button
@@ -359,7 +422,7 @@ export default function BridgeConnectionsView({
                   <strong>{footerTitle}</strong>
                   <span>{footerMeta}</span>
                 </div>
-                <span className="pr-connector-card-cta">Open setup</span>
+                <span className="pr-connector-card-cta">{cardActionLabel}</span>
               </div>
             </button>
           );
@@ -369,16 +432,6 @@ export default function BridgeConnectionsView({
 
       {activeConnectorId && (
         <div className="pr-connector-detail-page">
-          <div className="pr-connector-page-top">
-            <button
-              type="button"
-              className="pr-secondary-pill"
-              onClick={() => setActiveConnectorId(null)}
-            >
-              Back to connectors
-            </button>
-          </div>
-
           <div className="pr-connector-detail-grid">
             <article className="pr-connector-feature-card">
               <div className="pr-connector-feature-top">
@@ -416,7 +469,14 @@ export default function BridgeConnectionsView({
               <button
                 className={`pr-connector-connect-button ${selectedConnected ? "is-connected" : ""}`}
                 disabled={selectedActionDisabled}
-                onClick={() => void onConnectConnector(selectedConnector.id)}
+                onClick={() => {
+                  if (selectedDownloadsConnector) {
+                    window.open(CONNECTOR_DOWNLOAD_URL, "_blank", "noopener,noreferrer");
+                    return;
+                  }
+
+                  void onConnectConnector(selectedConnector.id);
+                }}
               >
                 {selectedActionLabel}
               </button>
@@ -436,7 +496,9 @@ export default function BridgeConnectionsView({
 
               <div className="pr-connector-feature-footnote">
                 {selectedConnector.id === "gspro"
-                  ? `Pair code ${manualCode ?? "pending"} • ${pairingState}`
+                  ? selectedDownloadsConnector
+                    ? "Download the Connector app, run it on this desktop, then scan its QR code from your phone."
+                    : `Pair code ${manualCode ?? "pending"} • ${pairingState}`
                   : "Infinite Tee uses the same bridge workspace once its launch spec is configured."}
               </div>
             </article>

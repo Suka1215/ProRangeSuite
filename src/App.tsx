@@ -10,7 +10,6 @@ import { useNotification } from "./hooks/useNotification";
 import { useSessionLibrary } from "./hooks/useSessionLibrary";
 import { useSessions } from "./hooks/useSessions";
 import { useUserShots } from "./hooks/useUserShots";
-import { isDesktopApp } from "./lib/desktop";
 import type { SessionLibraryBucket } from "./hooks/useSessionLibrary";
 import type { Session, Shot, TabId } from "./types";
 import { exportShotsToCSV, generateSyntheticShot } from "./utils/shotData";
@@ -82,9 +81,9 @@ const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: str
     description: "Browse and manage saved runs from the new homepage schedule strip.",
   },
   bridge: {
-    eyebrow: "Desktop",
+    eyebrow: "Connector",
     title: "Bridge Connections",
-    description: "Manage the GSPro bridge and premium offline companion pairing for the Electron desktop shell.",
+    description: "Manage the local GSPro connector, pairing flow, and localhost bridge from the browser or desktop app.",
   },
 };
 
@@ -144,7 +143,6 @@ function normalizeShot(shot: Shot): Shot {
 
 export default function App() {
   const { user, logOut } = useAuth();
-  const isDesktopShell = isDesktopApp();
   const [tab, setTab] = useState<TabId>("dashboard");
   const [club, setClub] = useState<string>("7-Iron");
   const [clubOpen, setClubOpen] = useState(false);
@@ -178,7 +176,7 @@ export default function App() {
     deleteBucket,
   } = useSessionLibrary(user?.uid, club);
   const desktopBridge = useDesktopBridge();
-  const primaryNav = isDesktopShell ? [...PRIMARY_NAV, DESKTOP_BRIDGE_NAV] : PRIMARY_NAV;
+  const primaryNav = [...PRIMARY_NAV, DESKTOP_BRIDGE_NAV];
 
   const handleLiveShot = (shot: Shot) => {
     const normalizedShot = normalizeShot(shot);
@@ -331,7 +329,8 @@ export default function App() {
   };
 
   const sectionCopy = TAB_COPY[tab];
-  const isImmersiveStage = tab === "accuracy" || tab === "shots";
+  const isBridgeStage = tab === "bridge";
+  const isImmersiveStage = tab === "accuracy" || tab === "shots" || isBridgeStage;
 
   return (
     <div className="pr-page">
@@ -410,7 +409,7 @@ export default function App() {
               onToggleLive={toggleLive}
             />
           ) : (
-            <section className={`pr-secondary-stage ${isImmersiveStage ? "is-immersive" : ""}`}>
+            <section className={`pr-secondary-stage ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""}`}>
               {!isImmersiveStage && (
                 <div className="pr-secondary-intro">
                   <div>
@@ -425,7 +424,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className={`pr-secondary-stage-inner ${isImmersiveStage ? "is-immersive" : ""}`}>
+              <div className={`pr-secondary-stage-inner ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""}`}>
                 <SecPage
                   tab={tab}
                   shots={shots}
@@ -1386,7 +1385,7 @@ function SecPage({
   bridgeDesktop,
 }: SecProps) {
   return (
-    <div className="pr-secondary-content">
+    <div className={`pr-secondary-content ${tab === "bridge" ? "is-bridge-scroll" : ""}`}>
       <Suspense fallback={<Loader />}>
         {tab === "accuracy" && <AccuracyView shots={shots} sessions={sessions} tmReady={tmReady} />}
         {tab === "shots" && (
