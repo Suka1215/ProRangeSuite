@@ -37,6 +37,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           pairing={desktopBridge.pairing}
           entitlement={desktopBridge.entitlement}
           connectors={desktopBridge.connectors}
+          connectorLogs={desktopBridge.connectorLogs}
           loading={desktopBridge.loading}
           error={desktopBridge.error}
           offlineAllowed={desktopBridge.premiumAccess}
@@ -44,6 +45,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           pairingUrl={desktopBridge.pairingUrl}
           manualCode={desktopBridge.manualCode}
           onConnectConnector={desktopBridge.connectConnector}
+          onSendGsproTestShot={desktopBridge.sendGsproTestShot}
           onRefresh={desktopBridge.refresh}
           onClearOfflineAccess={desktopBridge.clearOfflineAccess}
           compact={!desktopBridge.bridgeAccess}

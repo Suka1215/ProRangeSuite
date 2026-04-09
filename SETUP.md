@@ -10,7 +10,7 @@ Every shot you hit updates the dashboard in real time.
 ```
 iPhone (ProRange app)
         │
-        │  HTTP POST /shot  (GSPro protocol, port 9211)
+        │  HTTP POST /shot  (GSPro protocol, port 9210)
         │  same WiFi network
         ▼
 Mac (server.js — Node bridge)
@@ -61,7 +61,7 @@ You'll see something like:
 ║  LAN:      http://192.168.1.42:3000                   ║
 ╠═══════════════════════════════════════════════════════╣
 ║  iPhone → set GSPro IP to: 192.168.1.42               ║
-║  iPhone → set GSPro Port:  9211                       ║
+║  iPhone → set GSPro Port:  9210                       ║
 ╚═══════════════════════════════════════════════════════╝
 ```
 
@@ -71,7 +71,7 @@ Go to **http://localhost:3000** in your browser.
 ### Step 3 — Configure ProRange on your iPhone
 In the ProRange iOS app settings:
 - **GSPro IP Address** → your Mac's IP shown in the terminal (e.g. `192.168.1.42`)
-- **GSPro Port** → `9211`
+- **GSPro Port** → `9210`
 - Make sure your iPhone and Mac are on the **same WiFi network**
 
 > **Tip:** Your Mac's IP can change if you reconnect to WiFi.
@@ -113,13 +113,55 @@ Then open http://localhost:5173
 
 ---
 
+## Desktop Builds
+
+You can package the Electron desktop app into downloadable installers from this repo.
+
+### Build a desktop app for your current machine
+```bash
+npm run desktop:dist
+```
+
+Artifacts are written to `release/`.
+
+### Build macOS downloadables
+```bash
+npm run desktop:dist:mac
+```
+
+This produces a `.dmg` and `.zip` in `release/`.
+
+### Build Windows downloadables
+```bash
+npm run desktop:dist:win
+```
+
+This produces an NSIS installer `.exe` and a `.zip` in `release/`.
+For the smoothest Windows result, run this command on a Windows machine.
+
+### Smoke-test the packaged app layout without making an installer
+```bash
+npm run desktop:pack
+```
+
+### GSPro helper note
+
+The desktop app looks for `gspro_bridge.py` in one of these ways:
+- a path you set with `GSPRO_BRIDGE_SCRIPT`
+- a bundled `gspro_bridge.py` shipped with the desktop app
+- the legacy local Mac fallback at `/Users/jmmiller/Downloads/gspro_bridge.py`
+
+If you want one-click GSPro setup in the downloadable app, bundle `gspro_bridge.py` with the desktop build or set `GSPRO_BRIDGE_SCRIPT` on the target machine.
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
 | "Go Live" stays orange | Server not running — check Terminal |
 | iPhone sends shots but browser doesn't update | Wrong IP in ProRange settings |
-| `EADDRINUSE` error | Port 9211 in use — kill the old process: `lsof -ti:9211 \| xargs kill` |
+| `EADDRINUSE` error | Port 9210 in use — kill the old process: `lsof -ti:9210 \| xargs kill` |
 | Shots come in but VLA looks wrong | That's the whole point — use the dashboard to track it! |
 
 ---

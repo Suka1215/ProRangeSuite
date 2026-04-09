@@ -42,6 +42,15 @@ export interface DesktopConnectorStatus {
   available: boolean;
 }
 
+export interface ConnectorLogEntry {
+  id: string;
+  level: "info" | "error";
+  message: string;
+  createdAt: string;
+}
+
+export type ConnectorLogs = Record<DesktopConnectorId, ConnectorLogEntry[]>;
+
 interface OfflineStatusResponse {
   ok: boolean;
   pairing: DesktopOfflinePairingStatus;
@@ -50,6 +59,11 @@ interface OfflineStatusResponse {
 interface ConnectorsStatusResponse {
   ok: boolean;
   connectors: DesktopConnectorStatus[];
+}
+
+interface ConnectorLogsResponse {
+  ok: boolean;
+  logs: Partial<ConnectorLogs>;
 }
 
 interface ConnectConnectorSuccessResponse {
@@ -63,6 +77,34 @@ interface ConnectConnectorFailureResponse {
   error?: string;
   connector?: DesktopConnectorStatus;
   connectors?: DesktopConnectorStatus[];
+}
+
+interface TestGsproShotSuccessResponse {
+  ok: true;
+  payload: Record<string, unknown>;
+  logs: ConnectorLogEntry[];
+  connectors?: DesktopConnectorStatus[];
+}
+
+interface TestGsproShotFailureResponse {
+  ok: false;
+  error?: string;
+  payload?: Record<string, unknown>;
+  logs?: ConnectorLogEntry[];
+  connectors?: DesktopConnectorStatus[];
+}
+
+function defaultOrigin() {
+  if (typeof window === "undefined") return "";
+
+  const { protocol, hostname, port } = window.location;
+  if (!hostname) return "";
+
+  if (port) {
+    return `${protocol}//${hostname}:${port}`;
+  }
+
+  return `${protocol}//${hostname}`;
 }
 
 function readEntitlement() {
@@ -122,11 +164,20 @@ function getBridgeBaseUrl() {
     return window.desktop.bridgeBaseUrl;
   }
 
+  const queryBridgeUrl = new URLSearchParams(window.location.search).get("bridgeUrl");
+  if (queryBridgeUrl) {
+    return queryBridgeUrl;
+  }
+
   if (/electron/i.test(window.navigator.userAgent) && window.location.port === "5173") {
     return DEFAULT_BRIDGE_BASE_URL;
   }
 
-  return "";
+  if (window.location.port === "5173") {
+    return DEFAULT_BRIDGE_BASE_URL;
+  }
+
+  return defaultOrigin();
 }
 
 function upsertConnector(
@@ -139,38 +190,46 @@ function upsertConnector(
 
 export function useDesktopBridge() {
   const desktop = isDesktopApp();
+  const bridgeBaseUrl = useMemo(() => getBridgeBaseUrl(), [desktop]);
+  const bridgeEnabled = Boolean(bridgeBaseUrl);
   const [bridge, setBridge] = useState<BridgeRuntimeStatus | null>(null);
   const [pairing, setPairing] = useState<DesktopOfflinePairingStatus | null>(null);
   const [entitlement, setEntitlement] = useState<DesktopOfflineEntitlement | null>(() => readEntitlement());
   const [connectors, setConnectors] = useState<DesktopConnectorStatus[]>([]);
-  const [loading, setLoading] = useState(desktop);
+  const [connectorLogs, setConnectorLogs] = useState<ConnectorLogs>({ gspro: [], "infinite-tee": [] });
+  const [loading, setLoading] = useState(bridgeEnabled);
   const [error, setError] = useState<string | null>(null);
-  const bridgeBaseUrl = useMemo(() => getBridgeBaseUrl(), [desktop]);
 
   const refresh = useCallback(async () => {
-    if (!desktop) {
+    if (!bridgeEnabled) {
       setLoading(false);
       return;
     }
 
     try {
-      const [bridgeResponse, offlineResponse, connectorsResponse] = await Promise.all([
+      const [bridgeResponse, offlineResponse, connectorsResponse, logsResponse] = await Promise.all([
         fetch(`${bridgeBaseUrl}/api/status`),
         fetch(`${bridgeBaseUrl}/api/offline/status`),
         fetch(`${bridgeBaseUrl}/api/connectors/status`),
+        fetch(`${bridgeBaseUrl}/api/connectors/logs`),
       ]);
 
-      if (!bridgeResponse.ok || !offlineResponse.ok || !connectorsResponse.ok) {
+      if (!bridgeResponse.ok || !offlineResponse.ok || !connectorsResponse.ok || !logsResponse.ok) {
         throw new Error("The local bridge is unavailable.");
       }
 
       const bridgePayload = await bridgeResponse.json() as BridgeRuntimeStatus;
       const offlinePayload = await offlineResponse.json() as OfflineStatusResponse;
       const connectorsPayload = await connectorsResponse.json() as ConnectorsStatusResponse;
+      const logsPayload = await logsResponse.json() as ConnectorLogsResponse;
 
       setBridge(bridgePayload);
       setPairing(offlinePayload.pairing);
       setConnectors(connectorsPayload.connectors ?? []);
+      setConnectorLogs({
+        gspro: logsPayload.logs.gspro ?? [],
+        "infinite-tee": logsPayload.logs["infinite-tee"] ?? [],
+      });
 
       if (isPairingPremium(offlinePayload.pairing)) {
         setEntitlement(persistEntitlement(offlinePayload.pairing));
@@ -190,10 +249,10 @@ export function useDesktopBridge() {
     } finally {
       setLoading(false);
     }
-  }, [bridgeBaseUrl, desktop]);
+  }, [bridgeBaseUrl, bridgeEnabled]);
 
   useEffect(() => {
-    if (!desktop) {
+    if (!bridgeEnabled) {
       setLoading(false);
       return;
     }
@@ -215,7 +274,7 @@ export function useDesktopBridge() {
       active = false;
       window.clearInterval(timer);
     };
-  }, [desktop, refresh]);
+  }, [bridgeEnabled, refresh]);
 
   const premiumAccess = useMemo(
     () => isPairingPremium(pairing) || isEntitlementValid(entitlement),
@@ -223,8 +282,8 @@ export function useDesktopBridge() {
   );
 
   const bridgeAccess = useMemo(
-    () => isPairingAuthenticated(pairing) || premiumAccess,
-    [pairing, premiumAccess]
+    () => (!desktop && Boolean(bridge)) || isPairingAuthenticated(pairing) || premiumAccess,
+    [bridge, desktop, pairing, premiumAccess]
   );
 
   const pairingUrl = useMemo(() => {
@@ -247,7 +306,7 @@ export function useDesktopBridge() {
     clearEntitlement();
     setEntitlement(null);
 
-    if (!desktop) return;
+    if (!bridgeEnabled) return;
 
     try {
       await fetch(`${bridgeBaseUrl}/api/offline/unpair`, { method: "POST" });
@@ -256,10 +315,12 @@ export function useDesktopBridge() {
     } finally {
       await refresh();
     }
-  }, [bridgeBaseUrl, desktop, refresh]);
+  }, [bridgeBaseUrl, bridgeEnabled, refresh]);
 
   const connectConnector = useCallback(async (connectorId: DesktopConnectorId) => {
-    if (!desktop) return;
+    if (!bridgeEnabled) {
+      throw new Error("The local bridge is unavailable.");
+    }
 
     const response = await fetch(`${bridgeBaseUrl}/api/connectors/${connectorId}/connect`, {
       method: "POST",
@@ -281,14 +342,46 @@ export function useDesktopBridge() {
     }
 
     await refresh();
-  }, [bridgeBaseUrl, desktop, refresh]);
+  }, [bridgeBaseUrl, bridgeEnabled, refresh]);
+
+  const sendGsproTestShot = useCallback(async () => {
+    if (!bridgeEnabled) {
+      throw new Error("The local bridge is unavailable.");
+    }
+
+    const response = await fetch(`${bridgeBaseUrl}/api/connectors/gspro/test-shot`, {
+      method: "POST",
+    });
+
+    const payload = await response.json() as TestGsproShotSuccessResponse | TestGsproShotFailureResponse;
+
+    if (payload.connectors) {
+      setConnectors(payload.connectors);
+    }
+    if (payload.logs) {
+      setConnectorLogs((current) => ({
+        ...current,
+        gspro: payload.logs ?? current.gspro,
+      }));
+    }
+
+    if (!response.ok || payload.ok === false) {
+      const message = "error" in payload ? payload.error : undefined;
+      throw new Error(message || "Failed to send GSPro test shot.");
+    }
+
+    await refresh();
+    return payload;
+  }, [bridgeBaseUrl, bridgeEnabled, refresh]);
 
   return {
     isDesktop: desktop,
+    bridgeEnabled,
     bridge,
     pairing,
     entitlement,
     connectors,
+    connectorLogs,
     loading,
     error,
     bridgeAccess,
@@ -297,6 +390,7 @@ export function useDesktopBridge() {
     pairingUrl,
     manualCode,
     connectConnector,
+    sendGsproTestShot,
     refresh,
     clearOfflineAccess,
   };

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
 import type {
   BridgeRuntimeStatus,
+  ConnectorLogEntry,
   DesktopConnectorId,
   DesktopConnectorStatus,
   DesktopOfflineEntitlement,
@@ -13,6 +14,7 @@ interface BridgeConnectionsViewProps {
   pairing: DesktopOfflinePairingStatus | null;
   entitlement: DesktopOfflineEntitlement | null;
   connectors: DesktopConnectorStatus[];
+  connectorLogs: Record<DesktopConnectorId, ConnectorLogEntry[]>;
   loading: boolean;
   error: string | null;
   offlineAllowed: boolean;
@@ -24,6 +26,7 @@ interface BridgeConnectionsViewProps {
   onContinueOffline?: () => void;
   onOpenCloudLogin?: () => void;
   onConnectConnector: (connectorId: DesktopConnectorId) => void | Promise<void>;
+  onSendGsproTestShot?: () => Promise<unknown>;
   compact?: boolean;
 }
 
@@ -48,12 +51,12 @@ const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
     monogram: "GS",
     instructions: [
       "Open GSPro on this desktop and make sure the Open Connect window is available before you connect.",
-      "Click Connect to GSPro to start the Python bridge helper bundled with this desktop workflow.",
+      "Click Connect to GSPro to start the configured Python bridge helper for this desktop install.",
       "While GSPro is opening or waiting, the connector stays in Establishing for up to 30 seconds.",
       "If GSPro accepts the bridge, the button turns SPIVOT green and the status flips to Connected.",
       "If GSPro never comes online, SPIVOT marks the connection as failed so you can retry cleanly.",
     ],
-    instructionNote: "Phone shots keep flowing through the SPIVOT bridge once GSPro accepts the local helper.",
+    instructionNote: "The desktop app can use a bundled gspro_bridge.py helper or the path set in GSPRO_BRIDGE_SCRIPT.",
   },
   "infinite-tee": {
     id: "infinite-tee",
@@ -84,6 +87,10 @@ function formatPairingState(
 }
 
 function getConnectorActionLabel(connector: DesktopConnectorStatus) {
+  if (connector.id === "gspro" && !connector.available) {
+    return "Helper not configured";
+  }
+
   switch (connector.status) {
     case "connected":
       return `Connected to ${connector.name}`;
@@ -97,6 +104,10 @@ function getConnectorActionLabel(connector: DesktopConnectorStatus) {
 }
 
 function getConnectorBadgeText(connector: DesktopConnectorStatus) {
+  if (connector.id === "gspro" && !connector.available) {
+    return "Setup needed";
+  }
+
   switch (connector.status) {
     case "connected":
       return "Connected";
@@ -145,6 +156,7 @@ export default function BridgeConnectionsView({
   pairing,
   entitlement,
   connectors,
+  connectorLogs,
   loading,
   error,
   offlineAllowed,
@@ -156,10 +168,12 @@ export default function BridgeConnectionsView({
   onContinueOffline,
   onOpenCloudLogin,
   onConnectConnector,
+  onSendGsproTestShot,
   compact = false,
 }: BridgeConnectionsViewProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [activeConnectorId, setActiveConnectorId] = useState<DesktopConnectorId | null>(null);
+  const [sendingTestShot, setSendingTestShot] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -280,6 +294,8 @@ export default function BridgeConnectionsView({
   const selectedBadgeText = getConnectorBadgeText(selectedConnector);
   const selectedConnecting = selectedConnector.status === "establishing";
   const selectedConnected = selectedConnector.status === "connected";
+  const selectedActionDisabled = selectedConnecting || (selectedConnector.id === "gspro" && !selectedConnector.available);
+  const selectedLogs = connectorLogs[selectedConnector.id] ?? [];
 
   return (
     <section className="pr-bridge pr-connector-workspace">
@@ -391,7 +407,7 @@ export default function BridgeConnectionsView({
                 </div>
                 <div>
                   <span>Port</span>
-                  <strong>{selectedConnector.id === "gspro" ? "9210 → 921" : bridge?.shotPort ?? "9211"}</strong>
+                  <strong>{selectedConnector.id === "gspro" ? "9210 → 921" : bridge?.shotPort ?? "9210"}</strong>
                 </div>
               </div>
 
@@ -399,11 +415,24 @@ export default function BridgeConnectionsView({
 
               <button
                 className={`pr-connector-connect-button ${selectedConnected ? "is-connected" : ""}`}
-                disabled={selectedConnecting}
+                disabled={selectedActionDisabled}
                 onClick={() => void onConnectConnector(selectedConnector.id)}
               >
                 {selectedActionLabel}
               </button>
+
+              {selectedConnector.id === "gspro" && selectedConnected && onSendGsproTestShot && (
+                <button
+                  className="pr-secondary-pill"
+                  disabled={sendingTestShot}
+                  onClick={() => {
+                    setSendingTestShot(true);
+                    void onSendGsproTestShot().finally(() => setSendingTestShot(false));
+                  }}
+                >
+                  {sendingTestShot ? "Sending test shot..." : "Send test shot"}
+                </button>
+              )}
 
               <div className="pr-connector-feature-footnote">
                 {selectedConnector.id === "gspro"
@@ -423,16 +452,36 @@ export default function BridgeConnectionsView({
               <p className="pr-connector-instruction-note">{selectedDefinition.instructionNote}</p>
 
               {selectedConnector.id === "gspro" && (
-                <div className="pr-connector-instruction-summary">
-                  <div>
-                    <span>GSPro bridge script</span>
-                    <strong>/Users/jmmiller/Downloads/gspro_bridge.py</strong>
+                <>
+                  <div className="pr-connector-instruction-summary">
+                    <div>
+                      <span>GSPro helper</span>
+                      <strong>{selectedConnector.available ? "Configured" : "Not configured"}</strong>
+                    </div>
+                    <div>
+                      <span>Current state</span>
+                      <strong>{selectedBadgeText}</strong>
+                    </div>
                   </div>
-                  <div>
-                    <span>Current state</span>
-                    <strong>{selectedBadgeText}</strong>
+
+                  <div className="pr-connector-log-panel">
+                    <span className="pr-connector-panel-kicker">GSPro logs</span>
+                    <div className="pr-connector-log-list">
+                      {selectedLogs.length ? (
+                        selectedLogs.slice().reverse().map((entry) => (
+                          <div key={entry.id} className={`pr-connector-log-entry is-${entry.level}`}>
+                            <strong>{new Date(entry.createdAt).toLocaleTimeString()}</strong>
+                            <span>{entry.message}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="pr-connector-log-entry">
+                          <span>No GSPro logs yet.</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </article>
           </div>

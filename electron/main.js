@@ -1,13 +1,41 @@
 import { app, BrowserWindow, dialog } from "electron";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DEFAULT_HTTP_PORT, startBridgeServer } from "../server.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(__dirname, "..");
+const BRIDGE_PORT_CANDIDATES = [
+  { httpPort: DEFAULT_HTTP_PORT, shotPort: 9210 },
+  { httpPort: 3001, shotPort: 9212 },
+  { httpPort: 3002, shotPort: 9213 },
+];
 
 let bridge = null;
 let mainWindow = null;
 let quitting = false;
+
+function resolveBundledGsproScript() {
+  const candidates = [
+    path.join(rootDir, "gspro_bridge.py"),
+    typeof process.resourcesPath === "string"
+      ? path.join(process.resourcesPath, "gspro_bridge.py")
+      : null,
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0] ?? null;
+}
+
+function createBridgeOptions(overrides = {}) {
+  const gsproScriptPath = resolveBundledGsproScript();
+  return {
+    silent: true,
+    baseDir: rootDir,
+    ...(gsproScriptPath ? { gsproScriptPath } : {}),
+    ...overrides,
+  };
+}
 
 async function probeExistingBridge(port = DEFAULT_HTTP_PORT) {
   try {
@@ -29,18 +57,28 @@ async function probeExistingBridge(port = DEFAULT_HTTP_PORT) {
 
 async function ensureBridge() {
   if (!bridge) {
-    try {
-      bridge = await startBridgeServer({ silent: true });
-    } catch (error) {
-      if (error?.code === "EADDRINUSE") {
-        const existingBridge = await probeExistingBridge();
-        if (existingBridge) {
-          bridge = existingBridge;
-        } else {
-          throw new Error("Port 3000 is already in use by another process. Stop it or free the port before launching ProRange Desktop.");
+    let lastPortError = null;
+
+    for (const candidate of BRIDGE_PORT_CANDIDATES) {
+      try {
+        bridge = await startBridgeServer(createBridgeOptions(candidate));
+        break;
+      } catch (error) {
+        if (error?.code === "EADDRINUSE") {
+          lastPortError = error;
+          continue;
         }
-      } else {
+
         throw error;
+      }
+    }
+
+    if (!bridge) {
+      const existingBridge = await probeExistingBridge();
+      if (existingBridge) {
+        bridge = existingBridge;
+      } else if (lastPortError) {
+        throw new Error("The desktop bridge ports are already in use. Stop the old bridge or restart the desktop app.");
       }
     }
   }
@@ -49,7 +87,10 @@ async function ensureBridge() {
 
 async function createMainWindow() {
   const bridgeHandle = await ensureBridge();
-  const appUrl = process.env.VITE_DEV_SERVER_URL || `http://127.0.0.1:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`;
+  const bridgeUrl = `http://127.0.0.1:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`;
+  const appUrl = new URL(process.env.VITE_DEV_SERVER_URL || bridgeUrl);
+  appUrl.searchParams.set("desktop", "1");
+  appUrl.searchParams.set("bridgeUrl", bridgeUrl);
 
   const window = new BrowserWindow({
     width: 1600,
@@ -74,7 +115,7 @@ async function createMainWindow() {
   });
 
   mainWindow = window;
-  await window.loadURL(appUrl);
+  await window.loadURL(appUrl.toString());
 }
 
 async function stopBridge() {
