@@ -22,7 +22,7 @@ export default function AllSessionsView({ sessions, onDelete, onReset, onNew }: 
         <div>
           <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:"-.3px" }}>All Sessions</h1>
           <p style={{ color:"#6b7280", fontSize:13, marginTop:3 }}>
-            {sessions.length} sessions · Stored locally in your browser
+            {sessions.length} sessions · Stored locally on this app
           </p>
         </div>
         <div style={{ display:"flex", gap:8 }}>

@@ -11,6 +11,7 @@ import { useSessionLibrary } from "./hooks/useSessionLibrary";
 import { useSessions } from "./hooks/useSessions";
 import { useUserShots } from "./hooks/useUserShots";
 import type { SessionLibraryBucket } from "./hooks/useSessionLibrary";
+import { isDesktopApp } from "./lib/desktop";
 import type { Session, Shot, TabId } from "./types";
 import { exportShotsToCSV, generateSyntheticShot } from "./utils/shotData";
 import { calcSessionStats, pctError } from "./utils/stats";
@@ -143,6 +144,7 @@ function normalizeShot(shot: Shot): Shot {
 
 export default function App() {
   const { user, logOut } = useAuth();
+  const desktopRuntime = isDesktopApp();
   const [tab, setTab] = useState<TabId>("dashboard");
   const [club, setClub] = useState<string>("7-Iron");
   const [clubOpen, setClubOpen] = useState(false);
@@ -155,17 +157,18 @@ export default function App() {
   const [creatingSession, setCreatingSession] = useState(false);
 
   const {
-    sessions,
+    sessions: legacySessions,
     liveShots,
     tmReady,
-    addSession,
     deleteSession,
     resetToSeed,
     addLiveShot,
     clearLiveShots,
   } = useSessions();
   const { notification, notify } = useNotification();
-  const { shots: cloudShots, loading: cloudShotsLoading, error: cloudShotsError } = useUserShots(user?.uid);
+  const { shots: cloudShots, loading: cloudShotsLoading, error: cloudShotsError } = useUserShots(
+    desktopRuntime ? null : user?.uid
+  );
   const {
     buckets: sessionBuckets,
     activeSessionId,
@@ -174,13 +177,18 @@ export default function App() {
     startSession,
     endSession,
     deleteBucket,
+    recordShot,
   } = useSessionLibrary(user?.uid, club);
   const desktopBridge = useDesktopBridge();
   const primaryNav = [...PRIMARY_NAV, DESKTOP_BRIDGE_NAV];
+  const sessions = useMemo(() => {
+    return desktopRuntime ? mapSessionBucketsToSessions(sessionBuckets) : legacySessions;
+  }, [desktopRuntime, legacySessions, sessionBuckets]);
 
   const handleLiveShot = (shot: Shot) => {
     const normalizedShot = normalizeShot(shot);
     addLiveShot(normalizedShot);
+    recordShot(normalizedShot);
     setActiveShot(normalizedShot);
   };
 
@@ -192,6 +200,10 @@ export default function App() {
   } = useLiveShots({ onShot: handleLiveShot, onNotify: notify, autoConnect: false });
 
   const shots = useMemo(() => {
+    if (desktopRuntime) {
+      return flattenBucketShots(sessionBuckets);
+    }
+
     const merged: Array<{ shot: Shot; order: number }> = [];
     const seen = new Set<string>();
     let order = 0;
@@ -217,7 +229,7 @@ export default function App() {
         return left.order - right.order;
       })
       .map(({ shot }) => shot);
-  }, [cloudShots, liveShots]);
+  }, [cloudShots, desktopRuntime, liveShots, sessionBuckets]);
 
   useEffect(() => {
     if (!cloudShotsError) return;
@@ -251,31 +263,38 @@ export default function App() {
     }
   }, [activeShot, shots]);
 
+  const localSessionCount = sessionBuckets.filter((bucket) => bucket.kind === "session").length;
+  const localShotCount = sessionBuckets.reduce((sum, bucket) => sum + bucket.shots.length, 0);
   const profileName = user?.displayName || user?.email || desktopBridge.pairing?.deviceName || "SPIVOT User";
-  const profileSubtitle = user
-    ? cloudShotsLoading
-      ? "Syncing cloud shots"
-      : `${cloudShots.length} cloud ${cloudShots.length === 1 ? "shot" : "shots"} loaded`
-    : desktopBridge.premiumAccess
-      ? "Offline companion unlocked"
-      : desktopBridge.bridgeAccess
-        ? "Bridge-only access"
-        : "Desktop bridge available";
+  const profileSubtitle = desktopRuntime
+    ? activeSessionId
+      ? `Session live · ${localShotCount} local ${localShotCount === 1 ? "shot" : "shots"}`
+      : localSessionCount
+        ? `${localSessionCount} app ${localSessionCount === 1 ? "session" : "sessions"} saved`
+        : desktopBridge.premiumAccess
+          ? "Offline companion unlocked"
+          : desktopBridge.bridgeAccess
+            ? "Bridge-only access"
+            : "Desktop bridge available"
+    : user
+      ? cloudShotsLoading
+        ? "Syncing cloud shots"
+        : `${cloudShots.length} cloud ${cloudShots.length === 1 ? "shot" : "shots"} loaded`
+      : desktopBridge.premiumAccess
+        ? "Offline companion unlocked"
+        : desktopBridge.bridgeAccess
+          ? "Bridge-only access"
+          : "Desktop bridge available";
 
   const addShot = () => {
     const shot = normalizeShot(generateSyntheticShot(club));
     addLiveShot(shot);
+    recordShot(shot);
     setActiveShot(shot);
     notify("Synthetic shot logged");
   };
 
   const handleStartSession = async (draft: { title: string; club: string; color: string }) => {
-    if (!user?.uid) {
-      setNewSessionError("Offline mode is view-only right now. Sign in to create cloud sessions from the suite.");
-      notify("Sign in to create cloud sessions", "err");
-      return;
-    }
-
     setCreatingSession(true);
     setNewSessionError(null);
 
@@ -295,10 +314,8 @@ export default function App() {
       notify(`${draft.title} started`);
     } catch (error) {
       console.error("[Session] Failed to create session:", error);
-      setNewSessionError(
-        "Firestore blocked session creation. Update your rules for users/{uid}/sessions/** and users/{uid}/sessionState/current."
-      );
-      notify("Session creation is blocked by Firestore rules", "err");
+      setNewSessionError("We couldn't create this local app session on this device.");
+      notify("Session creation failed", "err");
     } finally {
       setCreatingSession(false);
     }
@@ -440,16 +457,43 @@ export default function App() {
                   onPlay={() => setPlaying(true)}
                   onPlayDone={() => setPlaying(false)}
                   onAddShot={(shot) => {
-                    addLiveShot(shot);
-                    setActiveShot(shot);
+                    const normalizedShot = normalizeShot(shot);
+                    addLiveShot(normalizedShot);
+                    recordShot(normalizedShot);
+                    setActiveShot(normalizedShot);
                     notify("Shot logged");
                   }}
                   onNotify={notify}
                   onDelete={(id) => {
+                    if (desktopRuntime) {
+                      void deleteBucket(id)
+                        .then(() => notify("Session deleted"))
+                        .catch((error) => {
+                          console.error("[Session] Failed to delete app session:", error);
+                          notify("Session deletion failed", "err");
+                        });
+                      return;
+                    }
+
                     deleteSession(id);
                     notify("Session deleted");
                   }}
                   onReset={() => {
+                    if (desktopRuntime) {
+                      const bucketIds = sessionBuckets.map((bucket) => bucket.id);
+                      void Promise.all(bucketIds.map((bucketId) => deleteBucket(bucketId)))
+                        .then(() => {
+                          clearLiveShots();
+                          setActiveShot(null);
+                          notify("App sessions reset");
+                        })
+                        .catch((error) => {
+                          console.error("[Session] Failed to reset app sessions:", error);
+                          notify("App session reset failed", "err");
+                        });
+                      return;
+                    }
+
                     resetToSeed();
                     notify("Seed data reset");
                   }}
@@ -1542,6 +1586,55 @@ function buildScheduleWeek(
     canPrev: safePage < 51,
     canNext: safePage > 0,
   };
+}
+
+function flattenBucketShots(sessionBuckets: SessionLibraryBucket[]) {
+  const merged: Array<{ shot: Shot; order: number }> = [];
+  const seen = new Set<string>();
+  let order = 0;
+
+  for (const bucket of sessionBuckets) {
+    for (const shot of bucket.shots) {
+      const normalizedShot = normalizeShot(shot);
+      const key = String(normalizedShot.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push({ shot: normalizedShot, order: order++ });
+    }
+  }
+
+  return merged
+    .sort((left, right) => {
+      const timeDelta = (left.shot.capturedAt ?? 0) - (right.shot.capturedAt ?? 0);
+      if (timeDelta !== 0) return timeDelta;
+      return left.order - right.order;
+    })
+    .map(({ shot }) => shot);
+}
+
+function mapSessionBucketsToSessions(sessionBuckets: SessionLibraryBucket[]): Session[] {
+  return sessionBuckets
+    .filter((bucket) => bucket.kind === "session")
+    .sort((left, right) => left.createdAt - right.createdAt)
+    .map((bucket) => ({
+      id: bucket.id,
+      date: new Date(bucket.createdAt || bucket.updatedAt || Date.now()).toISOString().slice(0, 10),
+      version: bucket.title,
+      label: bucket.source === "app" ? "App session" : bucket.source,
+      club: bucket.club,
+      color: bucket.color,
+      shots: bucket.shots.map((shot, index) => ({
+        id: String(shot.id),
+        shotNum: index + 1,
+        pr: {
+          ...shot.pr,
+          total: shot.pr.total ?? shot.pr.carry,
+        },
+        tm: shot.tm ?? null,
+        trackPts: shot.trackPts,
+      })),
+      createdAt: bucket.createdAt || bucket.updatedAt || Date.now(),
+    }));
 }
 
 function toDateKey(date: Date) {
