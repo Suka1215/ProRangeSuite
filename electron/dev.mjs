@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
+const LOOPBACK_HOST = "localhost";
 const nodeBin = process.execPath;
 const npmCli = process.env.npm_execpath;
 const electronCli = path.join(rootDir, "node_modules", "electron", "cli.js");
@@ -61,13 +62,13 @@ if (!npmCli) {
   throw new Error("npm_execpath is not available. Run this script through `npm run desktop:dev`.");
 }
 
-const vite = spawnChild(nodeBin, [npmCli, "run", "dev", "--", "--host", "127.0.0.1"]);
+const vite = spawnChild(nodeBin, [npmCli, "run", "dev", "--", "--host", LOOPBACK_HOST]);
 let viteReady = false;
 vite.on("exit", async (code) => {
   if (!code || code === 0 || shuttingDown) return;
 
   try {
-    await waitForUrl("http://127.0.0.1:5173", 1500);
+    await waitForUrl(`http://${LOOPBACK_HOST}:5173`, 1500);
     viteReady = true;
   } catch {
     shutdown(code);
@@ -75,7 +76,7 @@ vite.on("exit", async (code) => {
 });
 
 try {
-  await waitForUrl("http://127.0.0.1:5173");
+  await waitForUrl(`http://${LOOPBACK_HOST}:5173`);
   viteReady = true;
 } catch (error) {
   console.error(`[desktop:dev] ${error.message}`);
@@ -83,7 +84,7 @@ try {
 }
 
 const electron = spawnChild(nodeBin, [electronCli, "."], {
-  VITE_DEV_SERVER_URL: "http://127.0.0.1:5173",
+  VITE_DEV_SERVER_URL: `http://${LOOPBACK_HOST}:5173`,
 });
 
 electron.on("exit", (code) => shutdown(code ?? 0));

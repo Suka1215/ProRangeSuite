@@ -107,6 +107,10 @@ function defaultOrigin() {
   return `${protocol}//${hostname}`;
 }
 
+function isLoopbackHost(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 function readEntitlement() {
   if (typeof window === "undefined") return null;
 
@@ -169,15 +173,24 @@ function getBridgeBaseUrl() {
     return queryBridgeUrl;
   }
 
+  const configuredBridgeUrl = import.meta.env.VITE_BRIDGE_BASE_URL?.trim();
+  if (configuredBridgeUrl) {
+    return configuredBridgeUrl;
+  }
+
   if (/electron/i.test(window.navigator.userAgent) && window.location.port === "5173") {
     return DEFAULT_BRIDGE_BASE_URL;
   }
 
-  if (window.location.port === "5173") {
+  if (window.location.port === "5173" || window.location.port === "4173") {
     return DEFAULT_BRIDGE_BASE_URL;
   }
 
-  return defaultOrigin();
+  if (isLoopbackHost(window.location.hostname) && (!window.location.port || window.location.port === "3000")) {
+    return defaultOrigin();
+  }
+
+  return DEFAULT_BRIDGE_BASE_URL;
 }
 
 function upsertConnector(
@@ -245,7 +258,20 @@ export function useDesktopBridge() {
     } catch (nextError) {
       const cached = readEntitlement();
       setEntitlement(cached);
-      setError(nextError instanceof Error ? nextError.message : "The desktop bridge is unavailable.");
+      setBridge(null);
+      setPairing(null);
+      setConnectors([]);
+      setConnectorLogs({ gspro: [], "infinite-tee": [] });
+
+      const nextMessage = nextError instanceof Error ? nextError.message : "";
+      const unavailableMessage =
+        nextMessage === "Failed to fetch" ||
+        nextMessage === "Load failed" ||
+        /networkerror/i.test(nextMessage)
+          ? `The local connector is unavailable on ${DEFAULT_BRIDGE_BASE_URL}.`
+          : nextMessage || "The desktop bridge is unavailable.";
+
+      setError(unavailableMessage);
     } finally {
       setLoading(false);
     }

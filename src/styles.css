@@ -1285,6 +1285,13 @@ svg {
   padding: 8px 16px 16px;
 }
 
+.pr-secondary-stage.is-bridge {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 16px;
+  overflow: hidden;
+}
+
 .pr-secondary-intro {
   padding: 12px 4px 20px;
 }
@@ -1317,6 +1324,14 @@ svg {
   border-radius: 36px;
 }
 
+.pr-secondary-stage-inner.is-bridge {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  border-radius: 36px;
+  overflow: hidden;
+}
+
 .pr-secondary-content {
   height: 100%;
   min-height: 0;
@@ -1329,6 +1344,12 @@ svg {
 .pr-secondary-stage-inner.is-immersive .pr-secondary-content {
   padding: 0;
   overflow: hidden;
+}
+
+.pr-secondary-stage-inner.is-bridge .pr-secondary-content.is-bridge-scroll {
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .pr-shotlog {
@@ -5074,6 +5095,81 @@ svg {
   flex-wrap: wrap;
 }
 
+.pr-connector-browser-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.5rem 1.6rem;
+  border-radius: 28px;
+  border: 1px solid rgba(106, 216, 124, 0.24);
+  background:
+    linear-gradient(135deg, rgba(106, 216, 124, 0.14), rgba(255, 255, 255, 0.96) 42%),
+    rgba(255, 255, 255, 0.95);
+  box-shadow: 0 20px 40px rgba(38, 41, 48, 0.08);
+}
+
+.pr-connector-browser-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pr-connector-browser-copy h2 {
+  margin: 0;
+  color: #262930;
+  font-family: "Outfit", sans-serif;
+  font-size: 2rem;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.pr-connector-browser-copy p {
+  margin: 0;
+  color: rgba(38, 41, 48, 0.7);
+  line-height: 1.65;
+}
+
+.pr-connector-browser-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.pr-connector-browser-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(38, 41, 48, 0.06);
+}
+
+.pr-connector-browser-meta span {
+  color: rgba(38, 41, 48, 0.48);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pr-connector-browser-meta strong {
+  color: #262930;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.pr-connector-browser-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.pr-connector-download-pill {
+  text-decoration: none;
+}
+
 .pr-connector-selector-grid {
   width: fit-content;
   max-width: min(920px, 100%);
@@ -5421,7 +5517,8 @@ svg {
   .pr-connector-selector-grid,
   .pr-connector-detail-grid,
   .pr-connector-feature-meta,
-  .pr-connector-instruction-summary {
+  .pr-connector-instruction-summary,
+  .pr-connector-browser-meta {
     grid-template-columns: 1fr;
   }
 
@@ -5448,13 +5545,20 @@ svg {
     border-radius: 24px;
   }
 
+  .pr-connector-browser-card {
+    padding: 1.25rem;
+    border-radius: 24px;
+  }
+
   .pr-connector-card-copy strong,
   .pr-connector-feature-brand h2,
+  .pr-connector-browser-copy h2,
   .pr-connector-instruction-panel h3 {
     font-size: 1.8rem;
   }
 
-  .pr-connector-card-footer {
+  .pr-connector-card-footer,
+  .pr-connector-browser-actions {
     flex-direction: column;
     align-items: flex-start;
   }

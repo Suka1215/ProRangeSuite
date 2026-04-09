@@ -6,6 +6,7 @@ import { DEFAULT_HTTP_PORT, startBridgeServer } from "../server.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
+const LOOPBACK_HOST = "localhost";
 const BRIDGE_PORT_CANDIDATES = [
   { httpPort: DEFAULT_HTTP_PORT, shotPort: 9210 },
   { httpPort: 3001, shotPort: 9212 },
@@ -39,7 +40,7 @@ function createBridgeOptions(overrides = {}) {
 
 async function probeExistingBridge(port = DEFAULT_HTTP_PORT) {
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/api/status`);
+    const res = await fetch(`http://${LOOPBACK_HOST}:${port}/api/status`);
     if (!res.ok) return null;
 
     const status = await res.json();
@@ -87,7 +88,7 @@ async function ensureBridge() {
 
 async function createMainWindow() {
   const bridgeHandle = await ensureBridge();
-  const bridgeUrl = `http://127.0.0.1:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`;
+  const bridgeUrl = `http://${LOOPBACK_HOST}:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`;
   const appUrl = new URL(process.env.VITE_DEV_SERVER_URL || bridgeUrl);
   appUrl.searchParams.set("desktop", "1");
   appUrl.searchParams.set("bridgeUrl", bridgeUrl);
@@ -101,7 +102,7 @@ async function createMainWindow() {
     backgroundColor: "#09111f",
     show: false,
     webPreferences: {
-      additionalArguments: [`--bridge-url=http://127.0.0.1:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`],
+      additionalArguments: [`--bridge-url=http://${LOOPBACK_HOST}:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`],
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,

@@ -372,7 +372,7 @@ export default function ShotLogView({
           {loading && !visibleBuckets.length ? (
             <div className="pr-shotdesk-empty">
               <h3>Loading sessions</h3>
-              <p>Pulling your saved sessions and misc shots from Firestore.</p>
+              <p>Loading your saved app sessions and misc shots from this device.</p>
             </div>
           ) : visibleBuckets.length ? (
             visibleBuckets.map((bucket, index) => renderCard(bucket, index))
