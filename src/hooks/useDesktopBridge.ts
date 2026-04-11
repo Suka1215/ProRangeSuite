@@ -326,6 +326,18 @@ export function useDesktopBridge() {
     return `spivot://desktop-pair?${params.toString()}`;
   }, [bridge, pairing]);
 
+  const gsproScanUrl = useMemo(() => {
+    if (!bridge) return "";
+
+    const params = new URLSearchParams({
+      host: bridge.ip,
+      shotPort: String(bridge.shotPort),
+      mode: "gspro-bridge",
+    });
+
+    return `spivot://desktop-pair?${params.toString()}`;
+  }, [bridge]);
+
   const manualCode = pairing?.token ? pairing.token.slice(0, 8).toUpperCase() : null;
 
   const clearOfflineAccess = useCallback(async () => {
@@ -359,6 +371,33 @@ export function useDesktopBridge() {
         setConnectors((current) => upsertConnector(current, payload.connector!));
       }
       throw new Error(("error" in payload && payload.error) || "Failed to start connector.");
+    }
+
+    if (payload.connectors) {
+      setConnectors(payload.connectors);
+    } else {
+      setConnectors((current) => upsertConnector(current, payload.connector));
+    }
+
+    await refresh();
+  }, [bridgeBaseUrl, bridgeEnabled, refresh]);
+
+  const disconnectConnector = useCallback(async (connectorId: DesktopConnectorId) => {
+    if (!bridgeEnabled) {
+      throw new Error("The local bridge is unavailable.");
+    }
+
+    const response = await fetch(`${bridgeBaseUrl}/api/connectors/${connectorId}/disconnect`, {
+      method: "POST",
+    });
+
+    const payload = await response.json() as ConnectConnectorSuccessResponse | ConnectConnectorFailureResponse;
+
+    if (!response.ok || payload.ok === false) {
+      if (payload.connector) {
+        setConnectors((current) => upsertConnector(current, payload.connector!));
+      }
+      throw new Error(("error" in payload && payload.error) || "Failed to disconnect connector.");
     }
 
     if (payload.connectors) {
@@ -414,8 +453,10 @@ export function useDesktopBridge() {
     premiumAccess,
     offlineAllowed: premiumAccess,
     pairingUrl,
+    gsproScanUrl,
     manualCode,
     connectConnector,
+    disconnectConnector,
     sendGsproTestShot,
     refresh,
     clearOfflineAccess,
