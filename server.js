@@ -28,12 +28,37 @@ const DEFAULT_GSPRO_BRIDGE_SCRIPT_NAME = "gspro_bridge.py";
 const LEGACY_GSPRO_BRIDGE_SCRIPT = "/Users/jmmiller/Downloads/gspro_bridge.py";
 
 function getLocalIP() {
+  const override = process.env.BRIDGE_HOST_IP?.trim();
+  if (override) return override;
+
   const nets = networkInterfaces();
+
+  const candidates = [];
   for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      if (net.family === "IPv4" && !net.internal) return net.address;
+    for (const net of nets[name] ?? []) {
+      if (net.family !== "IPv4" || net.internal) continue;
+      candidates.push({ name, address: net.address });
     }
   }
+
+  if (!candidates.length) return "127.0.0.1";
+
+  const scoreInterface = ({ name, address }) => {
+    let score = 0;
+    const lowerName = name.toLowerCase();
+
+    if (/wi-?fi|wlan|wireless/.test(lowerName)) score += 100;
+    if (/ethernet/.test(lowerName)) score += 40;
+    if (address.startsWith("192.168.")) score += 30;
+    else if (address.startsWith("10.")) score += 20;
+    else if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(address)) score += 10;
+
+    return score;
+  };
+
+  candidates.sort((left, right) => scoreInterface(right) - scoreInterface(left));
+  return candidates[0].address;
+
   return "127.0.0.1";
 }
 
@@ -71,31 +96,56 @@ function getInfiniteTeeUnavailableDetail() {
 
 function buildGsproTestShot() {
   return {
-    DeviceID: "SPIVOT Test",
+    DeviceID: "Spivot-iOS",
     Units: "Yards",
-    ShotNumber: Date.now(),
+    ShotNumber: 1,
     APIversion: "1",
     BallData: {
-      Speed: 152.4,
-      SpinAxis: 1.8,
-      TotalSpin: 6125,
-      BackSpin: 6125,
-      HLA: 0.4,
-      VLA: 13.6,
-      CarryDistance: 247,
-      SideSpin: 190,
-    },
-    ClubData: {
-      Speed: 106.2,
+      Speed: 145.2,
+      VLA: 14.5,
+      HLA: -1.2,
+      BackSpin: 3200.0,
+      SideSpin: -150.0,
+      TotalSpin: 3203.5,
+      SpinAxis: -2.7,
     },
     ShotDataOptions: {
       ContainsBallData: true,
-      ContainsClubData: true,
+      ContainsClubData: false,
       LaunchMonitorIsReady: true,
       LaunchMonitorBallDetected: true,
       IsHeartBeat: false,
     },
   };
+}
+
+function normalizeGsproPayload(input, fallbackShotNumber = Date.now()) {
+  const ball = input?.BallData ?? {};
+
+  const normalized = {
+    DeviceID: typeof input?.DeviceID === "string" && input.DeviceID.trim() ? input.DeviceID : "SPIVOT Bridge",
+    Units: typeof input?.Units === "string" && input.Units.trim() ? input.Units : "Yards",
+    ShotNumber: Number.isFinite(Number(input?.ShotNumber)) ? Number(input.ShotNumber) : fallbackShotNumber,
+    APIversion: "1",
+    BallData: {
+      Speed: Number(ball.Speed ?? 0),
+      VLA: Number(ball.VLA ?? 0),
+      HLA: Number(ball.HLA ?? 0),
+      BackSpin: Number(ball.BackSpin ?? ball.TotalSpin ?? 0),
+      SideSpin: Number(ball.SideSpin ?? 0),
+      TotalSpin: Number(ball.TotalSpin ?? ball.BackSpin ?? 0),
+      SpinAxis: Number(ball.SpinAxis ?? 0),
+    },
+    ShotDataOptions: {
+      ContainsBallData: true,
+      ContainsClubData: false,
+      LaunchMonitorIsReady: true,
+      LaunchMonitorBallDetected: true,
+      IsHeartBeat: Boolean(input?.ShotDataOptions?.IsHeartBeat),
+    },
+  };
+
+  return normalized;
 }
 
 function sendPayloadToGsproHelper(payload) {
@@ -138,6 +188,7 @@ function sendPayloadToGsproHelper(payload) {
     socket.on("error", rejectOnce);
   });
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Load TrackMan reference DB — ALL 10k shots in one flat array
@@ -635,6 +686,36 @@ export async function startBridgeServer(options = {}) {
     }
   }
 
+  function disconnectGspro() {
+    const connector = connectors.gspro;
+    if (connector.status === "idle" && !connector.process) {
+      return connectorSnapshot("gspro");
+    }
+
+    pushConnectorLog("gspro", "Disconnecting GSPro bridge.");
+    stopConnectorProcess("gspro");
+    return updateConnector("gspro", {
+      status: "idle",
+      detail: "GSPro bridge stopped. Reconnect when GSPro Open Connect is ready.",
+      available: fs.existsSync(gsproScriptPath),
+    });
+  }
+
+  function disconnectInfiniteTee() {
+    const connector = connectors["infinite-tee"];
+    if (connector.status === "idle" && !connector.process) {
+      return connectorSnapshot("infinite-tee");
+    }
+
+    pushConnectorLog("infinite-tee", "Disconnecting Infinite Tee connector.");
+    stopConnectorProcess("infinite-tee");
+    return updateConnector("infinite-tee", {
+      status: "idle",
+      detail: infiniteTeeAvailable ? "Infinite Tee is ready to launch again." : getInfiniteTeeUnavailableDetail(),
+      available: infiniteTeeAvailable,
+    });
+  }
+
   function beginInfiniteTeeConnect() {
     const connector = connectors["infinite-tee"];
 
@@ -791,6 +872,20 @@ export async function startBridgeServer(options = {}) {
       return;
     }
 
+    if (requestPath === "/api/connectors/gspro/disconnect" && req.method === "POST") {
+      const connector = disconnectGspro();
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, connector, connectors: connectorsSnapshot() }));
+      return;
+    }
+
+    if (requestPath === "/api/connectors/infinite-tee/disconnect" && req.method === "POST") {
+      const connector = disconnectInfiniteTee();
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, connector, connectors: connectorsSnapshot() }));
+      return;
+    }
+
     if (requestPath === "/api/connectors/gspro/test-shot" && req.method === "POST") {
       if (!connectors.gspro.connected) {
         res.writeHead(409, { "Content-Type": "application/json" });
@@ -798,7 +893,8 @@ export async function startBridgeServer(options = {}) {
         return;
       }
 
-      const payload = buildGsproTestShot();
+      const payload = normalizeGsproPayload(buildGsproTestShot());
+      pushConnectorLog("gspro", "Sending test shot through the GSPro helper's persistent socket.");
       forwardShotToGspro(payload, "test shot")
         .then(() => {
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -991,7 +1087,7 @@ export async function startBridgeServer(options = {}) {
 
         console.log(`[SHOT] speed=${prSpeed}mph VLA=${prVla}° → TM match: speed=${tmRef?.speed ?? "?"}mph VLA=${tmRef?.vla ?? "?"}° err=${tmRef ? (prVla - tmRef.vla).toFixed(1) : "?"}°`);
         broadcast({ type: "shot", shot });
-        void forwardShotToGspro(gspro, "live shot").catch(() => {});
+        void forwardShotToGspro(normalizeGsproPayload(gspro), "live shot").catch(() => {});
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ status: "ok" }));

@@ -1091,8 +1091,6 @@ function HomeView({
 
           <div className="pr-hero-column">
             <div className="pr-hero-metric">
-              <span className="pr-hero-grade">{heroGrade}</span>
-              <span className="pr-hero-label">Consistency</span>
               <strong>{carryAverage}</strong>
               <span className="pr-hero-unit">yd carry avg</span>
             </div>
@@ -1460,8 +1458,10 @@ function SecPage({
             offlineAllowed={bridgeDesktop.premiumAccess}
             bridgeOnly={bridgeDesktop.bridgeAccess && !bridgeDesktop.premiumAccess}
             pairingUrl={bridgeDesktop.pairingUrl}
+            gsproScanUrl={bridgeDesktop.gsproScanUrl}
             manualCode={bridgeDesktop.manualCode}
             onConnectConnector={bridgeDesktop.connectConnector}
+            onDisconnectConnector={bridgeDesktop.disconnectConnector}
             onSendGsproTestShot={bridgeDesktop.sendGsproTestShot}
             onRefresh={bridgeDesktop.refresh}
             onClearOfflineAccess={bridgeDesktop.clearOfflineAccess}

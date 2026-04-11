@@ -26,12 +26,14 @@ interface BridgeConnectionsViewProps {
   offlineAllowed: boolean;
   bridgeOnly?: boolean;
   pairingUrl: string;
+  gsproScanUrl?: string;
   manualCode: string | null;
   onRefresh: () => void | Promise<void>;
   onClearOfflineAccess?: () => void | Promise<void>;
   onContinueOffline?: () => void;
   onOpenCloudLogin?: () => void;
   onConnectConnector: (connectorId: DesktopConnectorId) => void | Promise<void>;
+  onDisconnectConnector?: (connectorId: DesktopConnectorId) => void | Promise<void>;
   onSendGsproTestShot?: () => Promise<unknown>;
   compact?: boolean;
 }
@@ -43,8 +45,6 @@ interface ConnectorDefinition {
   subtitle: string;
   tags: string[];
   monogram: string;
-  instructions: string[];
-  instructionNote: string;
 }
 
 const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
@@ -55,14 +55,6 @@ const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
     subtitle: "Launch the local GSPro bridge helper and hand off SPIVOT shot traffic into GSPro Open Connect.",
     tags: ["Local Bridge", "Simulator", "Open Connect"],
     monogram: "GS",
-    instructions: [
-      "Open GSPro on this desktop and make sure the Open Connect window is available before you connect.",
-      "Click Connect to GSPro to start the configured Python bridge helper on this machine.",
-      "While GSPro is opening or waiting, the connector stays in Establishing for up to 30 seconds.",
-      "If GSPro accepts the bridge, the button turns SPIVOT green and the status flips to Connected.",
-      "If GSPro never comes online, SPIVOT marks the connection as failed so you can retry cleanly.",
-    ],
-    instructionNote: "The Connector app can use a bundled gspro_bridge.py helper or the path set in GSPRO_BRIDGE_SCRIPT.",
   },
   "infinite-tee": {
     id: "infinite-tee",
@@ -71,13 +63,6 @@ const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
     subtitle: "Prepare a dedicated connector profile for Infinite Tee with the same streamlined one-click workflow.",
     tags: ["Connector Profile", "Third-Party App", "Coming Next"],
     monogram: "IT",
-    instructions: [
-      "Select Infinite Tee when you want to prep its bridge profile inside the desktop suite.",
-      "The UI and action flow are ready, but the actual launch command still needs the Infinite Tee app details.",
-      "Once that command or integration spec is available, this button can start and monitor the connector exactly like GSPro.",
-      "Until then, keep using the host and port details from the bridge tools for manual setup if needed.",
-    ],
-    instructionNote: "Infinite Tee is scaffolded in the suite now, but it still needs its launch or socket spec for a real connect flow.",
   },
 };
 
@@ -90,23 +75,6 @@ function formatPairingState(
   if (offlineAllowed) return "Saved premium access";
   if (bridgeOnly || pairing?.paired) return "Bridge only access";
   return "Waiting for app pair";
-}
-
-function getConnectorActionLabel(connector: DesktopConnectorStatus) {
-  if (connector.id === "gspro" && !connector.available) {
-    return "Helper not configured";
-  }
-
-  switch (connector.status) {
-    case "connected":
-      return `Connected to ${connector.name}`;
-    case "establishing":
-      return "Establishing…";
-    case "failed":
-      return "Connection failed";
-    default:
-      return connector.commandLabel;
-  }
 }
 
 function getConnectorBadgeText(connector: DesktopConnectorStatus) {
@@ -170,18 +138,20 @@ export default function BridgeConnectionsView({
   offlineAllowed,
   bridgeOnly = false,
   pairingUrl,
+  gsproScanUrl = "",
   manualCode,
   onRefresh,
   onClearOfflineAccess,
   onContinueOffline,
   onOpenCloudLogin,
   onConnectConnector,
+  onDisconnectConnector,
   onSendGsproTestShot,
   compact = false,
 }: BridgeConnectionsViewProps) {
   const desktopRuntime = isDesktopApp();
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
-  const [activeConnectorId, setActiveConnectorId] = useState<DesktopConnectorId | null>(null);
+  const [gsproQrDataUrl, setGsproQrDataUrl] = useState<string>("");
   const [sendingTestShot, setSendingTestShot] = useState(false);
 
   useEffect(() => {
@@ -212,6 +182,34 @@ export default function BridgeConnectionsView({
     };
   }, [pairingUrl]);
 
+  useEffect(() => {
+    let active = true;
+
+    if (!gsproScanUrl) {
+      setGsproQrDataUrl("");
+      return;
+    }
+
+    void toDataURL(gsproScanUrl, {
+      width: 240,
+      margin: 1,
+      color: {
+        dark: "#262930",
+        light: "#ffffff",
+      },
+    })
+      .then((nextUrl) => {
+        if (active) setGsproQrDataUrl(nextUrl);
+      })
+      .catch(() => {
+        if (active) setGsproQrDataUrl("");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [gsproScanUrl]);
+
   const connectorMap = useMemo(() => {
     const map = new Map<DesktopConnectorId, DesktopConnectorStatus>();
     connectors.forEach((connector) => {
@@ -222,31 +220,28 @@ export default function BridgeConnectionsView({
 
   const gsproConnector = connectorMap.get("gspro") ?? getConnectorFallback("gspro", bridge);
   const infiniteTeeConnector = connectorMap.get("infinite-tee") ?? getConnectorFallback("infinite-tee", bridge);
-  const selectedConnectorId = activeConnectorId ?? "gspro";
-  const selectedConnector =
-    connectorMap.get(selectedConnectorId) ?? getConnectorFallback(selectedConnectorId, bridge);
-  const selectedDefinition = CONNECTOR_DEFINITIONS[selectedConnectorId];
   const bridgeAvailable = Boolean(bridge);
   const browserConnectorMissing = !desktopRuntime && !loading && !bridgeAvailable;
   const downloadConnectorEnabled = Boolean(CONNECTOR_DOWNLOAD_URL);
-  const selectedDownloadsConnector =
-    !desktopRuntime &&
-    !bridgeAvailable &&
-    selectedConnector.id === "gspro" &&
-    downloadConnectorEnabled;
+  const pairingState = formatPairingState(pairing, offlineAllowed, bridgeOnly);
+  const pairedDevice = pairing?.deviceName || entitlement?.deviceName || null;
+  const compactStatus = offlineAllowed
+    ? `Premium paired with ${pairedDevice || "your app"}`
+    : bridgeOnly || pairing?.paired
+      ? "Bridge paired. Premium is required to unlock the full suite."
+      : loading
+        ? "Preparing pairing QR..."
+        : error
+          ? "Bridge unavailable"
+          : "Waiting for app pair";
+  const gsproConnected = gsproConnector.status === "connected";
+  const gsproConnecting = gsproConnector.status === "establishing";
+  const gsproOrbPulsing = gsproConnecting || gsproConnected;
+  const gsproLogs = connectorLogs.gspro ?? [];
+  const showGsproQr = Boolean(gsproQrDataUrl);
+  const gsproStatusLabel = gsproConnected ? "Connected" : gsproConnecting ? "Connecting" : "Waiting";
 
   if (compact) {
-    const pairedDevice = pairing?.deviceName || entitlement?.deviceName || null;
-    const compactStatus = offlineAllowed
-      ? `Premium paired with ${pairedDevice || "your app"}`
-      : bridgeOnly || pairing?.paired
-        ? "Bridge paired. Premium is required to unlock the full suite."
-        : loading
-          ? "Preparing pairing QR..."
-          : error
-            ? "Bridge unavailable"
-            : "Waiting for app pair";
-
     return (
       <div className="pr-auth-shell pr-bridge-entry-shell">
         <div className="pr-bridge-entry-frame">
@@ -306,26 +301,15 @@ export default function BridgeConnectionsView({
     );
   }
 
-  const pairingState = formatPairingState(pairing, offlineAllowed, bridgeOnly);
-  const selectedActionLabel = selectedDownloadsConnector
-    ? "Download Connector"
-    : getConnectorActionLabel(selectedConnector);
-  const selectedBadgeText = getConnectorBadgeText(selectedConnector);
-  const selectedConnecting = selectedConnector.status === "establishing";
-  const selectedConnected = selectedConnector.status === "connected";
-  const selectedActionDisabled =
-    !selectedDownloadsConnector &&
-    (selectedConnecting || (selectedConnector.id === "gspro" && !selectedConnector.available));
-  const selectedLogs = connectorLogs[selectedConnector.id] ?? [];
-
   return (
     <section className="pr-bridge pr-connector-workspace">
       <div className="pr-bridge-head pr-connector-head">
         <div>
           <span className="pr-bridge-eyebrow">Bridge Connectors</span>
-          <h1>Launch and monitor third-party connectors</h1>
+          <h1>Connect GSPro with one phone scan</h1>
           <p>
-            Pick a connector card, open its setup panel, and start or monitor the local connector directly from SPIVOT Suite.
+            The GSPro card now carries the scan flow directly. Scan once to start the connector workflow, hand shots to
+            your phone, and keep Open Connect fed from SPIVOT.
           </p>
         </div>
 
@@ -349,8 +333,8 @@ export default function BridgeConnectionsView({
             <h2>Start the SPIVOT Connector on this machine</h2>
             <p>
               {error ?? "The local connector is unavailable on http://127.0.0.1:3000."} Launch the Connector app on
-              this computer, then refresh this page. Once it is running, your phone can scan the QR shown in the
-              connector window to pair shots into GSPro.
+              this computer, then refresh this page. Once it is running, your phone can scan the QR shown here to pair
+              shots into GSPro.
             </p>
           </div>
 
@@ -361,7 +345,7 @@ export default function BridgeConnectionsView({
             </div>
             <div>
               <span>Pairing flow</span>
-              <strong>Scan the QR in the Connector window</strong>
+              <strong>Scan the QR from the GSPro card</strong>
             </div>
           </div>
 
@@ -369,119 +353,82 @@ export default function BridgeConnectionsView({
             <button className="pr-secondary-pill" onClick={() => void onRefresh()}>
               Retry localhost
             </button>
-            <a
-              className="pr-secondary-pill pr-connector-download-pill"
-              href={CONNECTOR_DOWNLOAD_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Download Connector
-            </a>
+            {downloadConnectorEnabled && (
+              <a
+                className="pr-secondary-pill pr-connector-download-pill"
+                href={CONNECTOR_DOWNLOAD_URL}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Download Connector
+              </a>
+            )}
           </div>
         </div>
       )}
+
       <div className="pr-connector-selector-shell">
         <div className="pr-connector-selector-grid">
-        {[gsproConnector, infiniteTeeConnector].map((connector) => {
-          const definition = CONNECTOR_DEFINITIONS[connector.id];
-          const badgeText = getConnectorBadgeText(connector);
-          const footerTitle = connector.id === "gspro" ? "Open Connect" : "Connector profile";
-          const footerMeta =
-            connector.id === "gspro" ? "Local connector + simulator" : "Third-party app";
-          const cardActionLabel =
-            !desktopRuntime && !bridgeAvailable && connector.id === "gspro" && downloadConnectorEnabled
-              ? "Download"
-              : "Open setup";
+          <article className="pr-connector-card is-gspro-live">
+            <div className="pr-connector-card-top">
+              <span className={`pr-connector-card-orb is-gspro ${gsproOrbPulsing ? "is-pulsing" : ""}`}>GS</span>
+              <span className={`pr-connector-card-badge is-${gsproConnector.status}`}>
+                {getConnectorBadgeText(gsproConnector)}
+              </span>
+            </div>
 
-          return (
-            <button
-              key={connector.id}
-              type="button"
-              className="pr-connector-card"
-              onClick={() => setActiveConnectorId(connector.id)}
-            >
-              <div className="pr-connector-card-top">
-                <span className={`pr-connector-card-orb is-${connector.id}`}>{definition.monogram}</span>
-                <span className={`pr-connector-card-badge is-${connector.status}`}>{badgeText}</span>
-              </div>
+            <div className="pr-connector-card-copy">
+              <span className="pr-connector-card-vendor">GSPro connector</span>
+              <strong>{CONNECTOR_DEFINITIONS.gspro.title}</strong>
+              <p>{CONNECTOR_DEFINITIONS.gspro.subtitle}</p>
+            </div>
 
-              <div className="pr-connector-card-copy">
-                <span className="pr-connector-card-vendor">{definition.vendor} connector</span>
-                <strong>{definition.title}</strong>
-                <p>{definition.subtitle}</p>
-              </div>
+            <div className="pr-connector-card-tags">
+              {CONNECTOR_DEFINITIONS.gspro.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
 
-              <div className="pr-connector-card-tags">
-                {definition.tags.map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
-              </div>
+            <div className="pr-connector-card-divider" />
 
-              <div className="pr-connector-card-footer">
-                <div className="pr-connector-card-footer-copy">
-                  <strong>{footerTitle}</strong>
-                  <span>{footerMeta}</span>
-                </div>
-                <span className="pr-connector-card-cta">{cardActionLabel}</span>
-              </div>
-            </button>
-          );
-        })}
-        </div>
-      </div>
-
-      {activeConnectorId && (
-        <div className="pr-connector-detail-page">
-          <div className="pr-connector-detail-grid">
-            <article className="pr-connector-feature-card">
-              <div className="pr-connector-feature-top">
-                <span className="pr-connector-feature-kicker">{selectedDefinition.vendor}</span>
-                <span className={`pr-connector-live-pill is-${selectedConnector.status}`}>{selectedBadgeText}</span>
-              </div>
-
-              <div className="pr-connector-feature-brand">
-                <span className={`pr-connector-feature-orb is-${selectedConnector.id}`}>{selectedDefinition.monogram}</span>
-                <div>
-                  <h2>{selectedDefinition.title}</h2>
-                  <p>{selectedDefinition.subtitle}</p>
-                </div>
-              </div>
-
-              <div className="pr-connector-feature-tags">
-                {selectedDefinition.tags.map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
-              </div>
-
-              <div className="pr-connector-feature-meta">
+            <div className="pr-connector-card-inline">
+              <div className="pr-connector-feature-meta pr-connector-card-meta">
                 <div>
                   <span>Bridge host</span>
                   <strong>{bridge?.ip ?? "Waiting for bridge"}</strong>
                 </div>
                 <div>
                   <span>Port</span>
-                  <strong>{selectedConnector.id === "gspro" ? "9210 → 921" : bridge?.shotPort ?? "9210"}</strong>
+                  <strong>9210 to 921</strong>
                 </div>
               </div>
 
-              <p className="pr-connector-feature-status">{selectedConnector.detail}</p>
+              <div className="pr-connector-card-qr-column">
+                <div className="pr-connector-card-qr-copy">
+                  <span className="pr-connector-panel-kicker">Phone scan</span>
+                  <strong className="pr-connector-card-qr-headline">
+                    Scan to launch the connector, connect to GSPro, and send the session to your phone.
+                  </strong>
+                </div>
 
-              <button
-                className={`pr-connector-connect-button ${selectedConnected ? "is-connected" : ""}`}
-                disabled={selectedActionDisabled}
-                onClick={() => {
-                  if (selectedDownloadsConnector) {
-                    window.open(CONNECTOR_DOWNLOAD_URL, "_blank", "noopener,noreferrer");
-                    return;
-                  }
+                <div className="pr-bridge-showcase-qr-shell pr-connector-card-qr-shell">
+                  {showGsproQr ? (
+                    <img
+                      src={gsproQrDataUrl}
+                      alt="GSPro bridge QR code"
+                      className="pr-bridge-showcase-qr pr-connector-card-qr"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="pr-bridge-showcase-qr is-placeholder">
+                      {loading ? "Preparing QR..." : "QR unavailable"}
+                    </div>
+                  )}
+                </div>
 
-                  void onConnectConnector(selectedConnector.id);
-                }}
-              >
-                {selectedActionLabel}
-              </button>
+              </div>
 
-              {selectedConnector.id === "gspro" && selectedConnected && onSendGsproTestShot && (
+              {gsproConnected && onSendGsproTestShot && (
                 <button
                   className="pr-secondary-pill"
                   disabled={sendingTestShot}
@@ -493,62 +440,84 @@ export default function BridgeConnectionsView({
                   {sendingTestShot ? "Sending test shot..." : "Send test shot"}
                 </button>
               )}
+            </div>
 
-              <div className="pr-connector-feature-footnote">
-                {selectedConnector.id === "gspro"
-                  ? selectedDownloadsConnector
-                    ? "Download the Connector app, run it on this desktop, then scan its QR code from your phone."
-                    : `Pair code ${manualCode ?? "pending"} • ${pairingState}`
-                  : "Infinite Tee uses the same bridge workspace once its launch spec is configured."}
+            <div className="pr-connector-card-footer">
+              <div className="pr-connector-card-footer-copy">
+                <strong>Phone scan ready</strong>
+                <span>Scan once to launch bridge plus phone handoff</span>
               </div>
-            </article>
+              <button
+                className={`pr-connector-connect-button pr-connector-footer-button ${gsproConnected ? "is-connected" : ""}`}
+                disabled
+                onClick={() => void onConnectConnector("gspro")}
+              >
+                {gsproStatusLabel}
+              </button>
+            </div>
 
-            <article className="pr-connector-instruction-panel">
-              <span className="pr-connector-panel-kicker">Setup instructions</span>
-              <h3>{selectedDefinition.title}</h3>
-              <ul className="pr-connector-instruction-list">
-                {selectedDefinition.instructions.map((instruction) => (
-                  <li key={instruction}>{instruction}</li>
-                ))}
-              </ul>
-              <p className="pr-connector-instruction-note">{selectedDefinition.instructionNote}</p>
+            <button
+              className="pr-secondary-pill pr-connector-disconnect-pill"
+              disabled={!onDisconnectConnector || (!gsproConnected && !gsproConnecting)}
+              onClick={() => void onDisconnectConnector?.("gspro")}
+            >
+              Disconnect
+            </button>
+          </article>
 
-              {selectedConnector.id === "gspro" && (
-                <>
-                  <div className="pr-connector-instruction-summary">
-                    <div>
-                      <span>GSPro helper</span>
-                      <strong>{selectedConnector.available ? "Configured" : "Not configured"}</strong>
-                    </div>
-                    <div>
-                      <span>Current state</span>
-                      <strong>{selectedBadgeText}</strong>
-                    </div>
-                  </div>
+          <article className="pr-connector-card">
+            <div className="pr-connector-card-top">
+              <span className="pr-connector-card-orb is-infinite-tee">{CONNECTOR_DEFINITIONS["infinite-tee"].monogram}</span>
+              <span className={`pr-connector-card-badge is-${infiniteTeeConnector.status}`}>
+                {getConnectorBadgeText(infiniteTeeConnector)}
+              </span>
+            </div>
 
-                  <div className="pr-connector-log-panel">
-                    <span className="pr-connector-panel-kicker">GSPro logs</span>
-                    <div className="pr-connector-log-list">
-                      {selectedLogs.length ? (
-                        selectedLogs.slice().reverse().map((entry) => (
-                          <div key={entry.id} className={`pr-connector-log-entry is-${entry.level}`}>
-                            <strong>{new Date(entry.createdAt).toLocaleTimeString()}</strong>
-                            <span>{entry.message}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="pr-connector-log-entry">
-                          <span>No GSPro logs yet.</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </article>
-          </div>
+            <div className="pr-connector-card-copy">
+              <span className="pr-connector-card-vendor">Infinite Tee connector</span>
+              <strong>{CONNECTOR_DEFINITIONS["infinite-tee"].title}</strong>
+              <p>{CONNECTOR_DEFINITIONS["infinite-tee"].subtitle}</p>
+            </div>
+
+            <div className="pr-connector-card-tags">
+              {CONNECTOR_DEFINITIONS["infinite-tee"].tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+
+            <div className="pr-connector-card-footer">
+              <div className="pr-connector-card-footer-copy">
+                <strong>Connector profile</strong>
+                <span>Third-party app</span>
+              </div>
+              <span className="pr-connector-card-cta">Coming soon</span>
+            </div>
+          </article>
         </div>
-      )}
+      </div>
+
+      <div className="pr-connector-detail-page">
+        <div className="pr-connector-detail-grid is-single">
+          <article className="pr-connector-instruction-panel">
+            <span className="pr-connector-panel-kicker">GSPro logs</span>
+            <h3>Connector activity</h3>
+            <div className="pr-connector-log-list">
+              {gsproLogs.length ? (
+                gsproLogs.slice().reverse().map((entry) => (
+                  <div key={entry.id} className={`pr-connector-log-entry is-${entry.level}`}>
+                    <strong>{new Date(entry.createdAt).toLocaleTimeString()}</strong>
+                    <span>{entry.message}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="pr-connector-log-entry">
+                  <span>No GSPro logs yet.</span>
+                </div>
+              )}
+            </div>
+          </article>
+        </div>
+      </div>
     </section>
   );
 }
