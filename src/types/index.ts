@@ -8,7 +8,6 @@ export type TabId =
   | "shots"
   | "progress"
   | "compare"
-  | "sessions"
   | "bridge";
 
 // ─── SHOT DATA ────────────────────────────────────────────────────────────────
@@ -20,6 +19,8 @@ export interface MetricSet {
   carry: number;
   spin: number;
   total?: number;
+  clubSpeed?: number;
+  smashFactor?: number;
 }
 
 export interface TrajectoryPoint {
@@ -54,6 +55,7 @@ export interface Shot {
 export interface SessionShot {
   id: string;
   shotNum: number;
+  club?: string;
   pr: MetricSet;
   tm: Partial<MetricSet> | null;
   trackPts: number | null;

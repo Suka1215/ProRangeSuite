@@ -24,12 +24,12 @@ export default function TrackManPulseCard({
     <button
       className="shotiq-trackman-card"
       onClick={onClick}
-      aria-label={`TrackMan matched card, ${matchedCount} of ${totalCount || matchedCount} shots matched`}
+      aria-label={`Reference matched card, ${matchedCount} of ${totalCount || matchedCount} shots matched`}
     >
       <div className="shotiq-trackman-head">
         <span className="shotiq-trackman-avatar">T</span>
         <span className="shotiq-trackman-copy">
-          <strong>TrackMan</strong>
+          <strong>Reference</strong>
           <span>Matched</span>
         </span>
       </div>

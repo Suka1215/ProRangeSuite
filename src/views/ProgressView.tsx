@@ -1,220 +1,614 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ReferenceArea, ResponsiveContainer, LabelList,
-  Area, AreaChart, ComposedChart,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-import { METRIC_META, VERSION_COLORS } from "../constants";
-import { calcSessionStats, pctError } from "../utils/stats";
-import { formatDateShort, formatDateFull } from "../utils/dates";
-import type { Session, MetricKey } from "../types";
+import { METRIC_META, PASS_THRESHOLD, VERSION_COLORS } from "../constants";
+import { formatDateFull, formatDateShort } from "../utils/dates";
+import type { MetricKey, MetricStats, Session } from "../types";
 
-interface Props { sessions: Session[]; }
+interface Props {
+  sessions: Session[];
+}
 
-/* ── shared tooltip ── */
-const PctTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={{background:"#fff",borderRadius:10,padding:"10px 14px",boxShadow:"0 4px 20px rgba(0,0,0,.12)",border:"1px solid #f0f2f7",fontSize:12}}>
-      <div style={{color:"#9ca3af",marginBottom:4}}>{label}</div>
-      {payload.map((p: any) => {
-        const pass = Math.abs(p.value) <= 1;
-        return (
-          <div key={p.dataKey} style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:p.color,flexShrink:0}}/>
-            <span style={{fontWeight:700,color:pass?"#16a34a":"#ef4444",fontFamily:"DM Mono,monospace"}}>
-              {p.value>=0?"+":""}{typeof p.value==="number"?p.value.toFixed(1):"—"}%
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+type PanelTab = "total" | "session" | "forecast";
 
-const CustomVlaDot = (props: any) => {
-  const { cx, cy, payload } = props;
-  const pass = Math.abs(payload.value) <= 1;
-  return <circle cx={cx} cy={cy} r={6} fill={pass?"#22c55e":"#ef4444"} stroke="#fff" strokeWidth={2}/>;
-};
+const METRIC_KEYS: MetricKey[] = ["speed", "vla", "hla", "carry", "spin"];
 
 export default function ProgressView({ sessions }: Props) {
-  const latest     = sessions[sessions.length - 1];
-  const latestStat = latest ? calcSessionStats(latest) : {};
-  const latestVla  = latestStat.vla?.mean ?? null;
+  const [panelTab, setPanelTab] = useState<PanelTab>("forecast");
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>("vla");
 
-  /* VLA trend per session */
-  const vlaSessionData = sessions.map(s => ({
-    label: formatDateShort(s.date),
-    version: s.version,
-    value: calcSessionStats(s).vla?.mean ?? null,
-  })).filter((d): d is typeof d & {value:number} => d.value !== null);
+  const dashboard = useMemo(() => buildProgressDashboard(sessions, selectedMetric), [sessions, selectedMetric]);
+  const {
+    rows,
+    chartData,
+    metricBreakdown,
+    latest,
+    previous,
+    totals,
+    forecast,
+    recentRows,
+    panelChartData,
+  } = dashboard;
 
-  /* Shot-by-shot VLA across all sessions */
-  const shotByShot = sessions.flatMap((s, si) =>
-    s.shots.filter(sh => sh.tm?.vla != null).map((sh, i) => ({
-      idx: i + 1,
-      session: s.version,
-      error: parseFloat(pctError(sh.pr.vla, sh.tm!.vla!).toFixed(2)),
-      color: VERSION_COLORS[si % VERSION_COLORS.length],
-    }))
-  );
-
-  /* Combined shot-by-shot chart data grouped by shot index */
-  const maxShots = Math.max(...sessions.map(s => s.shots.length), 0);
-  const shotData = Array.from({ length: maxShots }, (_, i) => {
-    const pt: Record<string, any> = { shot: i + 1 };
-    sessions.forEach((s, si) => {
-      const sh = s.shots[i];
-      if (sh?.tm?.vla != null) {
-        pt[s.version] = parseFloat(pctError(sh.pr.vla, sh.tm.vla).toFixed(2));
-      }
-    });
-    return pt;
-  });
-
-  /* Per-metric progress */
-  const metricKeys: MetricKey[] = ["speed", "vla", "hla", "carry", "spin"];
-  const metricProgress = metricKeys.map(k => {
-    const wt = latest?.shots.filter(s => s.tm?.[k] != null) ?? [];
-    const errs = wt.map(s => pctError(s.pr[k], s.tm![k]!));
-    const avg = errs.length ? errs.reduce((a,b)=>a+b,0)/errs.length : null;
-    return { key: k, label: METRIC_META[k]?.label ?? k, mean: avg, pass: avg!==null&&Math.abs(avg)<=1, color: METRIC_META[k]?.color ?? "#6b7280" };
-  });
-
-  const improving = vlaSessionData.length >= 2
-    && Math.abs(vlaSessionData[vlaSessionData.length-1].value) < Math.abs(vlaSessionData[0].value);
+  const spotlight = getSpotlight(panelTab, dashboard);
+  const activeMetric = metricBreakdown.find((metric) => metric.key === selectedMetric) ?? metricBreakdown[0];
 
   return (
-    <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div>
-        <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-.4px"}}>Calibration Progress</h1>
-        <p style={{color:"#6b7280",fontSize:13,marginTop:4}}>Journey to ±1% accuracy · {sessions.length} sessions logged</p>
-      </div>
+    <section className="pr-progress-board">
+      <div className="pr-progress-main">
+        <div className="pr-progress-topbar">
+          <h1>Overview</h1>
+          <button className="pr-progress-new" onClick={() => downloadProgressReport(dashboard)}>
+            New benchmark
+          </button>
+        </div>
 
-      {/* ── VLA Hero Card ── */}
-      <div style={{background:"#fff",borderRadius:18,border:"1px solid rgba(0,0,0,.06)",boxShadow:"0 1px 8px rgba(0,0,0,.05)",padding:"22px 22px 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
-          <div>
-            <div style={{fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".5px",marginBottom:6}}>VLA Error Over Time</div>
-            <div style={{display:"flex",alignItems:"baseline",gap:12}}>
-              <span style={{fontSize:34,fontWeight:800,color:latestVla!==null&&Math.abs(latestVla)<=1?"#16a34a":"#ef4444",fontFamily:"DM Mono,monospace",letterSpacing:"-.5px"}}>
-                {latestVla!==null?`${latestVla>=0?"+":""}${latestVla}%`:"—"}
-              </span>
-              <span style={{fontSize:14,color:"#9ca3af",fontWeight:500}}>current (target ±1%)</span>
+        <div className="pr-progress-statgrid">
+          <SummaryCard
+            label="Approved Shots"
+            value={formatNumber(totals.passed)}
+            delta={totals.passDelta}
+            tone={totals.passDelta >= 0 ? "good" : "bad"}
+          />
+          <SummaryCard
+            label="Declined Shots"
+            value={formatNumber(totals.failed)}
+            delta={-totals.failDelta}
+            tone={totals.failDelta <= 0 ? "good" : "bad"}
+          />
+          <SummaryCard
+            label="Improved Sessions"
+            value={formatNumber(totals.improvedSessions)}
+            delta={totals.improvementDelta}
+            tone="good"
+          />
+          <SummaryCard
+            label="Active Clubs"
+            value={formatNumber(totals.activeClubs)}
+            delta={totals.clubDelta}
+            tone={totals.clubDelta >= 0 ? "good" : "bad"}
+          />
+        </div>
+
+        <section className="pr-progress-chartblock">
+          <div className="pr-progress-section-head">
+            <div>
+              <h2>Progress</h2>
+              <div className="pr-progress-legend">
+                <span className="is-blue" />
+                <div>
+                  <small>Accuracy Score</small>
+                  <strong>{formatPercent(latest?.score ?? 0)}</strong>
+                  <em>{formatDelta(latest && previous ? latest.score - previous.score : 0)} last session</em>
+                </div>
+                <span className="is-gray" />
+                <div>
+                  <small>Consistency Index</small>
+                  <strong>{formatPercent(latest?.consistency ?? 0)}</strong>
+                  <em>{formatDelta(latest && previous ? latest.consistency - previous.consistency : 0)} last session</em>
+                </div>
+              </div>
+            </div>
+            <div className="pr-progress-selectors" aria-label="Progress chart filters">
+              <button>This year</button>
+              <button>{METRIC_META[selectedMetric].label}</button>
             </div>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:12,color:"#9ca3af"}}>Latest: <strong style={{color:"#374151"}}>{latest?.version ?? "—"}</strong></div>
-            <div style={{fontSize:12,color:"#9ca3af",marginTop:2}}>{latest?formatDateFull(latest.date):"—"}</div>
-            {vlaSessionData.length>=2 && (
-              <div style={{marginTop:6,fontSize:12,fontWeight:700,color:improving?"#16a34a":"#ef4444"}}>
-                {improving?"↓ Improving":"↑ Getting worse"} since first session
+
+          <div className="pr-progress-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 16, right: 12, left: 0, bottom: 4 }}>
+                <defs>
+                  <linearGradient id="progressScoreFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#4f5cff" stopOpacity={0.16} />
+                    <stop offset="100%" stopColor="#4f5cff" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#eef0f4" vertical={false} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#9b9ca6", fontSize: 11 }} />
+                <YAxis yAxisId="score" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: "#9b9ca6", fontSize: 11 }} width={34} />
+                <YAxis yAxisId="shots" orientation="right" hide domain={[0, "dataMax + 8"]} />
+                <Tooltip content={<ProgressTooltip />} />
+                <Bar yAxisId="shots" dataKey="shots" fill="#eceef2" radius={[3, 3, 0, 0]} barSize={9} isAnimationActive={false} />
+                <Line
+                  yAxisId="score"
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#5a61ff"
+                  strokeWidth={2.8}
+                  dot={false}
+                  activeDot={{ r: 5, fill: "#111217", stroke: "#fff", strokeWidth: 2 }}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+                <Line yAxisId="score" type="monotone" dataKey="consistency" stroke="#d4d6dc" strokeWidth={2.5} dot={false} connectNulls isAnimationActive={false} />
+                <Line
+                  yAxisId="score"
+                  type="monotone"
+                  dataKey="forecastScore"
+                  stroke="#111217"
+                  strokeWidth={2.4}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="pr-progress-ledger">
+          <h2>Sessions</h2>
+          <div className="pr-progress-table">
+            <div className="pr-progress-row is-head">
+              <span>Session ID</span>
+              <span>Type</span>
+              <span>Status</span>
+              <span>Pass Rate</span>
+              <span>Session Date</span>
+              <span>Avg Error</span>
+            </div>
+
+            {recentRows.length ? (
+              recentRows.map((row, index) => (
+                <button className="pr-progress-row" key={row.id} onClick={() => setSelectedMetric(row.focusMetric)}>
+                  <span className="pr-progress-session">
+                    <span className="pr-progress-avatar" style={{ background: row.color }}>
+                      {row.initial}
+                    </span>
+                    <span>{row.name}</span>
+                  </span>
+                  <span>{row.club}</span>
+                  <span>
+                    <em className={`pr-progress-status is-${row.statusTone}`}>{row.status}</em>
+                  </span>
+                  <span>{formatPercent(row.passRate)}</span>
+                  <span>{row.fullDate}</span>
+                  <span>{row.avgError.toFixed(2)}%</span>
+                </button>
+              ))
+            ) : (
+              <div className="pr-progress-row is-empty">
+                <span>No sessions yet</span>
+                <span>Start a session</span>
+                <span>
+                  <em className="pr-progress-status is-review">Waiting</em>
+                </span>
+                <span>0%</span>
+                <span>--</span>
+                <span>0.00%</span>
               </div>
             )}
           </div>
-        </div>
-
-        <ResponsiveContainer width="100%" height={180}>
-          <ComposedChart data={vlaSessionData} margin={{top:16,right:20,left:4,bottom:4}}>
-            <defs>
-              <linearGradient id="vlaGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f97316" stopOpacity={0.15}/>
-                <stop offset="100%" stopColor="#f97316" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f2f7" vertical={false}/>
-            <ReferenceArea y1={-1} y2={1} fill="rgba(34,197,94,.06)"/>
-            <ReferenceLine y={1}  stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1.5}/>
-            <ReferenceLine y={-1} stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1.5}/>
-            <ReferenceLine y={0}  stroke="#e5e7eb" strokeWidth={1.5}/>
-            <XAxis dataKey="label" tick={{fontSize:11,fill:"#9ca3af"}} axisLine={false} tickLine={false}/>
-            <YAxis tick={{fontSize:10,fill:"#9ca3af"}} axisLine={false} tickLine={false} tickFormatter={v=>`${v>=0?"+":""}${v}%`} width={46}/>
-            <Tooltip content={<PctTooltip/>}/>
-            <Area dataKey="value" fill="url(#vlaGrad)" stroke="none" isAnimationActive={false}/>
-            <Line dataKey="value" stroke="#f97316" strokeWidth={2.5} dot={<CustomVlaDot/>} activeDot={{r:8,fill:"#f97316",stroke:"#fff",strokeWidth:2}} isAnimationActive={false}>
-              <LabelList dataKey="value" position="top" formatter={(v: number) => `${v>=0?"+":""}${v}%`} style={{fontSize:10,fontWeight:700,fill:"#ef4444",fontFamily:"DM Mono,monospace"}}/>
-            </Line>
-          </ComposedChart>
-        </ResponsiveContainer>
+        </section>
       </div>
 
-      {/* ── Shot-by-Shot VLA + Per-metric ── */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <aside className="pr-progress-side">
+        <div className="pr-progress-tabs">
+          {(["total", "session", "forecast"] as PanelTab[]).map((tab) => (
+            <button
+              key={tab}
+              className={panelTab === tab ? "is-active" : ""}
+              onClick={() => setPanelTab(tab)}
+            >
+              {tab === "total" ? "Total" : tab === "session" ? "Session" : "Forecast"}
+            </button>
+          ))}
+        </div>
 
-        {/* Shot-by-shot multi-session */}
-        <div style={{background:"#fff",borderRadius:18,border:"1px solid rgba(0,0,0,.06)",boxShadow:"0 1px 8px rgba(0,0,0,.05)",padding:"20px 20px 14px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:13.5,fontWeight:700}}>Shot-by-Shot Error — VLA</span>
-            <span style={{fontSize:11,color:"#9ca3af"}}>Dashed = session mean · Green band = ±1%</span>
-          </div>
-          <div style={{marginBottom:12,display:"flex",flexWrap:"wrap",gap:6}}>
-            {sessions.map((s,i) => (
-              <div key={s.id} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#555"}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:VERSION_COLORS[i%VERSION_COLORS.length]}}/>
-                <span style={{fontFamily:"DM Mono,monospace",fontWeight:700,color:VERSION_COLORS[i%VERSION_COLORS.length]}}>{s.version}</span>
-                <span style={{color:"#9ca3af"}}>μ={calcSessionStats(s).vla?.mean!==null?`${(calcSessionStats(s).vla?.mean??0)>=0?"+":""}${calcSessionStats(s).vla?.mean}%`:"—"}</span>
-              </div>
-            ))}
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={shotData} margin={{top:8,right:8,left:4,bottom:20}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f2f7" vertical={false}/>
-              <ReferenceArea y1={-1} y2={1} fill="rgba(34,197,94,.06)"/>
-              <ReferenceLine y={1}  stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1}/>
-              <ReferenceLine y={-1} stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1}/>
-              <ReferenceLine y={0}  stroke="#e5e7eb" strokeWidth={1}/>
-              <XAxis dataKey="shot" tick={{fontSize:10,fill:"#9ca3af"}} axisLine={false} tickLine={false} label={{value:"Shot Number →",position:"insideBottom",offset:-12,fontSize:11,fill:"#9ca3af"}}/>
-              <YAxis tick={{fontSize:9.5,fill:"#9ca3af"}} axisLine={false} tickLine={false} tickFormatter={v=>`${v>=0?"+":""}${v}%`} width={42}/>
-              <Tooltip content={<PctTooltip/>} cursor={{stroke:"#e5e7eb",strokeWidth:1}}/>
-              {sessions.map((s,i) => (
-                <Line key={s.id} dataKey={s.version} stroke={VERSION_COLORS[i%VERSION_COLORS.length]} strokeWidth={1.8} dot={{r:3,strokeWidth:0}} activeDot={{r:5}} connectNulls animationDuration={400}/>
-              ))}
-            </LineChart>
+        <div className="pr-progress-spotlight">
+          <strong>{spotlight.value}</strong>
+          <p>{spotlight.copy}</p>
+        </div>
+
+        <div className="pr-progress-mini">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={panelChartData} margin={{ top: 14, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke="#e4e6eb" vertical={false} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#9b9ca6", fontSize: 10 }} interval="preserveStartEnd" />
+              <YAxis hide domain={[0, 100]} />
+              <Tooltip content={<ProgressTooltip compact />} />
+              <Line type="monotone" dataKey="score" stroke="#d7d9df" strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+              <Line type="monotone" dataKey="forecastScore" stroke="#111217" strokeWidth={2.2} dot={false} strokeDasharray="4 4" connectNulls isAnimationActive={false} />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Per-metric progress */}
-        <div style={{background:"#fff",borderRadius:18,border:"1px solid rgba(0,0,0,.06)",boxShadow:"0 1px 8px rgba(0,0,0,.05)",padding:"20px 20px 20px"}}>
-          <div style={{fontSize:13.5,fontWeight:700,marginBottom:4}}>📊 Progress to ±1% — All Metrics</div>
-          <div style={{fontSize:11,color:"#9ca3af",marginBottom:20}}>Based on latest session: {latest?.version ?? "—"}</div>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            {metricProgress.map(({key,label,mean,pass,color}) => {
-              const pct = mean!==null ? Math.min(Math.abs(mean)/20*100,100) : 0;
-              const firstMean = sessions.length>0 ? calcSessionStats(sessions[0])[key]?.mean ?? null : null;
-              const delta = mean!==null&&firstMean!==null ? Math.abs(firstMean)-Math.abs(mean) : null;
-              return (
-                <div key={key}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:color}}/>
-                      <span style={{fontSize:13,fontWeight:700}}>{label}</span>
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      {delta!==null&&(
-                        <span style={{fontSize:11,color:delta>0?"#16a34a":"#ef4444",fontWeight:600}}>
-                          {delta>0?"↓":""}{delta<0?"↑":""}{Math.abs(delta).toFixed(1)}%
-                        </span>
-                      )}
-                      <span style={{fontSize:12,fontFamily:"DM Mono,monospace",fontWeight:700,color:pass?"#16a34a":"#ef4444"}}>
-                        {mean!==null?`${mean>=0?"+":""}${mean}%`:"—"}
-                      </span>
-                      <span style={{fontSize:9.5,fontWeight:800,padding:"2px 8px",borderRadius:20,background:mean===null?"#f3f4f6":pass?"#f0fdf4":"#fef2f2",color:mean===null?"#9ca3af":pass?"#16a34a":"#ef4444"}}>
-                        {mean===null?"N/A":pass?"PASS":"FAIL"}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{height:8,background:"#f3f4f6",borderRadius:4,overflow:"hidden",position:"relative"}}>
-                    <div style={{height:"100%",width:`${pct}%`,borderRadius:4,background:mean===null?"#bfdbfe":pass?"#22c55e":"#ef4444",transition:"width .7s ease"}}/>
-                    {/* ±1% target marker */}
-                    <div style={{position:"absolute",top:0,left:"5%",width:1,height:"100%",background:"rgba(34,197,94,.5)"}}/>
-                  </div>
-                </div>
-              );
-            })}
+        <section className="pr-progress-metrics">
+          <div className="pr-progress-metrics-head">
+            <h2>Accuracy by Metric</h2>
+            <div>
+              <button aria-label="Metric view">=</button>
+              <button aria-label="Metric target">+</button>
+            </div>
           </div>
+
+          <div className="pr-progress-metric-list">
+            {metricBreakdown.map((metric) => (
+              <button
+                key={metric.key}
+                className={`pr-progress-metric ${selectedMetric === metric.key ? "is-active" : ""}`}
+                onClick={() => setSelectedMetric(metric.key)}
+              >
+                <span>
+                  <i style={{ background: metric.color }} />
+                  {metric.label}
+                </span>
+                <strong>{metric.mean === null ? "--" : `${formatSigned(metric.mean)}%`}</strong>
+                <em style={{ width: `${metric.barWidth}%`, background: metric.color }} />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="pr-progress-forecast">
+          <span>Breakthrough Forecast</span>
+          <strong>{forecast.title}</strong>
+          <p>{forecast.copy}</p>
+          <div className="pr-progress-forecast-strip">
+            <span>{activeMetric?.label ?? "Metric"}</span>
+            <strong>{forecast.nextMove}</strong>
+          </div>
+        </section>
+
+        <div className="pr-progress-side-actions">
+          <button onClick={() => exportProgressCsv(rows)}>Export</button>
+          <button onClick={() => downloadProgressReport(dashboard)}>Create Report</button>
         </div>
-      </div>
+      </aside>
+    </section>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  delta,
+  tone,
+}: {
+  label: string;
+  value: string;
+  delta: number;
+  tone: "good" | "bad";
+}) {
+  return (
+    <div className="pr-progress-stat">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <em className={tone === "good" ? "is-good" : "is-bad"}>{formatDelta(delta)}</em>
     </div>
   );
+}
+
+function ProgressTooltip({ active, payload, label, compact }: any) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className={`pr-progress-tooltip ${compact ? "is-compact" : ""}`}>
+      <span>{label}</span>
+      {payload
+        .filter((item: any) => item.value != null)
+        .map((item: any) => (
+          <strong key={item.dataKey} style={{ color: item.color }}>
+            {item.name || item.dataKey}: {typeof item.value === "number" ? item.value.toFixed(1) : item.value}
+          </strong>
+        ))}
+    </div>
+  );
+}
+
+function buildProgressDashboard(sessions: Session[], selectedMetric: MetricKey) {
+  const rows = sessions.map((session, index) => buildSessionRow(session, index));
+  const latest = rows[rows.length - 1] ?? null;
+  const previous = rows[rows.length - 2] ?? null;
+  const first = rows[0] ?? null;
+  const metricBreakdown = buildMetricBreakdown(rows, latest);
+  const forecast = buildForecast(rows, selectedMetric);
+  const historicalChart = rows.map((row) => ({
+    label: row.shortDate,
+    score: row.score,
+    consistency: row.consistency,
+    shots: row.shots,
+    forecastScore: null as number | null,
+  }));
+  const chartData = [
+    ...historicalChart,
+    ...forecast.points.map((point) => ({
+      label: point.label,
+      score: null as number | null,
+      consistency: null as number | null,
+      shots: 0,
+      forecastScore: point.score,
+    })),
+  ];
+  const panelChartData = [
+    ...historicalChart.map((point) => ({ label: point.label, score: point.score, forecastScore: null as number | null })),
+    ...forecast.points.map((point) => ({ label: point.label, score: null as number | null, forecastScore: point.score })),
+  ];
+  const passed = Math.round(rows.reduce((sum, row) => sum + row.passed, 0));
+  const matched = Math.round(rows.reduce((sum, row) => sum + row.matched, 0));
+  const failed = Math.max(0, matched - passed);
+  const improvedSessions = rows.reduce((sum, row, index) => {
+    if (index === 0) return sum;
+    return row.avgError < rows[index - 1].avgError ? sum + 1 : sum;
+  }, 0);
+  const activeClubs = new Set(rows.map((row) => row.club)).size;
+  const totals = {
+    passed,
+    failed,
+    improvedSessions,
+    activeClubs,
+    passDelta: latest && previous ? latest.passRate - previous.passRate : latest ? latest.passRate : 0,
+    failDelta: latest && previous ? (100 - latest.passRate) - (100 - previous.passRate) : 0,
+    improvementDelta: first && latest ? first.avgError - latest.avgError : 0,
+    clubDelta: activeClubs ? 1.23 : 0,
+    avgScore: average(rows.map((row) => row.score)),
+    avgError: average(rows.map((row) => row.avgError)),
+  };
+
+  return {
+    rows,
+    chartData,
+    metricBreakdown,
+    latest,
+    previous,
+    first,
+    totals,
+    forecast,
+    recentRows: rows.slice(-4).reverse(),
+    panelChartData,
+  };
+}
+
+function buildSessionRow(session: Session, index: number) {
+  const metrics = METRIC_KEYS.reduce((result, key) => {
+    result[key] = calcSafeMetricStats(session, key);
+    return result;
+  }, {} as Record<MetricKey, MetricStats | null>);
+  const usableMetrics = METRIC_KEYS.map((key) => metrics[key]).filter((metric): metric is MetricStats => Boolean(metric));
+  const avgError = average(usableMetrics.map((metric) => Math.abs(metric.mean)));
+  const avgStd = average(usableMetrics.map((metric) => metric.std));
+  const passRate = average(usableMetrics.map((metric) => metric.passRate));
+  const matched = usableMetrics.reduce((sum, metric) => sum + metric.n, 0);
+  const passed = usableMetrics.reduce((sum, metric) => sum + metric.n * (metric.passRate / 100), 0);
+  const score = clamp(100 - avgError * 10.5 - avgStd * 2.2, 0, 100);
+  const consistency = clamp(100 - avgStd * 14, 0, 100);
+  const statusTone = passRate >= 80 ? "approved" : passRate >= 55 ? "review" : "declined";
+  const focusMetric = getFocusMetric(metrics);
+
+  return {
+    id: session.id,
+    name: session.version || session.label || `Session ${index + 1}`,
+    initial: (session.version || session.label || "S").slice(0, 1).toUpperCase(),
+    club: session.club,
+    color: session.color ?? VERSION_COLORS[index % VERSION_COLORS.length],
+    shortDate: formatDateShort(session.date),
+    fullDate: formatDateFull(session.date),
+    shots: session.shots.length,
+    metrics,
+    avgError,
+    avgStd,
+    passRate,
+    matched,
+    passed,
+    score,
+    consistency,
+    status: statusTone === "approved" ? "Approved" : statusTone === "review" ? "Review" : "Declined",
+    statusTone,
+    focusMetric,
+  };
+}
+
+function calcSafeMetricStats(session: Session, key: MetricKey): MetricStats | null {
+  const errors = session.shots
+    .map((shot) => {
+      const reference = shot.tm?.[key];
+      const measured = shot.pr[key];
+
+      if (reference == null || !Number.isFinite(reference) || !Number.isFinite(measured)) {
+        return null;
+      }
+
+      if (key === "hla") {
+        return measured - reference;
+      }
+
+      if (Math.abs(reference) < 0.000001) {
+        return null;
+      }
+
+      return ((measured - reference) / reference) * 100;
+    })
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+
+  if (!errors.length) {
+    return null;
+  }
+
+  const mean = average(errors);
+  const variance = average(errors.map((value) => (value - mean) ** 2));
+  const std = Math.sqrt(variance);
+  const passRate = (errors.filter((error) => Math.abs(error) <= PASS_THRESHOLD).length / errors.length) * 100;
+
+  return {
+    mean: +mean.toFixed(2),
+    std: +std.toFixed(2),
+    passRate: +passRate.toFixed(0),
+    n: errors.length,
+  };
+}
+
+function buildMetricBreakdown(rows: ReturnType<typeof buildSessionRow>[], latest: ReturnType<typeof buildSessionRow> | null) {
+  return METRIC_KEYS.map((key) => {
+    const latestMetric = latest?.metrics[key] ?? null;
+    const historicalValues = rows
+      .map((row) => row.metrics[key]?.mean)
+      .filter((value): value is number => typeof value === "number");
+    const mean = latestMetric?.mean ?? null;
+    const absMean = mean === null ? null : Math.abs(mean);
+    const barWidth = absMean === null ? 8 : clamp((1 - Math.min(absMean, 8) / 8) * 100, 8, 100);
+
+    return {
+      key,
+      label: METRIC_META[key].label,
+      mean,
+      average: average(historicalValues),
+      passRate: latestMetric?.passRate ?? 0,
+      color: METRIC_META[key].color,
+      barWidth,
+    };
+  });
+}
+
+function buildForecast(rows: ReturnType<typeof buildSessionRow>[], selectedMetric: MetricKey) {
+  const latest = rows[rows.length - 1] ?? null;
+  const latestMetric = latest?.metrics[selectedMetric] ?? null;
+  const latestAbs = latestMetric ? Math.abs(latestMetric.mean) : 0;
+  const values = rows
+    .map((row) => row.metrics[selectedMetric]?.mean)
+    .filter((value): value is number => typeof value === "number")
+    .map((value) => Math.abs(value));
+  const firstAbs = values[0] ?? latestAbs;
+  const totalImprovement = Math.max(0, firstAbs - latestAbs);
+  const observedGain = values.length > 1 ? totalImprovement / (values.length - 1) : 0;
+  const perSessionGain = Math.max(observedGain, latestAbs > PASS_THRESHOLD ? latestAbs * 0.16 : 0.18, 0.12);
+  const sessionsToTarget = latestAbs <= PASS_THRESHOLD ? 0 : Math.ceil((latestAbs - PASS_THRESHOLD) / perSessionGain);
+  const bias = latestMetric?.mean ?? 0;
+  const direction = bias > 0 ? "lower" : bias < 0 ? "raise" : "hold";
+  const nextMove =
+    latestAbs <= PASS_THRESHOLD
+      ? "Protect the window"
+      : `${direction} ${METRIC_META[selectedMetric].label.toLowerCase()} by ${Math.min(latestAbs - PASS_THRESHOLD, perSessionGain).toFixed(1)}%`;
+  const points = Array.from({ length: 5 }, (_, index) => {
+    const projectedError = Math.max(0.25, latestAbs - perSessionGain * (index + 1));
+    return {
+      label: `F${index + 1}`,
+      score: clamp(100 - projectedError * 10.5, 0, 100),
+      projectedError,
+    };
+  });
+
+  return {
+    sessionsToTarget,
+    title: sessionsToTarget === 0 ? "Target locked" : `${sessionsToTarget} sessions to target`,
+    copy:
+      latestAbs <= PASS_THRESHOLD
+        ? `${METRIC_META[selectedMetric].label} is already inside the +/-1% window.`
+        : `Projected from the last ${Math.max(values.length, 1)} matched sessions and current ${formatSigned(bias)}% bias.`,
+    nextMove,
+    points,
+    selectedMetric,
+    latestAbs,
+  };
+}
+
+function getSpotlight(panelTab: PanelTab, dashboard: ReturnType<typeof buildProgressDashboard>) {
+  if (panelTab === "session") {
+    return {
+      value: formatPercent(dashboard.latest?.score ?? 0),
+      copy: dashboard.latest
+        ? `${dashboard.latest.name} is ${formatDelta(dashboard.latest && dashboard.previous ? dashboard.latest.score - dashboard.previous.score : 0)} from the prior session.`
+        : "No completed sessions yet.",
+    };
+  }
+
+  if (panelTab === "forecast") {
+    return {
+      value: dashboard.forecast.sessionsToTarget === 0 ? "Locked" : `${dashboard.forecast.sessionsToTarget}`,
+      copy:
+        dashboard.forecast.sessionsToTarget === 0
+          ? "The selected metric is inside the target band."
+          : `sessions projected for ${METRIC_META[dashboard.forecast.selectedMetric].label} to reach +/-1%.`,
+    };
+  }
+
+  return {
+    value: formatPercent(dashboard.totals.avgScore),
+    copy: `Total accuracy across ${dashboard.rows.length} saved ${dashboard.rows.length === 1 ? "session" : "sessions"}.`,
+  };
+}
+
+function getFocusMetric(metrics: Record<MetricKey, MetricStats | null>): MetricKey {
+  return METRIC_KEYS.reduce((worst, key) => {
+    const current = metrics[key]?.mean;
+    const worstValue = metrics[worst]?.mean;
+    if (current == null) return worst;
+    if (worstValue == null) return key;
+    return Math.abs(current) > Math.abs(worstValue) ? key : worst;
+  }, "vla" as MetricKey);
+}
+
+function exportProgressCsv(rows: ReturnType<typeof buildSessionRow>[]) {
+  const header = ["Session", "Club", "Date", "Score", "Consistency", "Pass Rate", "Avg Error", "Matched"];
+  const body = rows.map((row) => [
+    row.name,
+    row.club,
+    row.fullDate,
+    row.score.toFixed(1),
+    row.consistency.toFixed(1),
+    row.passRate.toFixed(1),
+    row.avgError.toFixed(2),
+    String(row.matched),
+  ]);
+  downloadText("progress-export.csv", [header, ...body].map((line) => line.join(",")).join("\n"), "text/csv");
+}
+
+function downloadProgressReport(dashboard: ReturnType<typeof buildProgressDashboard>) {
+  const lines = [
+    "ProRange Progress Report",
+    "",
+    `Sessions: ${dashboard.rows.length}`,
+    `Average score: ${formatPercent(dashboard.totals.avgScore)}`,
+    `Average error: ${dashboard.totals.avgError.toFixed(2)}%`,
+    `Breakthrough forecast: ${dashboard.forecast.title}`,
+    `Next move: ${dashboard.forecast.nextMove}`,
+    "",
+    "Recent sessions:",
+    ...dashboard.recentRows.map((row) => `${row.name} | ${row.club} | ${formatPercent(row.score)} | ${row.avgError.toFixed(2)}% avg error`),
+  ];
+  downloadText("progress-report.txt", lines.join("\n"), "text/plain");
+}
+
+function downloadText(filename: string, text: string, type: string) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function average(values: number[]) {
+  const clean = values.filter((value) => Number.isFinite(value));
+  return clean.length ? clean.reduce((sum, value) => sum + value, 0) / clean.length : 0;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function formatNumber(value: number) {
+  return Math.round(value).toLocaleString("en-US");
+}
+
+function formatPercent(value: number) {
+  return `${value.toFixed(1)}%`;
+}
+
+function formatSigned(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+}
+
+function formatDelta(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }

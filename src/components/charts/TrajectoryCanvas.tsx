@@ -222,7 +222,7 @@ export function TrajectoryCanvas({ shots, activeShot, playing, onPlayDone }: Pro
           { color:"#06b6d4",  filled:true,  label:"Real Detections" },
           { color:"#8b5cf6",  filled:false, label:"Predicted Points" },
           { color:"#1a6bff",  line:true,    label:"ProRange Trajectory" },
-          { color:"#22c55e",  line:true,    label:"TM Reference" },
+      { color:"#22c55e",  line:true,    label:"Reference" },
           { color:"#bfdbfe",  line:true,    label:"Previous Shots" },
         ].map(({ color, filled, line, label }) => (
           <div key={label} style={{ display:"flex", alignItems:"center", gap:5, fontSize:11, color:"#6b7280" }}>

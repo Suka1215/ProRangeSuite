@@ -103,7 +103,7 @@ async function createMainWindow() {
     show: false,
     webPreferences: {
       additionalArguments: [`--bridge-url=http://${LOOPBACK_HOST}:${bridgeHandle.httpPort ?? DEFAULT_HTTP_PORT}`],
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -113,6 +113,16 @@ async function createMainWindow() {
   window.once("ready-to-show", () => window.show());
   window.on("closed", () => {
     if (mainWindow === window) mainWindow = null;
+  });
+  window.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    const label = level >= 2 ? "error" : level === 1 ? "warn" : "log";
+    console.log(`[renderer:${label}] ${message} (${sourceId}:${line})`);
+  });
+  window.webContents.on("render-process-gone", (_event, details) => {
+    console.error(`[renderer:gone] reason=${details.reason} exitCode=${details.exitCode}`);
+  });
+  window.webContents.on("unresponsive", () => {
+    console.error("[renderer:unresponsive] Electron renderer stopped responding.");
   });
 
   mainWindow = window;

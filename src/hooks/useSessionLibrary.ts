@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { collection, deleteDoc, doc, getDocs, onSnapshot, query, setDoc } from "firebase/firestore";
 import { VERSION_COLORS } from "../constants";
+import { db } from "../lib/firebase";
 import type { Shot } from "../types";
 
 interface StartSessionOptions {
@@ -35,17 +37,29 @@ function randomSessionColor() {
 }
 
 function normalizeShot(shot: Shot): Shot {
+  const pr = shot.pr ?? {
+    speed: 0,
+    vla: 0,
+    hla: 0,
+    carry: 0,
+    spin: 0,
+  };
+
   return {
     ...shot,
     capturedAt: shot.capturedAt ?? Date.now(),
     pr: {
-      ...shot.pr,
-      total: shot.pr.total ?? shot.pr.carry,
+      ...pr,
+      total: pr.total ?? pr.carry,
+      clubSpeed: pr.clubSpeed,
+      smashFactor: pr.smashFactor,
     },
     tm: shot.tm
       ? {
           ...shot.tm,
           total: shot.tm.total ?? shot.tm.carry,
+          clubSpeed: shot.tm.clubSpeed,
+          smashFactor: shot.tm.smashFactor,
         }
       : null,
   };
@@ -55,6 +69,11 @@ function compareShots(left: Shot, right: Shot) {
   const timeDelta = (left.capturedAt ?? 0) - (right.capturedAt ?? 0);
   if (timeDelta !== 0) return timeDelta;
   return String(left.id).localeCompare(String(right.id));
+}
+
+function sameShotIdentity(left: Shot, right: Shot) {
+  if (String(left.id) === String(right.id)) return true;
+  return (left.capturedAt ?? 0) === (right.capturedAt ?? 0) && left.club === right.club;
 }
 
 function createMiscBucket(): SessionLibraryBucket {
@@ -73,15 +92,93 @@ function createMiscBucket(): SessionLibraryBucket {
   };
 }
 
+function serializeBucket(bucket: SessionLibraryBucket) {
+  return {
+    kind: bucket.kind,
+    title: bucket.title,
+    club: bucket.club,
+    color: bucket.color,
+    source: bucket.source,
+    shotCount: bucket.shotCount,
+    createdAt: bucket.createdAt,
+    updatedAt: bucket.updatedAt,
+    isActive: bucket.isActive,
+    shots: bucket.shots.map(serializeFirestoreShot),
+  };
+}
+
+function serializeSessionShot(shot: Shot) {
+  return serializeFirestoreShot(shot);
+}
+
+function cleanNumber(value: unknown, fallback = 0) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function cleanOptionalNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function serializeFirestoreShot(shot: Shot) {
+  const normalizedShot = normalizeShot(shot);
+  const pr = {
+    speed: cleanNumber(normalizedShot.pr.speed),
+    vla: cleanNumber(normalizedShot.pr.vla),
+    hla: cleanNumber(normalizedShot.pr.hla),
+    carry: cleanNumber(normalizedShot.pr.carry),
+    spin: cleanNumber(normalizedShot.pr.spin),
+    total: cleanNumber(normalizedShot.pr.total, cleanNumber(normalizedShot.pr.carry)),
+    clubSpeed: cleanOptionalNumber(normalizedShot.pr.clubSpeed),
+    smashFactor: cleanOptionalNumber(normalizedShot.pr.smashFactor),
+  };
+  const tm = normalizedShot.tm
+    ? {
+        speed: cleanOptionalNumber(normalizedShot.tm.speed),
+        vla: cleanOptionalNumber(normalizedShot.tm.vla),
+        hla: cleanOptionalNumber(normalizedShot.tm.hla),
+        carry: cleanOptionalNumber(normalizedShot.tm.carry),
+        spin: cleanOptionalNumber(normalizedShot.tm.spin),
+        total: cleanOptionalNumber(normalizedShot.tm.total),
+        clubSpeed: cleanOptionalNumber(normalizedShot.tm.clubSpeed),
+        smashFactor: cleanOptionalNumber(normalizedShot.tm.smashFactor),
+      }
+    : null;
+
+  return {
+    id: String(normalizedShot.id),
+    club: normalizedShot.club,
+    timestamp: normalizedShot.timestamp,
+    capturedAt: cleanNumber(normalizedShot.capturedAt, Date.now()),
+    pr,
+    tm,
+    trackPts: normalizedShot.trackPts ?? null,
+  };
+}
+
+function sessionShotDocId(shot: Shot) {
+  return encodeURIComponent(String(shot.id));
+}
+
+async function deleteSessionShotDocs(uid: string, bucketId: string) {
+  const shotsCollection = collection(db, "users", uid, "dashboard-sessions", bucketId, "shots");
+  const snapshot = await getDocs(shotsCollection);
+  if (snapshot.empty) return;
+  await Promise.all(snapshot.docs.map((shotDoc) => deleteDoc(shotDoc.ref)));
+}
+
+function sessionUpdatedAt(bucket: Partial<SessionLibraryBucket>) {
+  return typeof bucket.updatedAt === "number" && Number.isFinite(bucket.updatedAt) ? bucket.updatedAt : 0;
+}
+
 function normalizeBucket(
   bucket: Partial<SessionLibraryBucket> | undefined,
   activeClub: string,
   activeSessionId: string | null
 ): SessionLibraryBucket {
   const kind = bucket?.kind === "session" ? "session" : "misc";
-  const shots = Array.isArray(bucket?.shots) ? bucket!.shots.map(normalizeShot).sort(compareShots) : [];
-  const firstCapturedAt = shots[0]?.capturedAt ?? 0;
-  const lastCapturedAt = shots[shots.length - 1]?.capturedAt ?? firstCapturedAt;
+  const rawShots = Array.isArray(bucket?.shots) ? bucket!.shots.map(normalizeShot).sort(compareShots) : [];
+  const firstCapturedAt = rawShots[0]?.capturedAt ?? 0;
+  const lastCapturedAt = rawShots[rawShots.length - 1]?.capturedAt ?? firstCapturedAt;
   const createdAt = typeof bucket?.createdAt === "number" && Number.isFinite(bucket.createdAt)
     ? bucket.createdAt
     : firstCapturedAt;
@@ -92,7 +189,10 @@ function normalizeBucket(
     ? bucket.club
     : kind === "misc"
       ? "Mixed"
-      : shots[shots.length - 1]?.club ?? activeClub;
+      : rawShots[rawShots.length - 1]?.club ?? activeClub;
+  const shots = kind === "session"
+    ? rawShots.map((shot) => ({ ...shot, club }))
+    : rawShots;
 
   return {
     id: typeof bucket?.id === "string" && bucket.id.trim() ? bucket.id : MISC_BUCKET_ID,
@@ -184,14 +284,38 @@ function saveState(state: SessionLibraryState) {
   window.localStorage.setItem(SESSION_LIBRARY_KEY, JSON.stringify(state));
 }
 
-export function useSessionLibrary(_uid: string | null | undefined, activeClub: string) {
-  const initial = useMemo(() => loadState(activeClub), [activeClub]);
+export function useSessionLibrary(uid: string | null | undefined, activeClub: string) {
+  const initial = useMemo<{ state: SessionLibraryState; error: string | null }>(
+    () => uid
+      ? { state: { activeSessionId: null, buckets: [createMiscBucket()] }, error: null }
+      : loadState(activeClub),
+    [activeClub, uid]
+  );
   const [state, setState] = useState<SessionLibraryState>(initial.state);
   const [error, setError] = useState<string | null>(initial.error);
+  const activeSessionIdRef = useRef<string | null>(initial.state.activeSessionId);
+  const signedInUidRef = useRef<string | null>(uid ?? null);
 
   const buckets = useMemo(() => {
     return normalizeBuckets(state.buckets, activeClub, state.activeSessionId);
   }, [activeClub, state.activeSessionId, state.buckets]);
+
+  useEffect(() => {
+    activeSessionIdRef.current = state.activeSessionId;
+  }, [state.activeSessionId]);
+
+  useEffect(() => {
+    if (!uid) {
+      signedInUidRef.current = null;
+      return;
+    }
+
+    if (signedInUidRef.current === uid) return;
+
+    signedInUidRef.current = uid;
+    activeSessionIdRef.current = null;
+    setState({ activeSessionId: null, buckets: [createMiscBucket()] });
+  }, [uid]);
 
   useEffect(() => {
     try {
@@ -202,45 +326,175 @@ export function useSessionLibrary(_uid: string | null | undefined, activeClub: s
     }
   }, [buckets, state.activeSessionId]);
 
+  useEffect(() => {
+    if (!uid) return;
+
+    const sessionsQuery = query(collection(db, "users", uid, "dashboard-sessions"));
+    const unsubscribe = onSnapshot(
+      sessionsQuery,
+      (snapshot) => {
+        const remoteSessionDocs = snapshot.docs.map((snapshotDoc) => ({
+          id: snapshotDoc.id,
+          data: snapshotDoc.data() as Partial<SessionLibraryBucket>,
+        }));
+        const remoteActiveSessionId = remoteSessionDocs
+          .filter(({ data }) => data.isActive === true)
+          .sort((left, right) => sessionUpdatedAt(right.data) - sessionUpdatedAt(left.data))[0]?.id ?? null;
+
+        activeSessionIdRef.current = remoteActiveSessionId;
+
+        const remoteSessionBuckets = remoteSessionDocs
+          .map(({ id, data }) =>
+            normalizeBucket(
+              {
+                ...data,
+                id,
+                kind: "session",
+              },
+              activeClub,
+              remoteActiveSessionId
+            )
+          )
+          .filter((bucket) => bucket.id !== MISC_BUCKET_ID)
+          .sort((left, right) => right.updatedAt - left.updatedAt);
+
+        setState((current) => {
+          const currentBuckets = normalizeBuckets(current.buckets, activeClub, remoteActiveSessionId);
+          const miscBucket = currentBuckets.find((bucket) => bucket.id === MISC_BUCKET_ID) ?? createMiscBucket();
+
+          return {
+            activeSessionId: remoteActiveSessionId,
+            buckets: [miscBucket, ...remoteSessionBuckets],
+          };
+        });
+
+        setError(null);
+      },
+      (snapshotError) => {
+        console.error("[SessionLibrary] Failed to read dashboard sessions from Firestore:", snapshotError);
+        setError("We couldn't load your dashboard sessions from the cloud.");
+      }
+    );
+
+    return () => unsubscribe();
+  }, [activeClub, uid]);
+
   const startSession = useCallback(async (options?: StartSessionOptions) => {
     const createdAt = Date.now();
     const sessionId = `session-${createdAt}`;
+    const previousActiveSessionId = activeSessionIdRef.current;
     const sessionClub = options?.club?.trim() || activeClub;
     const title =
       options?.title?.trim() ||
       `${sessionClub} Session ${new Date(createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 
+    const nextBucket: SessionLibraryBucket = {
+      id: sessionId,
+      kind: "session",
+      title,
+      club: sessionClub,
+      color: options?.color?.trim() || randomSessionColor(),
+      source: "dashboard-session",
+      shotCount: 0,
+      createdAt,
+      updatedAt: createdAt,
+      shots: [],
+      isActive: true,
+    };
+
+    activeSessionIdRef.current = sessionId;
+
     setState((current) => ({
       activeSessionId: sessionId,
       buckets: [
-        {
-          id: sessionId,
-          kind: "session",
-          title,
-          club: sessionClub,
-          color: options?.color?.trim() || randomSessionColor(),
-          source: "app",
-          shotCount: 0,
-          createdAt,
-          updatedAt: createdAt,
-          shots: [],
-          isActive: true,
-        },
+        nextBucket,
         ...normalizeBuckets(current.buckets, activeClub, current.activeSessionId).filter((bucket) => bucket.id !== sessionId),
       ],
     }));
 
+    if (uid) {
+      try {
+        const writes: Promise<void>[] = [];
+        if (previousActiveSessionId && previousActiveSessionId !== sessionId) {
+          writes.push(setDoc(
+            doc(db, "users", uid, "dashboard-sessions", previousActiveSessionId),
+            { isActive: false },
+            { merge: true }
+          ));
+        }
+        writes.push(setDoc(doc(db, "users", uid, "dashboard-sessions", sessionId), serializeBucket(nextBucket)));
+        await Promise.all(writes);
+      } catch (writeError) {
+        console.error("[SessionLibrary] Failed to create dashboard session in Firestore:", writeError);
+        setError("We couldn't save your new dashboard session.");
+      }
+    }
+
     return sessionId;
-  }, [activeClub]);
+  }, [activeClub, uid]);
 
   const endSession = useCallback(async () => {
+    const sessionIdToEnd = activeSessionIdRef.current;
+    activeSessionIdRef.current = null;
     setState((current) => ({
       ...current,
       activeSessionId: null,
     }));
-  }, []);
+
+    if (uid && sessionIdToEnd) {
+      try {
+        await setDoc(
+          doc(db, "users", uid, "dashboard-sessions", sessionIdToEnd),
+          { isActive: false, updatedAt: Date.now() },
+          { merge: true }
+        );
+      } catch (writeError) {
+        console.error("[SessionLibrary] Failed to end dashboard session in Firestore:", writeError);
+        setError("We couldn't end that dashboard session in the cloud.");
+      }
+    }
+  }, [uid]);
+
+  const clearBucketShots = useCallback(async (bucketId: string) => {
+    let bucketToSync: SessionLibraryBucket | null = null;
+
+    setState((current) => {
+      const nextBuckets = normalizeBuckets(current.buckets, activeClub, current.activeSessionId);
+      const targetIndex = nextBuckets.findIndex((bucket) => bucket.id === bucketId);
+      if (targetIndex < 0) return current;
+
+      const targetBucket = nextBuckets[targetIndex];
+      const clearedBucket: SessionLibraryBucket = {
+        ...targetBucket,
+        shotCount: 0,
+        updatedAt: targetBucket.createdAt || 0,
+        shots: [],
+      };
+
+      nextBuckets[targetIndex] = clearedBucket;
+      bucketToSync = clearedBucket.kind === "session" ? clearedBucket : null;
+
+      return {
+        ...current,
+        buckets: nextBuckets,
+      };
+    });
+
+    if (uid && bucketToSync) {
+      try {
+        await deleteSessionShotDocs(uid, bucketId);
+        await setDoc(doc(db, "users", uid, "dashboard-sessions", bucketId), serializeBucket(bucketToSync));
+      } catch (writeError) {
+        console.error("[SessionLibrary] Failed to clear dashboard session shots in Firestore:", writeError);
+        setError("We couldn't clear the shots from that session.");
+      }
+    }
+  }, [activeClub, uid]);
 
   const deleteBucket = useCallback(async (bucketId: string) => {
+    if (bucketId !== MISC_BUCKET_ID && activeSessionIdRef.current === bucketId) {
+      activeSessionIdRef.current = null;
+    }
     setState((current) => {
       const nextBuckets = normalizeBuckets(current.buckets, activeClub, current.activeSessionId);
 
@@ -264,31 +518,70 @@ export function useSessionLibrary(_uid: string | null | undefined, activeClub: s
         buckets: nextBuckets.filter((bucket) => bucket.id !== bucketId),
       };
     });
-  }, [activeClub]);
+
+    if (uid && bucketId !== MISC_BUCKET_ID) {
+      try {
+        await deleteSessionShotDocs(uid, bucketId);
+        await deleteDoc(doc(db, "users", uid, "dashboard-sessions", bucketId));
+      } catch (deleteError) {
+        console.error("[SessionLibrary] Failed to delete dashboard session from Firestore:", deleteError);
+        setError("We couldn't delete that dashboard session.");
+      }
+    }
+  }, [activeClub, uid]);
 
   const recordShot = useCallback((shot: Shot) => {
     const normalizedShot = normalizeShot(shot);
+    const resolvedActiveSessionId = activeSessionIdRef.current;
+    const currentBuckets = normalizeBuckets(state.buckets, activeClub, resolvedActiveSessionId);
+    const targetId = resolvedActiveSessionId ?? MISC_BUCKET_ID;
+    const targetIndex = currentBuckets.findIndex((bucket) => bucket.id === targetId);
+    const targetBucket = targetIndex >= 0 ? currentBuckets[targetIndex] : null;
 
-    setState((current) => {
-      const nextBuckets = normalizeBuckets(current.buckets, activeClub, current.activeSessionId);
-      const targetId = current.activeSessionId ?? MISC_BUCKET_ID;
-      const targetIndex = nextBuckets.findIndex((bucket) => bucket.id === targetId);
-      if (targetIndex < 0) return current;
-
-      const targetBucket = nextBuckets[targetIndex];
-      const existingIndex = targetBucket.shots.findIndex((existingShot) => String(existingShot.id) === String(normalizedShot.id));
-
+    let nextSessionBucket: SessionLibraryBucket | null = null;
+    if (targetBucket) {
+      const existingIndex = targetBucket.shots.findIndex((existingShot) => sameShotIdentity(existingShot, normalizedShot));
       const nextShots = existingIndex >= 0
         ? targetBucket.shots.map((existingShot, index) => (index === existingIndex ? normalizedShot : existingShot)).sort(compareShots)
         : [...targetBucket.shots, normalizedShot].sort(compareShots);
       const updatedAt = nextShots[nextShots.length - 1]?.capturedAt ?? Date.now();
 
-      nextBuckets[targetIndex] = {
+      nextSessionBucket = {
         ...targetBucket,
         club: targetBucket.kind === "session" ? targetBucket.club || normalizedShot.club : "Mixed",
         shotCount: Math.max(targetBucket.shotCount, nextShots.length),
         updatedAt,
         createdAt: targetBucket.createdAt || nextShots[0]?.capturedAt || updatedAt,
+        shots: nextShots,
+      };
+    }
+
+    const sessionDocIdToSync = nextSessionBucket?.kind === "session" ? nextSessionBucket.id : null;
+    const sessionPayloadToSync =
+      nextSessionBucket?.kind === "session" ? serializeBucket(nextSessionBucket) : null;
+    const sessionShotPayloadToSync =
+      nextSessionBucket?.kind === "session" ? serializeSessionShot(normalizedShot) : null;
+
+    setState((current) => {
+      const currentResolvedActiveSessionId = activeSessionIdRef.current;
+      const nextBuckets = normalizeBuckets(current.buckets, activeClub, currentResolvedActiveSessionId);
+      const currentTargetId = currentResolvedActiveSessionId ?? MISC_BUCKET_ID;
+      const currentTargetIndex = nextBuckets.findIndex((bucket) => bucket.id === currentTargetId);
+      if (currentTargetIndex < 0) return current;
+
+      const currentTargetBucket = nextBuckets[currentTargetIndex];
+      const existingIndex = currentTargetBucket.shots.findIndex((existingShot) => sameShotIdentity(existingShot, normalizedShot));
+      const nextShots = existingIndex >= 0
+        ? currentTargetBucket.shots.map((existingShot, index) => (index === existingIndex ? normalizedShot : existingShot)).sort(compareShots)
+        : [...currentTargetBucket.shots, normalizedShot].sort(compareShots);
+      const updatedAt = nextShots[nextShots.length - 1]?.capturedAt ?? Date.now();
+
+      nextBuckets[currentTargetIndex] = {
+        ...currentTargetBucket,
+        club: currentTargetBucket.kind === "session" ? currentTargetBucket.club || normalizedShot.club : "Mixed",
+        shotCount: Math.max(currentTargetBucket.shotCount, nextShots.length),
+        updatedAt,
+        createdAt: currentTargetBucket.createdAt || nextShots[0]?.capturedAt || updatedAt,
         shots: nextShots,
       };
 
@@ -297,7 +590,25 @@ export function useSessionLibrary(_uid: string | null | undefined, activeClub: s
         buckets: nextBuckets,
       };
     });
-  }, [activeClub]);
+
+    if (uid && sessionDocIdToSync && sessionPayloadToSync) {
+      const sessionDocRef = doc(db, "users", uid, "dashboard-sessions", sessionDocIdToSync);
+      const sessionShotRef = sessionShotPayloadToSync
+        ? doc(db, "users", uid, "dashboard-sessions", sessionDocIdToSync, "shots", sessionShotDocId(normalizedShot))
+        : null;
+
+      const writes = [setDoc(sessionDocRef, sessionPayloadToSync)];
+      if (sessionShotRef && sessionShotPayloadToSync) {
+        writes.push(setDoc(sessionShotRef, sessionShotPayloadToSync));
+      }
+
+      void Promise.all(writes)
+        .catch((writeError) => {
+          console.error("[SessionLibrary] Failed to sync dashboard session shot to Firestore:", writeError);
+          setError("We couldn't sync the latest dashboard shot into its session.");
+        });
+    }
+  }, [activeClub, state.buckets, uid]);
 
   return {
     buckets,
@@ -306,6 +617,7 @@ export function useSessionLibrary(_uid: string | null | undefined, activeClub: s
     error,
     startSession,
     endSession,
+    clearBucketShots,
     deleteBucket,
     recordShot,
   };

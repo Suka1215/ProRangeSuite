@@ -671,7 +671,7 @@ export function ModelTester() {
                   </Badge>
                 </div>
                 <div style={{ fontSize: "11px", color: "#64748b", marginTop: "6px" }}>
-                  {results.expectedPoints >= 30 && "TrackMan-level ✓"}
+                  {results.expectedPoints >= 30 && "Top-tier ✓"}
                   {results.expectedPoints >= 25 && results.expectedPoints < 30 && "Highly accurate"}
                   {results.expectedPoints >= 20 && results.expectedPoints < 25 && "Usable"}
                   {results.expectedPoints < 20 && "Need more"}
@@ -705,7 +705,7 @@ export function ModelTester() {
                 {results.expectedPoints >= 30 && (
                   <div style={{ color: "#22c55e", fontWeight: 500 }}>
                     ✓ Excellent! Your settings achieve {results.expectedPoints} trajectory points.
-                    This is sufficient for TrackMan-level ball speed and launch angle accuracy.
+              This is sufficient for high-confidence ball speed and launch angle accuracy.
                   </div>
                 )}
                 {results.expectedPoints >= 25 && results.expectedPoints < 30 && (

@@ -1,8 +1,7 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./auth/AuthProvider";
-import { CLUB_NAMES } from "./constants";
 import { NotificationToast } from "./components/ui/NotificationToast";
-import TrackManPulseCard from "./features/shot-iq/components/TrackManPulseCard";
+import ReferencePulseCard from "./features/shot-iq/components/TrackManPulseCard";
 import { useLiveShots } from "./hooks/useLiveShots";
 import type { LiveStatus } from "./hooks/useLiveShots";
 import { useDesktopBridge } from "./hooks/useDesktopBridge";
@@ -11,25 +10,26 @@ import { useSessionLibrary } from "./hooks/useSessionLibrary";
 import { useSessions } from "./hooks/useSessions";
 import { useUserShots } from "./hooks/useUserShots";
 import type { SessionLibraryBucket } from "./hooks/useSessionLibrary";
+import CrushedItPopup from "./features/crushed-it/CrushedItPopup";
+import { useCrushedIt } from "./features/crushed-it/useCrushedIt";
 import { isDesktopApp } from "./lib/desktop";
 import type { Session, Shot, TabId } from "./types";
 import { exportShotsToCSV, generateSyntheticShot } from "./utils/shotData";
 import { calcSessionStats, pctError } from "./utils/stats";
 import NewSessionModal from "./components/modules/NewSessionModal";
 import BridgeConnectionsView from "./views/BridgeConnectionsView";
+import { buildSwingDnaSnapshot, type SwingDnaSnapshot } from "./lib/swingCues";
 
 const AccuracyView = lazy(() => import("./views/AccuracyView"));
 const ShotLogView = lazy(() => import("./views/ShotLogView"));
 const ProgressView = lazy(() => import("./views/ProgressView"));
 const CompareView = lazy(() => import("./views/CompareView"));
-const AllSessionsView = lazy(() => import("./views/AllSessionsView"));
 const PRIMARY_NAV = [
   { id: "dashboard", label: "Home", icon: IconCluster },
   { id: "accuracy", label: "Accuracy", icon: IconTarget },
   { id: "shots", label: "Shot Log", icon: IconSheets },
   { id: "compare", label: "Compare", icon: IconCompare },
   { id: "progress", label: "Progress", icon: IconTrend },
-  { id: "sessions", label: "Sessions", icon: IconCalendar },
 ] as const satisfies { id: TabId; label: string; icon: IconComponent }[];
 
 
@@ -58,7 +58,7 @@ const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: str
   },
   accuracy: {
     eyebrow: "Shot IQ",
-    title: "TrackMan Intelligence",
+    title: "Reference Intelligence",
     description: "A matched-shot analysis studio with drift readouts, tendencies, and calibration scoring.",
   },
   shots: {
@@ -75,11 +75,6 @@ const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: str
     eyebrow: "Trends",
     title: "Progress View",
     description: "See how recent work stacks up over time without leaving the redesigned shell.",
-  },
-  sessions: {
-    eyebrow: "Archive",
-    title: "All Sessions",
-    description: "Browse and manage saved runs from the new homepage schedule strip.",
   },
   bridge: {
     eyebrow: "Connector",
@@ -126,17 +121,29 @@ interface HeroActionData {
 }
 
 function normalizeShot(shot: Shot): Shot {
+  const pr = shot.pr ?? {
+    speed: 0,
+    vla: 0,
+    hla: 0,
+    carry: 0,
+    spin: 0,
+  };
+
   return {
     ...shot,
     capturedAt: shot.capturedAt ?? Date.now(),
     pr: {
-      ...shot.pr,
-      total: shot.pr.total ?? shot.pr.carry,
+      ...pr,
+      total: pr.total ?? pr.carry,
+      clubSpeed: pr.clubSpeed,
+      smashFactor: pr.smashFactor,
     },
     tm: shot.tm
       ? {
           ...shot.tm,
           total: shot.tm.total ?? shot.tm.carry,
+          clubSpeed: shot.tm.clubSpeed,
+          smashFactor: shot.tm.smashFactor,
         }
       : null,
   };
@@ -147,11 +154,13 @@ export default function App() {
   const desktopRuntime = isDesktopApp();
   const [tab, setTab] = useState<TabId>("dashboard");
   const [club, setClub] = useState<string>("7-Iron");
-  const [clubOpen, setClubOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [activeShot, setActiveShot] = useState<Shot | null>(null);
+  const [homeIncomingShot, setHomeIncomingShot] = useState<Shot | null>(null);
   const [homeFilter, setHomeFilter] = useState<HomeFilter>("all");
   const [weekPage, setWeekPage] = useState(0);
+  const [homeAnimatedShotKey, setHomeAnimatedShotKey] = useState("");
+  const [homeShotEventId, setHomeShotEventId] = useState(0);
   const [newSessionModalOpen, setNewSessionModalOpen] = useState(false);
   const [newSessionError, setNewSessionError] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
@@ -160,15 +169,16 @@ export default function App() {
     sessions: legacySessions,
     liveShots,
     tmReady,
-    deleteSession,
-    resetToSeed,
     addLiveShot,
     clearLiveShots,
   } = useSessions();
   const { notification, notify } = useNotification();
-  const { shots: cloudShots, loading: cloudShotsLoading, error: cloudShotsError } = useUserShots(
-    desktopRuntime ? null : user?.uid
-  );
+  const {
+    shotData: crushedItShot,
+    triggerIfCrushed,
+    dismiss: dismissCrushedIt,
+  } = useCrushedIt();
+  const { shots: cloudShots, loading: cloudShotsLoading, error: cloudShotsError } = useUserShots(user?.uid);
   const {
     buckets: sessionBuckets,
     activeSessionId,
@@ -176,20 +186,48 @@ export default function App() {
     error: sessionLibraryError,
     startSession,
     endSession,
+    clearBucketShots,
     deleteBucket,
     recordShot,
   } = useSessionLibrary(user?.uid, club);
+  const recordShotSafely = (shot: Shot) => {
+    try {
+      recordShot(shot);
+    } catch (error) {
+      console.error("[Session] Failed to record shot:", error);
+      notify("Shot displayed, but session sync failed", "err");
+    }
+  };
   const desktopBridge = useDesktopBridge();
   const primaryNav = [...PRIMARY_NAV, DESKTOP_BRIDGE_NAV];
+  const usesSessionLibrary = Boolean(user) || desktopRuntime;
+  const shotHistoryRef = useRef<Shot[]>([]);
   const sessions = useMemo(() => {
-    return desktopRuntime ? mapSessionBucketsToSessions(sessionBuckets) : legacySessions;
-  }, [desktopRuntime, legacySessions, sessionBuckets]);
+    const librarySessions = mapSessionBucketsToSessions(sessionBuckets);
+    return usesSessionLibrary ? librarySessions : legacySessions;
+  }, [legacySessions, sessionBuckets, usesSessionLibrary]);
+  const activeSessionBucket = useMemo(
+    () => sessionBuckets.find((bucket) => bucket.id === activeSessionId && bucket.kind === "session") ?? null,
+    [activeSessionId, sessionBuckets]
+  );
+  const activeCaptureClub = activeSessionBucket?.club ?? club;
+
+  useEffect(() => {
+    if (!activeSessionBucket?.club || activeSessionBucket.club === club) return;
+    setClub(activeSessionBucket.club);
+  }, [activeSessionBucket?.club, club]);
 
   const handleLiveShot = (shot: Shot) => {
-    const normalizedShot = normalizeShot(shot);
+    const normalizedShot = normalizeShot({
+      ...shot,
+      club: activeCaptureClub,
+    });
     addLiveShot(normalizedShot);
-    recordShot(normalizedShot);
+    recordShotSafely(normalizedShot);
     setActiveShot(normalizedShot);
+    setHomeIncomingShot(normalizedShot);
+    setHomeShotEventId((current) => current + 1);
+    triggerIfCrushed(normalizedShot, shotHistoryRef.current);
   };
 
   const {
@@ -198,43 +236,47 @@ export default function App() {
     connect: liveConnect,
     disconnect: liveDisconnect,
   } = useLiveShots({ onShot: handleLiveShot, onNotify: notify, autoConnect: false });
+  const seenCloudShotIds = useRef<Set<string>>(new Set());
+  const cloudShotsHydrated = useRef(false);
 
   const shots = useMemo(() => {
-    if (desktopRuntime) {
-      return flattenBucketShots(sessionBuckets);
-    }
-
-    const merged: Array<{ shot: Shot; order: number }> = [];
-    const seen = new Set<string>();
-    let order = 0;
-
-    for (const shot of cloudShots) {
-      const key = String(shot.id);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      merged.push({ shot: normalizeShot(shot), order: order++ });
-    }
-
-    for (const shot of liveShots) {
-      const key = String(shot.id);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      merged.push({ shot: normalizeShot(shot), order: order++ });
-    }
-
-    return merged
-      .sort((left, right) => {
-        const timeDelta = (left.shot.capturedAt ?? 0) - (right.shot.capturedAt ?? 0);
-        if (timeDelta !== 0) return timeDelta;
-        return left.order - right.order;
-      })
-      .map(({ shot }) => shot);
+    return mergeShots(
+      cloudShots,
+      desktopRuntime ? flattenBucketShots(sessionBuckets) : [],
+      liveShots
+    );
   }, [cloudShots, desktopRuntime, liveShots, sessionBuckets]);
+
+  useEffect(() => {
+    shotHistoryRef.current = shots;
+  }, [shots]);
 
   useEffect(() => {
     if (!cloudShotsError) return;
     notify(cloudShotsError, "err");
   }, [cloudShotsError, notify]);
+
+  useEffect(() => {
+    if (cloudShotsLoading) return;
+
+    if (!cloudShotsHydrated.current) {
+      seenCloudShotIds.current = new Set(cloudShots.map((shot) => String(shot.id)));
+      cloudShotsHydrated.current = true;
+      return;
+    }
+
+    for (const shot of cloudShots) {
+      const key = String(shot.id);
+      if (seenCloudShotIds.current.has(key)) continue;
+      seenCloudShotIds.current.add(key);
+      const normalizedShot = normalizeShot(shot);
+      recordShotSafely(normalizedShot);
+      setActiveShot(normalizedShot);
+      setHomeIncomingShot(normalizedShot);
+      setHomeShotEventId((current) => current + 1);
+      triggerIfCrushed(normalizedShot, shotHistoryRef.current);
+    }
+  }, [cloudShots, cloudShotsLoading, recordShot, triggerIfCrushed]);
 
   useEffect(() => {
     if (!sessionLibraryError) return;
@@ -287,10 +329,11 @@ export default function App() {
           : "Desktop bridge available";
 
   const addShot = () => {
-    const shot = normalizeShot(generateSyntheticShot(club));
+    const shot = normalizeShot(generateSyntheticShot(activeCaptureClub));
     addLiveShot(shot);
-    recordShot(shot);
+    recordShotSafely(shot);
     setActiveShot(shot);
+    triggerIfCrushed(shot, shotHistoryRef.current);
     notify("Synthetic shot logged");
   };
 
@@ -328,11 +371,9 @@ export default function App() {
 
   const openTab = (nextTab: TabId) => {
     setTab(nextTab);
-    setClubOpen(false);
   };
 
   const openNewSessionModal = () => {
-    setClubOpen(false);
     setNewSessionError(null);
     setNewSessionModalOpen(true);
   };
@@ -347,7 +388,7 @@ export default function App() {
 
   const sectionCopy = TAB_COPY[tab];
   const isBridgeStage = tab === "bridge";
-  const isImmersiveStage = tab === "accuracy" || tab === "shots" || isBridgeStage;
+  const isImmersiveStage = tab === "accuracy" || tab === "shots" || tab === "progress" || isBridgeStage;
 
   return (
     <div className="pr-page">
@@ -369,26 +410,15 @@ export default function App() {
       )}
 
       <div className="pr-shell">
+        {crushedItShot ? (
+          <CrushedItPopup data={crushedItShot} onDismiss={dismissCrushedIt} />
+        ) : null}
+
         <div className="pr-frame">
           <HeaderBar
             tab={tab}
-            club={club}
-            tmReady={tmReady}
-            liveStatus={liveStatus}
-            liveShotCount={liveShotCount}
-            clubOpen={clubOpen}
             primaryNav={primaryNav}
             onOpenTab={openTab}
-            onToggleClub={() => {
-              setClubOpen((current) => !current);
-            }}
-            onSelectClub={(nextClub) => {
-              setClub(nextClub);
-              setClubOpen(false);
-            }}
-            onAddShot={addShot}
-            onNewSession={openNewSessionModal}
-            onToggleLive={toggleLive}
             profileName={profileName}
             profileSubtitle={profileSubtitle}
             onSignOut={() => {
@@ -411,8 +441,12 @@ export default function App() {
               activeSessionId={activeSessionId}
               weekPage={weekPage}
               activeShot={activeShot}
+              incomingShot={homeIncomingShot}
               liveStatus={liveStatus}
               liveShotCount={liveShotCount}
+              animatedShotKey={homeAnimatedShotKey}
+              shotEventId={homeShotEventId}
+              onShotAnimationHandled={setHomeAnimatedShotKey}
               onFilterChange={setHomeFilter}
               onOpenTab={openTab}
               onPrevWeek={() => setWeekPage((current) => current + 1)}
@@ -459,45 +493,14 @@ export default function App() {
                   onAddShot={(shot) => {
                     const normalizedShot = normalizeShot(shot);
                     addLiveShot(normalizedShot);
-                    recordShot(normalizedShot);
+                    recordShotSafely(normalizedShot);
                     setActiveShot(normalizedShot);
+                    setHomeIncomingShot(normalizedShot);
+                    setHomeShotEventId((current) => current + 1);
+                    triggerIfCrushed(normalizedShot, shotHistoryRef.current);
                     notify("Shot logged");
                   }}
                   onNotify={notify}
-                  onDelete={(id) => {
-                    if (desktopRuntime) {
-                      void deleteBucket(id)
-                        .then(() => notify("Session deleted"))
-                        .catch((error) => {
-                          console.error("[Session] Failed to delete app session:", error);
-                          notify("Session deletion failed", "err");
-                        });
-                      return;
-                    }
-
-                    deleteSession(id);
-                    notify("Session deleted");
-                  }}
-                  onReset={() => {
-                    if (desktopRuntime) {
-                      const bucketIds = sessionBuckets.map((bucket) => bucket.id);
-                      void Promise.all(bucketIds.map((bucketId) => deleteBucket(bucketId)))
-                        .then(() => {
-                          clearLiveShots();
-                          setActiveShot(null);
-                          notify("App sessions reset");
-                        })
-                        .catch((error) => {
-                          console.error("[Session] Failed to reset app sessions:", error);
-                          notify("App session reset failed", "err");
-                        });
-                      return;
-                    }
-
-                    resetToSeed();
-                    notify("Seed data reset");
-                  }}
-                  onNew={openNewSessionModal}
                   onClear={() => {
                     clearLiveShots();
                     setActiveShot(null);
@@ -518,6 +521,11 @@ export default function App() {
                   onDeleteBucket={(bucketId) => {
                     void deleteBucket(bucketId).then(() => notify(bucketId === "misc" ? "Misc shots deleted" : "Session deleted"));
                   }}
+                  onClearBucket={(bucketId) => {
+                    void clearBucketShots(bucketId).then(() =>
+                      notify(bucketId === "misc" ? "Misc shots cleared" : "Session shots cleared")
+                    );
+                  }}
                   bridgeDesktop={desktopBridge}
                 />
               </div>
@@ -531,18 +539,8 @@ export default function App() {
 
 interface HeaderBarProps {
   tab: TabId;
-  club: string;
-  tmReady: boolean;
-  liveStatus: LiveStatus;
-  liveShotCount: number;
-  clubOpen: boolean;
   primaryNav: readonly { id: TabId; label: string; icon: IconComponent }[];
   onOpenTab: (tab: TabId) => void;
-  onToggleClub: () => void;
-  onSelectClub: (club: string) => void;
-  onAddShot: () => void;
-  onNewSession: () => void;
-  onToggleLive: () => void;
   profileName: string;
   profileSubtitle: string;
   onSignOut: () => void;
@@ -550,18 +548,8 @@ interface HeaderBarProps {
 
 function HeaderBar({
   tab,
-  club,
-  tmReady,
-  liveStatus,
-  liveShotCount,
-  clubOpen,
   primaryNav,
   onOpenTab,
-  onToggleClub,
-  onSelectClub,
-  onAddShot,
-  onNewSession,
-  onToggleLive,
   profileName,
   profileSubtitle,
   onSignOut,
@@ -590,59 +578,6 @@ function HeaderBar({
       </div>
 
       <div className="pr-header-actions">
-        <button
-          className={`pr-live-pill ${
-            liveStatus === "connected"
-              ? "is-live"
-              : liveStatus === "connecting"
-              ? "is-connecting"
-              : ""
-          }`}
-          onClick={onToggleLive}
-        >
-          <span className="pr-live-dot" />
-          <span className="pr-live-copy">
-            <strong>
-              {liveStatus === "connected"
-                ? `Live ${liveShotCount}`
-                : liveStatus === "connecting"
-                ? "Linking"
-                : "Live Off"}
-            </strong>
-            <span>{tmReady ? "TrackMan ready" : "TrackMan loading"}</span>
-          </span>
-        </button>
-
-        <div className="pr-menu-anchor">
-          <button className="pr-club-pill" onClick={onToggleClub}>
-            <span>{club}</span>
-            <IconChevronDown />
-          </button>
-
-          {clubOpen && (
-            <div className="pr-menu pr-menu-club">
-              {CLUB_NAMES.map((clubName) => (
-                <button
-                  key={clubName}
-                  className={`pr-menu-item ${club === clubName ? "is-active" : ""}`}
-                  onClick={() => onSelectClub(clubName)}
-                >
-                  <IconBall />
-                  <span>{clubName}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <button className="pr-header-icon" onClick={onAddShot} title="Generate shot">
-          <IconPlus />
-        </button>
-
-        <button className="pr-header-icon" onClick={onNewSession} title="Create session">
-          <IconCalendarPlus />
-        </button>
-
         <div className="pr-profile">
           <span className="pr-profile-copy">
             <strong>{profileName}</strong>
@@ -668,8 +603,12 @@ interface HomeViewProps {
   activeSessionId: string | null;
   weekPage: number;
   activeShot: Shot | null;
+  incomingShot: Shot | null;
   liveStatus: LiveStatus;
   liveShotCount: number;
+  animatedShotKey: string;
+  shotEventId: number;
+  onShotAnimationHandled: (shotKey: string) => void;
   onFilterChange: (filter: HomeFilter) => void;
   onOpenTab: (tab: TabId) => void;
   onPrevWeek: () => void;
@@ -689,8 +628,12 @@ function HomeView({
   activeSessionId,
   weekPage,
   activeShot,
+  incomingShot,
   liveStatus,
   liveShotCount,
+  animatedShotKey,
+  shotEventId,
+  onShotAnimationHandled,
   onFilterChange,
   onOpenTab,
   onPrevWeek,
@@ -703,7 +646,7 @@ function HomeView({
   const savedSessionBuckets = sessionBuckets.filter((bucket) => bucket.kind === "session");
   const savedSessionCount = savedSessionBuckets.length;
   const latestSavedBucket = savedSessionBuckets[0] ?? null;
-  const latestShot = activeShot ?? (shots.length ? shots[shots.length - 1] : null);
+  const latestShot = incomingShot ?? (shots.length ? shots[shots.length - 1] : activeShot);
   const latestSession = sessions.length ? sessions[sessions.length - 1] : null;
   const latestStats = latestSession ? calcSessionStats(latestSession) : null;
   const latestSessionLabel = latestSavedBucket?.title ?? latestSession?.version ?? null;
@@ -735,41 +678,58 @@ function HomeView({
   const overviewSpin = latestShot?.pr.spin ?? average(recentSpin, 6820);
   const overviewCarry = latestShot?.pr.carry ?? average(recentCarry, 172);
   const overviewTotal = latestShot?.pr.total ?? average(recentTotal, overviewCarry);
-  const [animatedSpeed, setAnimatedSpeed] = useState(overviewSpeed);
+  const overviewClubSpeed = latestShot?.pr.clubSpeed ?? latestShot?.tm?.clubSpeed ?? null;
+  const overviewSmashFactor = latestShot?.pr.smashFactor
+    ?? latestShot?.tm?.smashFactor
+    ?? ((overviewClubSpeed && overviewClubSpeed > 0) ? overviewSpeed / overviewClubSpeed : null);
+  const [heroAnimationProgress, setHeroAnimationProgress] = useState(1);
   const [isSpeedAnimating, setIsSpeedAnimating] = useState(false);
-  const hasMountedSpeed = useRef(false);
-  const latestShotKey = latestShot ? String(latestShot.id) : "";
-
+  const lastAnimatedEventId = useRef(shotEventId);
+  const animatedSpeed = overviewSpeed * heroAnimationProgress;
+  const animatedCarry = overviewCarry * heroAnimationProgress;
+  const animatedVla = overviewVla * heroAnimationProgress;
+  const animatedHla = overviewHla * heroAnimationProgress;
+  const animatedSpin = overviewSpin * heroAnimationProgress;
+  const animatedTotal = overviewTotal * heroAnimationProgress;
+  const animatedClubSpeed = overviewClubSpeed != null ? overviewClubSpeed * heroAnimationProgress : null;
+  const animatedSmashFactor = overviewSmashFactor;
+  const activeSessionBucket = sessionBuckets.find((bucket) => bucket.id === activeSessionId && bucket.kind === "session") ?? null;
+  const currentSessionClub = activeSessionBucket?.club ?? club;
+  const flightTwinRawShots = activeSessionBucket?.shots ?? [];
+  const flightTwinShots = flightTwinRawShots.slice(-18);
+  const flightTwinSessionLabel = activeSessionBucket?.title ?? "No session";
+  const currentSessionDna = buildSwingDnaSnapshot(currentSessionClub, flightTwinShots);
   useEffect(() => {
     if (!latestShot) {
-      setAnimatedSpeed(0);
+      setHeroAnimationProgress(0);
       setIsSpeedAnimating(false);
-      hasMountedSpeed.current = true;
       return;
     }
 
-    if (!hasMountedSpeed.current) {
-      setAnimatedSpeed(overviewSpeed);
+    if (shotEventId <= 0 || shotEventId <= lastAnimatedEventId.current) {
+      setHeroAnimationProgress(1);
       setIsSpeedAnimating(false);
-      hasMountedSpeed.current = true;
       return;
     }
 
     let frameId = 0;
     const start = performance.now();
-    const duration = 2800;
+    const duration = 2200;
 
-    setAnimatedSpeed(0);
+    lastAnimatedEventId.current = shotEventId;
+    onShotAnimationHandled(`${shotEventId}`);
+    setHeroAnimationProgress(0);
     setIsSpeedAnimating(true);
 
     const tick = (now: number) => {
       const progress = Math.min((now - start) / duration, 1);
       const eased = 0.5 - Math.cos(progress * Math.PI) / 2;
-      setAnimatedSpeed(overviewSpeed * eased);
+      setHeroAnimationProgress(eased);
 
       if (progress < 1) {
         frameId = requestAnimationFrame(tick);
       } else {
+        setHeroAnimationProgress(1);
         setIsSpeedAnimating(false);
       }
     };
@@ -780,7 +740,7 @@ function HomeView({
       cancelAnimationFrame(frameId);
       setIsSpeedAnimating(false);
     };
-  }, [latestShot, latestShotKey, overviewSpeed]);
+  }, [latestShot, onShotAnimationHandled, shotEventId]);
 
   const filterCopy = {
     all: {
@@ -827,7 +787,7 @@ function HomeView({
         onClick: () => onOpenTab("shots"),
       },
       {
-        owner: "TrackMan",
+        owner: "Reference",
         role: "matched",
         title: "Carry window",
         meta: `${carryAverage} yd center line for ${club}`,
@@ -853,7 +813,7 @@ function HomeView({
         owner: "AI Coach",
         role: "priority",
         title: "VLA bias watch",
-        meta: `${formatSigned(vlaBias, "%")} against the matched TrackMan reference`,
+        meta: `${formatSigned(vlaBias, "%")} against the matched reference`,
         accent: BRAND_GREEN,
         series: recentCarry,
         onClick: () => onOpenTab("compare"),
@@ -956,7 +916,7 @@ function HomeView({
         meta: `${savedSessionCount} saved sessions are available in the archive`,
         accent: BRAND_INK,
         series: recentSpeed,
-        onClick: () => onOpenTab("sessions"),
+        onClick: () => onOpenTab("shots"),
       },
       {
         owner: "Versions",
@@ -965,7 +925,7 @@ function HomeView({
         meta: latestSessionLabel ? `Latest run is ${latestSessionLabel}` : "No saved versions yet, create a session first",
         accent: BRAND_GREEN,
         series: recentSpin,
-        onClick: () => onOpenTab("sessions"),
+        onClick: () => onOpenTab("shots"),
       },
     ],
   }[filter];
@@ -983,7 +943,7 @@ function HomeView({
     {
       index: "02",
       title: "VLA",
-      value: `${overviewVla.toFixed(1)}°`,
+      value: `${animatedVla.toFixed(1)}°`,
       subtitle: "vertical launch",
       accent: BRAND_INK,
       icon: <IconVla />,
@@ -992,7 +952,7 @@ function HomeView({
     {
       index: "03",
       title: "HLA",
-      value: `${formatSigned(overviewHla, "°")}`,
+      value: `${formatSigned(animatedHla, "°")}`,
       subtitle: "horizontal launch",
       accent: BRAND_GREEN,
       icon: <IconHla />,
@@ -1001,7 +961,7 @@ function HomeView({
     {
       index: "04",
       title: "Spin",
-      value: `${Math.round(overviewSpin).toLocaleString()}`,
+      value: `${Math.round(animatedSpin).toLocaleString()}`,
       subtitle: "rpm back spin",
       accent: BRAND_INK,
       icon: <IconSpinMetric />,
@@ -1010,7 +970,7 @@ function HomeView({
     {
       index: "05",
       title: "Carry",
-      value: `${Math.round(overviewCarry)}`,
+      value: `${Math.round(animatedCarry)}`,
       subtitle: "yd carry distance",
       accent: BRAND_GREEN,
       icon: <IconCarryMetric />,
@@ -1019,10 +979,28 @@ function HomeView({
     {
       index: "06",
       title: "Total",
-      value: `${Math.round(overviewTotal)}`,
+      value: `${Math.round(animatedTotal)}`,
       subtitle: "yd total distance",
       accent: BRAND_INK,
       icon: <IconTotalMetric />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "07",
+      title: "Club Speed",
+      value: animatedClubSpeed != null ? `${animatedClubSpeed.toFixed(1)}` : "--",
+      subtitle: "mph club speed",
+      accent: BRAND_GREEN,
+      icon: <IconClubSpeed />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "08",
+      title: "Smash",
+      value: animatedSmashFactor != null ? `${animatedSmashFactor.toFixed(2)}` : "--",
+      subtitle: "smash factor",
+      accent: BRAND_INK,
+      icon: <IconSmashFactor />,
       onClick: () => onOpenTab("shots"),
     },
   ];
@@ -1047,12 +1025,6 @@ function HomeView({
       <div className="pr-home-stage">
         <div className="pr-home-layout">
           <div className="pr-copy-column">
-            {filter === "all" && (
-              <div className="pr-home-brandline">
-                <span className="pr-home-brand-pill">SPIVOT</span>
-                <span className="pr-home-brandline-copy">Golf Performance Intelligence</span>
-              </div>
-            )}
             <span className="pr-home-eyebrow">{filterCopy.eyebrow}</span>
             {filter === "all" ? (
               <h1 className="pr-home-title-brand">
@@ -1064,35 +1036,26 @@ function HomeView({
             )}
             <p className={filter === "all" ? "pr-home-lede" : undefined}>{filterCopy.detail}</p>
 
-            <div className="pr-filter-row">
-              {HOME_FILTERS.map((item) => (
-                <button
-                  key={item.id}
-                  className={`pr-filter-chip ${filter === item.id ? "is-active" : ""}`}
-                  onClick={() => onFilterChange(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="pr-home-microcopy">
-              <span>{shots.length} live shots</span>
-              <span>{savedSessionCount} saved sessions</span>
-              <span>{club} selected</span>
-            </div>
-
-            <div className="pr-insight-grid">
-              {insightCards.map((card) => (
-                <InsightCard key={`${filter}-${card.title}`} card={card} />
-              ))}
-            </div>
+            {filter === "all" ? (
+              <CurrentSessionCard
+                club={currentSessionClub}
+                sessionLabel={flightTwinSessionLabel}
+                dna={currentSessionDna}
+                hasActiveSession={Boolean(activeSessionBucket)}
+              />
+            ) : (
+              <div className="pr-insight-grid">
+                {insightCards.map((card) => (
+                  <InsightCard key={`${filter}-${card.title}`} card={card} />
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="pr-hero-column">
             <div className="pr-hero-metric">
-              <strong>{carryAverage}</strong>
-              <span className="pr-hero-unit">yd carry avg</span>
+              <strong>{Math.round(animatedCarry)}</strong>
+              <span className="pr-hero-unit">yd carry</span>
             </div>
 
             <div className="pr-hero-core" aria-hidden="true">
@@ -1132,7 +1095,7 @@ function HomeView({
 
           <div className="pr-side-column">
             <h2>Shot Overview</h2>
-            <p>Latest capture metrics from the active shot feed, staged as a clean six-card summary.</p>
+            <p>Latest capture metrics from the active shot feed, staged as a clean eight-card summary.</p>
 
             <div className="pr-action-grid">
               {actionTiles.map((tile) => (
@@ -1157,7 +1120,7 @@ function HomeView({
 function InsightCard({ card }: { card: InsightCardData }) {
   if (card.variant === "trackman") {
     return (
-      <TrackManPulseCard
+      <ReferencePulseCard
         title={card.title}
         meta={card.meta}
         series={card.series}
@@ -1197,7 +1160,6 @@ function ActionTile({ tile }: { tile: ActionTileData }) {
 
   return (
     <button className="pr-action-tile" onClick={tile.onClick}>
-      <span className="pr-action-index">{tile.index}</span>
       <span className="pr-action-icon" style={{ color: tile.accent }}>
         {tile.icon}
       </span>
@@ -1237,6 +1199,109 @@ function MiniSparkline({ values, color }: { values: number[]; color: string }) {
       <circle cx={last[0]} cy={last[1]} r="3.5" fill={color} />
     </svg>
   );
+}
+
+function CurrentSessionCard({
+  club,
+  sessionLabel,
+  dna,
+  hasActiveSession,
+}: {
+  club: string;
+  sessionLabel: string;
+  dna: SwingDnaSnapshot;
+  hasActiveSession: boolean;
+}) {
+  const cueCards = hasActiveSession
+    ? dna.cues.slice(0, 3)
+    : [
+        {
+          id: "empty-start",
+          label: "Start",
+          cue: "Create a current session to load live club trends and session cues.",
+          reason: "The card switches to live session data as soon as a session starts.",
+          tone: "good" as const,
+        },
+        {
+          id: "empty-club",
+          label: "Club",
+          cue: "Choose the club inside the session, and the bullseye will lock to that club.",
+          reason: "No club is pinned until a current session exists.",
+          tone: "watch" as const,
+        },
+        {
+          id: "empty-capture",
+          label: "Capture",
+          cue: "Hit a few shots after session start and the trend banner will update live.",
+          reason: "Create and destroy should reflect immediately in this card.",
+          tone: "good" as const,
+        },
+      ];
+  const clubLabel = formatClubLabel(club);
+  const [launchMin, launchMax] = dna.clubWindow.launchRange;
+  const title = hasActiveSession ? clubLabel : "No session";
+  const bannerText = hasActiveSession ? dna.headline : "Create a session to load live club trends";
+  const summaryText = hasActiveSession
+    ? `${sessionLabel} / ${clubLabel} / ${dna.shotCount} session shots.`
+    : "";
+  const bullseyeValue = hasActiveSession ? dna.bullseyeLabel : "Standby";
+  const bullseyeText = hasActiveSession
+    ? clubLabel.match(/\b(PW|GW|SW|LW)\b/i)
+      ? `Control window ${launchMin.toFixed(1)}-${launchMax.toFixed(1)}&deg; launch with start line near zero.`
+      : `Launch bullseye ${launchMin.toFixed(1)}-${launchMax.toFixed(1)}&deg; with ${Math.round(dna.clubWindow.carry)} yd carry center.`
+    : "Session bullseye and trend ranges appear here once a current session is created.";
+
+  return (
+    <section className="pr-flight-twin">
+      <div className="pr-flight-twin-copy">
+        <span className="pr-flight-twin-kicker">Current session</span>
+        <h2>{title}</h2>
+        <div className="pr-trend-banner" aria-live="polite">
+          <span>{bannerText}</span>
+        </div>
+        {summaryText ? <p>{summaryText}</p> : null}
+
+        <div className="pr-flight-twin-bullseye">
+          <span>Club bullseye</span>
+          <strong>{bullseyeValue}</strong>
+          <em>{bullseyeText}</em>
+        </div>
+
+        <div className="pr-current-session-facts">
+          <div>
+            <span>Club</span>
+            <strong>{hasActiveSession ? clubLabel : "Not locked"}</strong>
+          </div>
+          <div>
+            <span>Session</span>
+            <strong>{hasActiveSession ? sessionLabel : "Inactive"}</strong>
+          </div>
+          <div>
+            <span>Shots</span>
+            <strong>{hasActiveSession ? dna.shotCount : 0}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="pr-session-cues-panel">
+        <span className="pr-session-cues-kicker">3 cues</span>
+        {cueCards.map((cue, index) => (
+          <div key={cue.id} className={`pr-session-cue-card is-${cue.tone}`}>
+            <span>{index + 1}</span>
+            <div>
+              <strong>{cue.label}</strong>
+              <p>{cue.cue}</p>
+              <em>{cue.reason}</em>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function formatClubLabel(club: string) {
+  return club.replace(/-/g, " ");
 }
 
 function TrajectorySculpture({ spinActive }: { spinActive: boolean }) {
@@ -1359,7 +1424,7 @@ function ScheduleStrip({
                   {slot.session
                     ? vlaMean !== null
                       ? `${formatSigned(vlaMean, "%")} VLA`
-                      : "No TM match"
+                      : "No reference match"
                     : "Tap to create"}
                 </span>
               </div>
@@ -1384,9 +1449,6 @@ interface SecProps {
   onPlayDone: () => void;
   onAddShot: (shot: Shot) => void;
   onNotify: (message: string, type?: "ok" | "err") => void;
-  onDelete: (id: string) => void;
-  onReset: () => void;
-  onNew: () => void;
   onClear: () => void;
   onExport: () => void;
   sessionBuckets: import("./hooks/useSessionLibrary").SessionLibraryBucket[];
@@ -1396,6 +1458,7 @@ interface SecProps {
   onStartSession: () => void;
   onEndSession: () => void;
   onDeleteBucket: (bucketId: string) => void;
+  onClearBucket: (bucketId: string) => void;
   bridgeDesktop: ReturnType<typeof useDesktopBridge>;
 }
 
@@ -1412,9 +1475,6 @@ function SecPage({
   onPlayDone,
   onAddShot,
   onNotify,
-  onDelete,
-  onReset,
-  onNew,
   onClear,
   onExport,
   sessionBuckets,
@@ -1424,12 +1484,15 @@ function SecPage({
   onStartSession,
   onEndSession,
   onDeleteBucket,
+  onClearBucket,
   bridgeDesktop,
 }: SecProps) {
   return (
     <div className={`pr-secondary-content ${tab === "bridge" ? "is-bridge-scroll" : ""}`}>
       <Suspense fallback={<Loader />}>
-        {tab === "accuracy" && <AccuracyView shots={shots} sessions={sessions} tmReady={tmReady} />}
+        {tab === "accuracy" && (
+          <AccuracyView shots={shots} sessions={sessions} activeSessionId={activeSessionId} tmReady={tmReady} />
+        )}
         {tab === "shots" && (
           <ShotLogView
             buckets={sessionBuckets}
@@ -1440,6 +1503,7 @@ function SecPage({
             onStartSession={onStartSession}
             onEndSession={onEndSession}
             onDeleteBucket={onDeleteBucket}
+            onClearBucket={onClearBucket}
           />
         )}
         {tab === "progress" && <ProgressView sessions={sessions} />}
@@ -1466,9 +1530,6 @@ function SecPage({
             onRefresh={bridgeDesktop.refresh}
             onClearOfflineAccess={bridgeDesktop.clearOfflineAccess}
           />
-        )}
-        {tab === "sessions" && (
-          <AllSessionsView sessions={sessions} onDelete={onDelete} onReset={onReset} onNew={onNew} />
         )}
       </Suspense>
     </div>
@@ -1589,16 +1650,43 @@ function buildScheduleWeek(
 }
 
 function flattenBucketShots(sessionBuckets: SessionLibraryBucket[]) {
+  return mergeShots(...sessionBuckets.map((bucket) => bucket.shots));
+}
+
+function sameShotIdentity(left: Shot, right: Shot) {
+  if (String(left.id) === String(right.id)) return true;
+  return (left.capturedAt ?? 0) === (right.capturedAt ?? 0) && left.club === right.club;
+}
+
+function shotSignalScore(shot: Shot) {
+  return [
+    shot.pr.speed,
+    shot.pr.vla,
+    shot.pr.hla,
+    shot.pr.carry,
+    shot.pr.spin,
+    shot.pr.total ?? shot.pr.carry,
+    shot.trackPts ?? 0,
+  ].reduce((sum, value) => sum + Math.abs(Number(value) || 0), 0);
+}
+
+function mergeShots(...shotGroups: Shot[][]) {
   const merged: Array<{ shot: Shot; order: number }> = [];
-  const seen = new Set<string>();
   let order = 0;
 
-  for (const bucket of sessionBuckets) {
-    for (const shot of bucket.shots) {
+  for (const group of shotGroups) {
+    for (const shot of group) {
       const normalizedShot = normalizeShot(shot);
-      const key = String(normalizedShot.id);
-      if (seen.has(key)) continue;
-      seen.add(key);
+      const existingIndex = merged.findIndex(({ shot: existingShot }) => sameShotIdentity(existingShot, normalizedShot));
+
+      if (existingIndex >= 0) {
+        const existing = merged[existingIndex];
+        if (shotSignalScore(normalizedShot) >= shotSignalScore(existing.shot)) {
+          merged[existingIndex] = { shot: normalizedShot, order: existing.order };
+        }
+        continue;
+      }
+
       merged.push({ shot: normalizedShot, order: order++ });
     }
   }
@@ -1620,12 +1708,13 @@ function mapSessionBucketsToSessions(sessionBuckets: SessionLibraryBucket[]): Se
       id: bucket.id,
       date: new Date(bucket.createdAt || bucket.updatedAt || Date.now()).toISOString().slice(0, 10),
       version: bucket.title,
-      label: bucket.source === "app" ? "App session" : bucket.source,
+      label: bucket.source === "dashboard-session" ? "Dashboard session" : bucket.source === "app" ? "App session" : bucket.source,
       club: bucket.club,
       color: bucket.color,
       shots: bucket.shots.map((shot, index) => ({
         id: String(shot.id),
         shotNum: index + 1,
+        club: bucket.club,
         pr: {
           ...shot.pr,
           total: shot.pr.total ?? shot.pr.carry,
@@ -1702,15 +1791,6 @@ function IconTrend({ className }: IconProps) {
     <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path d="M4 14.5 8.2 10l2.6 2.6 5-6.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M13.4 6.5h2.8v2.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconCalendar({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect x="3.75" y="5" width="12.5" height="11.25" rx="2.25" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M6.5 3v3M13.5 3v3M3.75 8h12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -1797,6 +1877,17 @@ function IconSpeed({ className }: IconProps) {
   );
 }
 
+function IconClubSpeed({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.75 13.25a5.25 5.25 0 1 1 10.5 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="m10 10 2.6-3.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="10" cy="10" r="1.2" fill="currentColor" />
+      <path d="M13.8 4.8 16 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconVla({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -1820,6 +1911,15 @@ function IconSpinMetric({ className }: IconProps) {
     <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path d="M10 4.25a5.75 5.75 0 1 1-4.58 2.27" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M5 3.75v3.5h3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconSmashFactor({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.5 10h11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="m8 6.5 2 3.5-2 3.5M12 6.5 10 10l2 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -1884,3 +1984,6 @@ function IconChevronRight({ className }: IconProps) {
     </svg>
   );
 }
+
+
+

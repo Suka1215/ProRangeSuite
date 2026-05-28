@@ -1,0 +1,601 @@
+
+> prorange-test-suite@1.0.0 desktop:dev
+> node electron/dev.mjs
+
+
+> prorange-test-suite@1.0.0 dev
+> vite --host localhost
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m204[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+
+[TM-DB] Loaded 10000 shots from CSV (matching by speed+VLA)
+[renderer:log] [vite] connecting... (http://localhost:5173/@vite/client:495)
+[renderer:log] [vite] connected. (http://localhost:5173/@vite/client:618)
+[renderer:warn] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:21551)
+[renderer:warn] [TM] Loading 10k reference database… (http://localhost:5173/src/utils/tmMatcher.ts:8)
+[renderer:warn] [TM] Loaded 10000 shots (matching by speed+VLA) (http://localhost:5173/src/utils/tmMatcher.ts:29)
+[renderer:error] %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged. (node:electron/js2c/renderer_init:2)
+[SHOT] speed=141.4mph VLA=17.3° → TM match: speed=139.1mph VLA=16.6° err=0.7°
+[SHOT] speed=35.9mph VLA=19.6° → TM match: speed=62.7mph VLA=27.4° err=-7.8°
+[2m10:11:37 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m10:11:37 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m10:11:37 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m10:12:10 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m10:12:32 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m10:13:03 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=36.3mph VLA=22.1° → TM match: speed=62.7mph VLA=27.4° err=-5.3°
+[2m10:15:47 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=46.2mph VLA=23.8° → TM match: speed=62.7mph VLA=27.4° err=-3.6°
+[2m10:16:57 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:error] Uncaught ReferenceError: Cannot access 'shots' before initialization (http://localhost:5173/src/hooks/useSessionLibrary.ts?t=1779203817775:129)
+[renderer:error] Uncaught ReferenceError: Cannot access 'shots' before initialization (http://localhost:5173/src/hooks/useSessionLibrary.ts?t=1779203817775:129)
+[renderer:error] The above error occurred in the <App> component:
+
+    at App (http://localhost:5173/src/App.tsx?t=1779203817775:121:28)
+    at AuthGate (http://localhost:5173/src/auth/AuthGate.tsx:120:28)
+    at AuthProvider (http://localhost:5173/src/auth/AuthProvider.tsx:116:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:14032)
+[renderer:error] Uncaught (in promise) ReferenceError: Cannot access 'shots' before initialization (http://localhost:5173/src/hooks/useSessionLibrary.ts?t=1779203817775:129)
+[2m10:17:10 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=72.6mph VLA=21.2° → TM match: speed=71.6mph VLA=21.6° err=-0.4°
+[2m10:17:17 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m10:17:17 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=69.7mph VLA=25.5° → TM match: speed=69.6mph VLA=25.5° err=0.0°
+[SHOT] speed=39.3mph VLA=30.9° → TM match: speed=61.6mph VLA=31.1° err=-0.2°
+[SHOT] speed=102.5mph VLA=22.4° → TM match: speed=102.6mph VLA=22.4° err=0.0°
+[SHOT] speed=97.4mph VLA=24.9° → TM match: speed=97.6mph VLA=24.8° err=0.1°
+[SHOT] speed=79.7mph VLA=24.5° → TM match: speed=79.4mph VLA=24.6° err=-0.1°
+[SHOT] speed=132.8mph VLA=19° → TM match: speed=131.9mph VLA=17.6° err=1.4°
+[2m10:36:10 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m10:36:32 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m10:37:03 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m10:37:38 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m10:37:47 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=39.8mph VLA=21.2° → TM match: speed=62.7mph VLA=27.4° err=-6.2°
+[SHOT] speed=40.9mph VLA=21.1° → TM match: speed=62.7mph VLA=27.4° err=-6.3°
+[SHOT] speed=38.7mph VLA=23.5° → TM match: speed=61.3mph VLA=28.9° err=-5.4°
+[SHOT] speed=24.3mph VLA=21.1° → TM match: speed=61.3mph VLA=28.9° err=-7.8°
+[SHOT] speed=65.6mph VLA=19.5° → TM match: speed=72.3mph VLA=20.4° err=-0.9°
+[SHOT] speed=64mph VLA=7.5° → TM match: speed=82mph VLA=15.5° err=-8.0°
+[SHOT] speed=57.1mph VLA=27.3° → TM match: speed=61.3mph VLA=28.9° err=-1.6°
+[SHOT] speed=114.2mph VLA=17.7° → TM match: speed=114.2mph VLA=17.6° err=0.1°
+[SHOT] speed=68.4mph VLA=29.6° → TM match: speed=68.5mph VLA=29.6° err=0.0°
+[SHOT] speed=55.2mph VLA=43.8° → TM match: speed=63.2mph VLA=33.9° err=9.9°
+[SHOT] speed=67.8mph VLA=26.2° → TM match: speed=67.7mph VLA=26.2° err=0.0°
+[SHOT] speed=100.5mph VLA=22.1° → TM match: speed=100.7mph VLA=22° err=0.1°
+[SHOT] speed=110.1mph VLA=16.7° → TM match: speed=109.8mph VLA=16.9° err=-0.2°
+[SHOT] speed=63.9mph VLA=27.1° → TM match: speed=64.5mph VLA=27.2° err=-0.1°
+[SHOT] speed=92.6mph VLA=18.2° → TM match: speed=92.5mph VLA=18.1° err=0.1°
+[SHOT] speed=79.8mph VLA=28.6° → TM match: speed=79.5mph VLA=28.6° err=0.0°
+[SHOT] speed=108.4mph VLA=23.9° → TM match: speed=108.6mph VLA=24.1° err=-0.2°
+[SHOT] speed=68.9mph VLA=11.2° → TM match: speed=82mph VLA=15.5° err=-4.3°
+[SHOT] speed=48.3mph VLA=20.5° → TM match: speed=65.3mph VLA=25.3° err=-4.8°
+[2m11:01:31 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m11:01:56 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m11:02:06 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m11:02:44 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m11:02:52 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m11:02:58 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=45.1mph VLA=23.4° → TM match: speed=62.7mph VLA=27.4° err=-4.0°
+[SHOT] speed=39.2mph VLA=24.4° → TM match: speed=61.3mph VLA=28.9° err=-4.5°
+[SHOT] speed=49.6mph VLA=19.5° → TM match: speed=65.3mph VLA=25.3° err=-5.8°
+[SHOT] speed=87.8mph VLA=12.3° → TM match: speed=89.2mph VLA=14.1° err=-1.8°
+[SHOT] speed=46.5mph VLA=22.4° → TM match: speed=62.7mph VLA=27.4° err=-5.0°
+[SHOT] speed=37.4mph VLA=23.5° → TM match: speed=61.3mph VLA=28.9° err=-5.4°
+[SHOT] speed=44.7mph VLA=26.3° → TM match: speed=61.3mph VLA=28.9° err=-2.6°
+[SHOT] speed=34.6mph VLA=19.9° → TM match: speed=62.7mph VLA=27.4° err=-7.5°
+[SHOT] speed=30.9mph VLA=25.2° → TM match: speed=61.3mph VLA=28.9° err=-3.7°
+[SHOT] speed=27.9mph VLA=24.5° → TM match: speed=61.3mph VLA=28.9° err=-4.4°
+[SHOT] speed=30.1mph VLA=19° → TM match: speed=62.7mph VLA=27.4° err=-8.4°
+[SHOT] speed=89.6mph VLA=22.9° → TM match: speed=89.2mph VLA=22.9° err=0.0°
+[SHOT] speed=87mph VLA=12.6° → TM match: speed=85.4mph VLA=14° err=-1.4°
+[SHOT] speed=197.2mph VLA=12.4° → TM match: speed=188.8mph VLA=9.2° err=3.2°
+[SHOT] speed=23mph VLA=29.6° → TM match: speed=61.3mph VLA=28.9° err=0.7°
+[SHOT] speed=26mph VLA=38.9° → TM match: speed=63.2mph VLA=33.9° err=5.0°
+[SHOT] speed=29.2mph VLA=44.2° → TM match: speed=63.2mph VLA=33.9° err=10.3°
+[SHOT] speed=67.3mph VLA=42.2° → TM match: speed=63.2mph VLA=33.9° err=8.3°
+[SHOT] speed=102.3mph VLA=24.1° → TM match: speed=102.2mph VLA=24.1° err=0.0°
+[SHOT] speed=67.8mph VLA=20.7° → TM match: speed=71.6mph VLA=21.6° err=-0.9°
+[SHOT] speed=78.7mph VLA=24.5° → TM match: speed=78.6mph VLA=24.6° err=-0.1°
+[SHOT] speed=69.2mph VLA=29.4° → TM match: speed=69mph VLA=29.4° err=0.0°
+[SHOT] speed=58.1mph VLA=3.8° → TM match: speed=82mph VLA=15.5° err=-11.7°
+[SHOT] speed=49.2mph VLA=26.7° → TM match: speed=61.3mph VLA=28.9° err=-2.2°
+[SHOT] speed=169.5mph VLA=14.7° → TM match: speed=174.4mph VLA=11.7° err=3.0°
+[SHOT] speed=69.5mph VLA=25.1° → TM match: speed=69.6mph VLA=25.2° err=-0.1°
+[SHOT] speed=138.8mph VLA=22.4° → TM match: speed=128mph VLA=20.3° err=2.1°
+[SHOT] speed=78.8mph VLA=18.9° → TM match: speed=79.3mph VLA=19° err=-0.1°
+[SHOT] speed=83.5mph VLA=18.8° → TM match: speed=83.2mph VLA=18.8° err=0.0°
+[SHOT] speed=81mph VLA=22.5° → TM match: speed=80.9mph VLA=22.4° err=0.1°
+[SHOT] speed=127.4mph VLA=17.5° → TM match: speed=127.4mph VLA=17.5° err=0.0°
+[SHOT] speed=119.9mph VLA=21.6° → TM match: speed=119.9mph VLA=21.5° err=0.1°
+[SHOT] speed=28.8mph VLA=18.2° → TM match: speed=62.7mph VLA=27.4° err=-9.2°
+[SHOT] speed=114.3mph VLA=10.4° → TM match: speed=114.2mph VLA=10.5° err=-0.1°
+[SHOT] speed=100.3mph VLA=21.9° → TM match: speed=100.2mph VLA=21.9° err=0.0°
+[SHOT] speed=147.6mph VLA=13.7° → TM match: speed=147.6mph VLA=13.3° err=0.4°
+[SHOT] speed=128.7mph VLA=9.6° → TM match: speed=128.5mph VLA=9.5° err=0.1°
+[SHOT] speed=35.1mph VLA=18.3° → TM match: speed=62.7mph VLA=27.4° err=-9.1°
+[SHOT] speed=22.1mph VLA=26.8° → TM match: speed=61.3mph VLA=28.9° err=-2.1°
+[SHOT] speed=30mph VLA=33.4° → TM match: speed=61.6mph VLA=31.1° err=2.3°
+[SHOT] speed=102.5mph VLA=20.2° → TM match: speed=102.6mph VLA=20.4° err=-0.2°
+[SHOT] speed=174.8mph VLA=17.2° → TM match: speed=174.4mph VLA=11.7° err=5.5°
+[SHOT] speed=82.2mph VLA=35.8° → TM match: speed=85.4mph VLA=30.9° err=4.9°
+[SHOT] speed=103.7mph VLA=34.2° → TM match: speed=100.6mph VLA=30.8° err=3.4°
+[SHOT] speed=107.4mph VLA=10.6° → TM match: speed=107.3mph VLA=10.8° err=-0.2°
+[SHOT] speed=89.4mph VLA=34.8° → TM match: speed=90.4mph VLA=30.6° err=4.2°
+[SHOT] speed=31mph VLA=20.6° → TM match: speed=62.7mph VLA=27.4° err=-6.8°
+[SHOT] speed=94mph VLA=25.4° → TM match: speed=94.1mph VLA=25.3° err=0.1°
+[SHOT] speed=67.9mph VLA=29.4° → TM match: speed=68mph VLA=29.4° err=0.0°
+[SHOT] speed=47.1mph VLA=32.9° → TM match: speed=61.6mph VLA=31.1° err=1.8°
+[SHOT] speed=78.7mph VLA=28.6° → TM match: speed=78.8mph VLA=28.7° err=-0.1°
+[SHOT] speed=82.6mph VLA=23.1° → TM match: speed=82.8mph VLA=23.2° err=-0.1°
+[SHOT] speed=55.1mph VLA=33.6° → TM match: speed=63.2mph VLA=33.9° err=-0.3°
+[SHOT] speed=46.8mph VLA=11° → TM match: speed=72.3mph VLA=20.4° err=-9.4°
+[SHOT] speed=60.9mph VLA=32.2° → TM match: speed=61.6mph VLA=31.1° err=1.1°
+[SHOT] speed=84.4mph VLA=33.1° → TM match: speed=85.4mph VLA=30.9° err=2.2°
+[SHOT] speed=103.4mph VLA=27.2° → TM match: speed=103.2mph VLA=26.9° err=0.3°
+[SHOT] speed=112.6mph VLA=13.8° → TM match: speed=112.6mph VLA=13.9° err=-0.1°
+[SHOT] speed=65.9mph VLA=30.5° → TM match: speed=65.7mph VLA=30.5° err=0.0°
+[SHOT] speed=80.2mph VLA=32.9° → TM match: speed=82.8mph VLA=30.6° err=2.3°
+[SHOT] speed=135.7mph VLA=15.4° → TM match: speed=135.9mph VLA=15.3° err=0.1°
+[SHOT] speed=53.4mph VLA=34° → TM match: speed=63.2mph VLA=33.9° err=0.1°
+[SHOT] speed=69.2mph VLA=37.6° → TM match: speed=63.2mph VLA=33.9° err=3.7°
+[SHOT] speed=115.9mph VLA=28.1° → TM match: speed=109.9mph VLA=25.8° err=2.3°
+[SHOT] speed=90.2mph VLA=27.8° → TM match: speed=90.4mph VLA=27.8° err=0.0°
+[SHOT] speed=86.4mph VLA=36.5° → TM match: speed=85.4mph VLA=30.9° err=5.6°
+[SHOT] speed=79.3mph VLA=31.1° → TM match: speed=78.4mph VLA=30.3° err=0.8°
+[SHOT] speed=61.5mph VLA=41.2° → TM match: speed=63.2mph VLA=33.9° err=7.3°
+[SHOT] speed=129.1mph VLA=20.2° → TM match: speed=128mph VLA=20.3° err=-0.1°
+[SHOT] speed=17.5mph VLA=29.2° → TM match: speed=61.3mph VLA=28.9° err=0.3°
+[SHOT] speed=29.7mph VLA=21.3° → TM match: speed=61.3mph VLA=28.9° err=-7.6°
+[SHOT] speed=8.5mph VLA=18° → TM match: speed=61.3mph VLA=28.9° err=-10.9°
+[SHOT] speed=27.8mph VLA=27.4° → TM match: speed=61.3mph VLA=28.9° err=-1.5°
+[SHOT] speed=26.7mph VLA=34.9° → TM match: speed=61.6mph VLA=31.1° err=3.8°
+[SHOT] speed=90.5mph VLA=35° → TM match: speed=90.4mph VLA=30.6° err=4.4°
+[SHOT] speed=85.4mph VLA=25.3° → TM match: speed=85.6mph VLA=25.3° err=0.0°
+[SHOT] speed=86mph VLA=32.7° → TM match: speed=85.4mph VLA=30.9° err=1.8°
+[SHOT] speed=76.6mph VLA=30.7° → TM match: speed=76.7mph VLA=30.7° err=0.0°
+[SHOT] speed=44.9mph VLA=18° → TM match: speed=65.3mph VLA=25.3° err=-7.3°
+[SHOT] speed=72.8mph VLA=36.5° → TM match: speed=72mph VLA=31.5° err=5.0°
+[SHOT] speed=56.1mph VLA=32° → TM match: speed=61.6mph VLA=31.1° err=0.9°
+[SHOT] speed=83mph VLA=20.4° → TM match: speed=83mph VLA=20.5° err=-0.1°
+[SHOT] speed=138mph VLA=22° → TM match: speed=128mph VLA=20.3° err=1.7°
+[SHOT] speed=113.2mph VLA=24.1° → TM match: speed=112.8mph VLA=23.6° err=0.5°
+[SHOT] speed=127.4mph VLA=23.4° → TM match: speed=128mph VLA=20.3° err=3.1°
+[SHOT] speed=31.3mph VLA=20.7° → TM match: speed=62.7mph VLA=27.4° err=-6.7°
+[SHOT] speed=101.8mph VLA=22.7° → TM match: speed=101.8mph VLA=22.7° err=0.0°
+[SHOT] speed=75.4mph VLA=31.8° → TM match: speed=73.8mph VLA=31.5° err=0.3°
+[SHOT] speed=86.6mph VLA=23.3° → TM match: speed=86.8mph VLA=23.3° err=0.0°
+[SHOT] speed=102.9mph VLA=33.4° → TM match: speed=100.6mph VLA=30.8° err=2.6°
+[SHOT] speed=93.2mph VLA=32.4° → TM match: speed=92.7mph VLA=30.3° err=2.1°
+[SHOT] speed=140.3mph VLA=22.8° → TM match: speed=139.1mph VLA=16.6° err=6.2°
+[SHOT] speed=48.6mph VLA=39.2° → TM match: speed=63.2mph VLA=33.9° err=5.3°
+[SHOT] speed=27.9mph VLA=32.4° → TM match: speed=61.6mph VLA=31.1° err=1.3°
+[SHOT] speed=34.4mph VLA=31.2° → TM match: speed=61.6mph VLA=31.1° err=0.1°
+[SHOT] speed=44.4mph VLA=49.9° → TM match: speed=63.2mph VLA=33.9° err=16.0°
+[SHOT] speed=88.8mph VLA=39° → TM match: speed=85.4mph VLA=30.9° err=8.1°
+[SHOT] speed=72.3mph VLA=34.6° → TM match: speed=72mph VLA=31.5° err=3.1°
+[SHOT] speed=62.2mph VLA=29.5° → TM match: speed=62mph VLA=29.7° err=-0.2°
+[SHOT] speed=70.1mph VLA=19.9° → TM match: speed=72.3mph VLA=20.4° err=-0.5°
+[SHOT] speed=61.2mph VLA=36° → TM match: speed=63.2mph VLA=33.9° err=2.1°
+[SHOT] speed=87.8mph VLA=35.2° → TM match: speed=86.3mph VLA=30.8° err=4.4°
+[SHOT] speed=119.9mph VLA=22.8° → TM match: speed=119.9mph VLA=21.5° err=1.3°
+[SHOT] speed=90.5mph VLA=25.4° → TM match: speed=90.5mph VLA=25.4° err=0.0°
+[SHOT] speed=183.3mph VLA=31.7° → TM match: speed=174.4mph VLA=11.7° err=20.0°
+[SHOT] speed=29.8mph VLA=28.7° → TM match: speed=61.3mph VLA=28.9° err=-0.2°
+[SHOT] speed=31.9mph VLA=27.1° → TM match: speed=61.3mph VLA=28.9° err=-1.8°
+[SHOT] speed=66.6mph VLA=30.5° → TM match: speed=66.6mph VLA=30.4° err=0.1°
+[SHOT] speed=64.8mph VLA=33.8° → TM match: speed=63.2mph VLA=33.9° err=-0.1°
+[SHOT] speed=55.5mph VLA=33.5° → TM match: speed=63.2mph VLA=33.9° err=-0.4°
+[SHOT] speed=54.1mph VLA=42.2° → TM match: speed=63.2mph VLA=33.9° err=8.3°
+[SHOT] speed=72.6mph VLA=37.2° → TM match: speed=72mph VLA=31.5° err=5.7°
+[SHOT] speed=69.6mph VLA=35.3° → TM match: speed=63.2mph VLA=33.9° err=1.4°
+[SHOT] speed=121.2mph VLA=41.9° → TM match: speed=100.6mph VLA=30.8° err=11.1°
+[SHOT] speed=22mph VLA=16.8° → TM match: speed=62.7mph VLA=27.4° err=-10.6°
+[SHOT] speed=46.1mph VLA=29.1° → TM match: speed=61.3mph VLA=28.9° err=0.2°
+[SHOT] speed=74.9mph VLA=41.7° → TM match: speed=63.2mph VLA=33.9° err=7.8°
+[SHOT] speed=19.9mph VLA=13.9° → TM match: speed=62.7mph VLA=27.4° err=-13.5°
+[SHOT] speed=71.1mph VLA=33.1° → TM match: speed=72mph VLA=31.5° err=1.6°
+[SHOT] speed=72.8mph VLA=23° → TM match: speed=72.6mph VLA=23.2° err=-0.2°
+[SHOT] speed=143mph VLA=31.9° → TM match: speed=128mph VLA=20.3° err=11.6°
+[SHOT] speed=48.5mph VLA=32.9° → TM match: speed=61.6mph VLA=31.1° err=1.8°
+[SHOT] speed=161.3mph VLA=34.4° → TM match: speed=156mph VLA=14.5° err=19.9°
+[SHOT] speed=117.7mph VLA=33° → TM match: speed=107.7mph VLA=26.7° err=6.3°
+[SHOT] speed=27.7mph VLA=31° → TM match: speed=61.3mph VLA=28.9° err=2.1°
+[SHOT] speed=28.9mph VLA=35.5° → TM match: speed=61.6mph VLA=31.1° err=4.4°
+[SHOT] speed=44.8mph VLA=32.4° → TM match: speed=61.6mph VLA=31.1° err=1.3°
+[SHOT] speed=75.3mph VLA=30.9° → TM match: speed=74.7mph VLA=31° err=-0.1°
+[SHOT] speed=76.3mph VLA=26.1° → TM match: speed=76.4mph VLA=26° err=0.1°
+[SHOT] speed=81.6mph VLA=28.2° → TM match: speed=81.4mph VLA=28.2° err=0.0°
+[SHOT] speed=68mph VLA=30.3° → TM match: speed=67.8mph VLA=30.1° err=0.2°
+[SHOT] speed=95.6mph VLA=22.1° → TM match: speed=95.4mph VLA=22.2° err=-0.1°
+[SHOT] speed=67.8mph VLA=24.2° → TM match: speed=67.8mph VLA=23.8° err=0.4°
+[SHOT] speed=84.7mph VLA=22.6° → TM match: speed=84.4mph VLA=22.7° err=-0.1°
+[SHOT] speed=64mph VLA=33.4° → TM match: speed=63.2mph VLA=33.9° err=-0.5°
+[SHOT] speed=63.2mph VLA=19° → TM match: speed=72.3mph VLA=20.4° err=-1.4°
+[SHOT] speed=56.9mph VLA=31.7° → TM match: speed=61.6mph VLA=31.1° err=0.6°
+[SHOT] speed=80.6mph VLA=32.6° → TM match: speed=82.8mph VLA=30.6° err=2.0°
+[SHOT] speed=64.7mph VLA=30.4° → TM match: speed=64.6mph VLA=30.3° err=0.1°
+[SHOT] speed=67.1mph VLA=29.7° → TM match: speed=66.9mph VLA=29.8° err=-0.1°
+[SHOT] speed=64.8mph VLA=31.3° → TM match: speed=64.9mph VLA=30.7° err=0.6°
+[SHOT] speed=13.5mph VLA=18.7° → TM match: speed=61.3mph VLA=28.9° err=-10.2°
+[SHOT] speed=24.2mph VLA=21° → TM match: speed=61.3mph VLA=28.9° err=-7.9°
+[SHOT] speed=43.9mph VLA=21.2° → TM match: speed=62.7mph VLA=27.4° err=-6.2°
+[SHOT] speed=32.1mph VLA=31.8° → TM match: speed=61.6mph VLA=31.1° err=0.7°
+[SHOT] speed=24.3mph VLA=24.4° → TM match: speed=61.3mph VLA=28.9° err=-4.5°
+[SHOT] speed=22.4mph VLA=27.6° → TM match: speed=61.3mph VLA=28.9° err=-1.3°
+[SHOT] speed=48.1mph VLA=37.5° → TM match: speed=63.2mph VLA=33.9° err=3.6°
+[SHOT] speed=33.9mph VLA=45.7° → TM match: speed=63.2mph VLA=33.9° err=11.8°
+[SHOT] speed=50.9mph VLA=24.6° → TM match: speed=62.7mph VLA=27.4° err=-2.8°
+[SHOT] speed=61.7mph VLA=31° → TM match: speed=61.6mph VLA=31.1° err=-0.1°
+[SHOT] speed=35mph VLA=69.8° → TM match: speed=63.2mph VLA=33.9° err=35.9°
+[2m12:13:45 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/crushed-it/CrushedItPopup.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/crushed-it/CrushedItPopup.tsx (http://localhost:5173/@vite/client:223)
+[2m12:14:24 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/crushed-it/CrushedItPopup.css[22m
+[renderer:log] [vite] hot updated: /src/features/crushed-it/CrushedItPopup.css (http://localhost:5173/@vite/client:223)
+[SHOT] speed=80.7mph VLA=25° → TM match: speed=80.9mph VLA=25° err=0.0°
+[SHOT] speed=99.6mph VLA=28.7° → TM match: speed=99.8mph VLA=28.9° err=-0.2°
+[SHOT] speed=37mph VLA=32.7° → TM match: speed=61.6mph VLA=31.1° err=1.6°
+[SHOT] speed=31.3mph VLA=37.7° → TM match: speed=63.2mph VLA=33.9° err=3.8°
+[SHOT] speed=80mph VLA=2.5° → TM match: speed=92mph VLA=9.7° err=-7.2°
+[SHOT] speed=73.7mph VLA=32° → TM match: speed=73.8mph VLA=31.5° err=0.5°
+[SHOT] speed=83.3mph VLA=35° → TM match: speed=85.4mph VLA=30.9° err=4.1°
+[SHOT] speed=103.5mph VLA=31.8° → TM match: speed=100.6mph VLA=30.8° err=1.0°
+[SHOT] speed=91.5mph VLA=27.5° → TM match: speed=91.4mph VLA=27.5° err=0.0°
+[SHOT] speed=57.5mph VLA=35.6° → TM match: speed=63.2mph VLA=33.9° err=1.7°
+[SHOT] speed=27.1mph VLA=42° → TM match: speed=63.2mph VLA=33.9° err=8.1°
+[SHOT] speed=67.4mph VLA=42.7° → TM match: speed=63.2mph VLA=33.9° err=8.8°
+[SHOT] speed=107mph VLA=24.5° → TM match: speed=106.7mph VLA=24.6° err=-0.1°
+[SHOT] speed=93.2mph VLA=25.6° → TM match: speed=93.4mph VLA=25.6° err=0.0°
+[SHOT] speed=53.8mph VLA=29.8° → TM match: speed=61.3mph VLA=28.9° err=0.9°
+[SHOT] speed=59.6mph VLA=40.7° → TM match: speed=63.2mph VLA=33.9° err=6.8°
+[SHOT] speed=86.6mph VLA=11.4° → TM match: speed=85.4mph VLA=14° err=-2.6°
+[SHOT] speed=109.4mph VLA=31.7° → TM match: speed=100.6mph VLA=30.8° err=0.9°
+[SHOT] speed=68.7mph VLA=46.4° → TM match: speed=63.2mph VLA=33.9° err=12.5°
+[SHOT] speed=72.5mph VLA=32.2° → TM match: speed=72mph VLA=31.5° err=0.7°
+[SHOT] speed=72.3mph VLA=38.5° → TM match: speed=63.2mph VLA=33.9° err=4.6°
+[SHOT] speed=116.9mph VLA=2.5° → TM match: speed=113mph VLA=6° err=-3.5°
+[SHOT] speed=101.7mph VLA=32.6° → TM match: speed=100.6mph VLA=30.8° err=1.8°
+[SHOT] speed=95.5mph VLA=23.5° → TM match: speed=95.8mph VLA=23.5° err=0.0°
+[SHOT] speed=54.3mph VLA=37.8° → TM match: speed=63.2mph VLA=33.9° err=3.9°
+[SHOT] speed=86.8mph VLA=33.1° → TM match: speed=85.4mph VLA=30.9° err=2.2°
+[SHOT] speed=99.3mph VLA=32.9° → TM match: speed=98.1mph VLA=31.4° err=1.5°
+[SHOT] speed=77.6mph VLA=32.5° → TM match: speed=76.7mph VLA=30.7° err=1.8°
+[SHOT] speed=115.4mph VLA=37.1° → TM match: speed=100.6mph VLA=30.8° err=6.3°
+[SHOT] speed=89.6mph VLA=26.8° → TM match: speed=89.8mph VLA=27° err=-0.2°
+[SHOT] speed=85.6mph VLA=23.7° → TM match: speed=85.4mph VLA=23.6° err=0.1°
+[SHOT] speed=97.4mph VLA=26.4° → TM match: speed=97.3mph VLA=26.4° err=0.0°
+[SHOT] speed=160.4mph VLA=29.3° → TM match: speed=156mph VLA=14.5° err=14.8°
+[SHOT] speed=85.5mph VLA=30.3° → TM match: speed=84.9mph VLA=30° err=0.3°
+[SHOT] speed=124.3mph VLA=10.2° → TM match: speed=124.3mph VLA=10.4° err=-0.2°
+[SHOT] speed=75.8mph VLA=39.5° → TM match: speed=73.8mph VLA=31.5° err=8.0°
+[SHOT] speed=54.5mph VLA=28.7° → TM match: speed=61.3mph VLA=28.9° err=-0.2°
+[SHOT] speed=92.9mph VLA=23.9° → TM match: speed=92.9mph VLA=23.8° err=0.1°
+[SHOT] speed=117mph VLA=24.1° → TM match: speed=116.3mph VLA=23.8° err=0.3°
+[SHOT] speed=13.6mph VLA=54.3° → TM match: speed=63.2mph VLA=33.9° err=20.4°
+[SHOT] speed=62.2mph VLA=32.3° → TM match: speed=61.6mph VLA=31.1° err=1.2°
+[SHOT] speed=76.5mph VLA=34.2° → TM match: speed=73.8mph VLA=31.5° err=2.7°
+[SHOT] speed=18mph VLA=74.6° → TM match: speed=63.2mph VLA=33.9° err=40.7°
+[SHOT] speed=40mph VLA=31.1° → TM match: speed=61.6mph VLA=31.1° err=0.0°
+[SHOT] speed=21.1mph VLA=3.7° → TM match: speed=72.3mph VLA=20.4° err=-16.7°
+[SHOT] speed=59.8mph VLA=33.1° → TM match: speed=63.2mph VLA=33.9° err=-0.8°
+[SHOT] speed=109.5mph VLA=25.6° → TM match: speed=109.9mph VLA=25.8° err=-0.2°
+[SHOT] speed=36.8mph VLA=29.7° → TM match: speed=61.3mph VLA=28.9° err=0.8°
+[SHOT] speed=21.6mph VLA=61.2° → TM match: speed=63.2mph VLA=33.9° err=27.3°
+[SHOT] speed=53.4mph VLA=42.5° → TM match: speed=63.2mph VLA=33.9° err=8.6°
+[SHOT] speed=70.6mph VLA=42.7° → TM match: speed=63.2mph VLA=33.9° err=8.8°
+[SHOT] speed=75.4mph VLA=34.4° → TM match: speed=73.8mph VLA=31.5° err=2.9°
+[SHOT] speed=88.1mph VLA=33.1° → TM match: speed=86.3mph VLA=30.8° err=2.3°
+[SHOT] speed=43.1mph VLA=45° → TM match: speed=63.2mph VLA=33.9° err=11.1°
+[SHOT] speed=48.4mph VLA=61° → TM match: speed=63.2mph VLA=33.9° err=27.1°
+[SHOT] speed=74.9mph VLA=23.5° → TM match: speed=74.9mph VLA=23.4° err=0.1°
+[SHOT] speed=92.2mph VLA=21.8° → TM match: speed=92.2mph VLA=21.7° err=0.1°
+[SHOT] speed=93.9mph VLA=25° → TM match: speed=93.9mph VLA=24.9° err=0.1°
+[SHOT] speed=7.2mph VLA=69.4° → TM match: speed=63.2mph VLA=33.9° err=35.5°
+[SHOT] speed=56.6mph VLA=32.3° → TM match: speed=61.6mph VLA=31.1° err=1.2°
+[SHOT] speed=37mph VLA=40° → TM match: speed=63.2mph VLA=33.9° err=6.1°
+[SHOT] speed=31.5mph VLA=35.2° → TM match: speed=61.6mph VLA=31.1° err=4.1°
+[SHOT] speed=29.9mph VLA=38.6° → TM match: speed=63.2mph VLA=33.9° err=4.7°
+[SHOT] speed=35.2mph VLA=37.9° → TM match: speed=63.2mph VLA=33.9° err=4.0°
+[SHOT] speed=44.9mph VLA=45.5° → TM match: speed=63.2mph VLA=33.9° err=11.6°
+[SHOT] speed=57.6mph VLA=35.9° → TM match: speed=63.2mph VLA=33.9° err=2.0°
+[SHOT] speed=55.3mph VLA=43.7° → TM match: speed=63.2mph VLA=33.9° err=9.8°
+[SHOT] speed=40.9mph VLA=48.5° → TM match: speed=63.2mph VLA=33.9° err=14.6°
+[SHOT] speed=72.5mph VLA=34.8° → TM match: speed=72mph VLA=31.5° err=3.3°
+[SHOT] speed=42mph VLA=54° → TM match: speed=63.2mph VLA=33.9° err=20.1°
+[SHOT] speed=38.1mph VLA=48.3° → TM match: speed=63.2mph VLA=33.9° err=14.4°
+[SHOT] speed=27.9mph VLA=33.8° → TM match: speed=61.6mph VLA=31.1° err=2.7°
+[SHOT] speed=44.8mph VLA=34.9° → TM match: speed=61.6mph VLA=31.1° err=3.8°
+[SHOT] speed=109.6mph VLA=35.7° → TM match: speed=100.6mph VLA=30.8° err=4.9°
+[SHOT] speed=41.7mph VLA=39.2° → TM match: speed=63.2mph VLA=33.9° err=5.3°
+[SHOT] speed=80.7mph VLA=34.3° → TM match: speed=82.8mph VLA=30.6° err=3.7°
+[SHOT] speed=71.8mph VLA=40.1° → TM match: speed=63.2mph VLA=33.9° err=6.2°
+[SHOT] speed=43.2mph VLA=39.5° → TM match: speed=63.2mph VLA=33.9° err=5.6°
+[SHOT] speed=37.6mph VLA=45.8° → TM match: speed=63.2mph VLA=33.9° err=11.9°
+[SHOT] speed=35.4mph VLA=40.7° → TM match: speed=63.2mph VLA=33.9° err=6.8°
+[SHOT] speed=48.3mph VLA=10.5° → TM match: speed=72.3mph VLA=20.4° err=-9.9°
+[SHOT] speed=43.8mph VLA=33.7° → TM match: speed=61.6mph VLA=31.1° err=2.6°
+[SHOT] speed=67.9mph VLA=38.2° → TM match: speed=63.2mph VLA=33.9° err=4.3°
+[SHOT] speed=53.4mph VLA=44.9° → TM match: speed=63.2mph VLA=33.9° err=11.0°
+[SHOT] speed=67mph VLA=39.8° → TM match: speed=63.2mph VLA=33.9° err=5.9°
+[SHOT] speed=159.7mph VLA=16.3° → TM match: speed=156mph VLA=14.5° err=1.8°
+[SHOT] speed=81.6mph VLA=18.3° → TM match: speed=81.4mph VLA=18.4° err=-0.1°
+[SHOT] speed=122.7mph VLA=17.8° → TM match: speed=122.4mph VLA=17.8° err=0.0°
+[SHOT] speed=34.1mph VLA=34.3° → TM match: speed=61.6mph VLA=31.1° err=3.2°
+[SHOT] speed=48.8mph VLA=35.3° → TM match: speed=63.2mph VLA=33.9° err=1.4°
+[SHOT] speed=91.2mph VLA=19.9° → TM match: speed=91.4mph VLA=19.9° err=0.0°
+[SHOT] speed=74.1mph VLA=30.7° → TM match: speed=74.3mph VLA=30.6° err=0.1°
+[SHOT] speed=19.1mph VLA=2.8° → TM match: speed=72.3mph VLA=20.4° err=-17.6°
+[SHOT] speed=38.5mph VLA=47.4° → TM match: speed=63.2mph VLA=33.9° err=13.5°
+[SHOT] speed=165mph VLA=37.7° → TM match: speed=156mph VLA=14.5° err=23.2°
+[SHOT] speed=103.3mph VLA=17.7° → TM match: speed=103.3mph VLA=17.6° err=0.1°
+[SHOT] speed=38.7mph VLA=42.4° → TM match: speed=63.2mph VLA=33.9° err=8.5°
+[SHOT] speed=4.5mph VLA=20.6° → TM match: speed=61.3mph VLA=28.9° err=-8.3°
+[SHOT] speed=21.3mph VLA=22.5° → TM match: speed=61.3mph VLA=28.9° err=-6.4°
+[SHOT] speed=37.1mph VLA=32.2° → TM match: speed=61.6mph VLA=31.1° err=1.1°
+[SHOT] speed=33.5mph VLA=36.1° → TM match: speed=61.6mph VLA=31.1° err=5.0°
+[SHOT] speed=60.2mph VLA=37.6° → TM match: speed=63.2mph VLA=33.9° err=3.7°
+[SHOT] speed=24.5mph VLA=9.9° → TM match: speed=65.3mph VLA=25.3° err=-15.4°
+[SHOT] speed=67.7mph VLA=26.7° → TM match: speed=67.9mph VLA=26.7° err=0.0°
+[SHOT] speed=36.6mph VLA=29.1° → TM match: speed=61.3mph VLA=28.9° err=0.2°
+[SHOT] speed=70.2mph VLA=28.9° → TM match: speed=70.3mph VLA=28.9° err=0.0°
+[SHOT] speed=25.2mph VLA=13.9° → TM match: speed=65.3mph VLA=25.3° err=-11.4°
+[SHOT] speed=30.5mph VLA=16.9° → TM match: speed=62.7mph VLA=27.4° err=-10.5°
+[SHOT] speed=139.2mph VLA=20.8° → TM match: speed=139.1mph VLA=16.6° err=4.2°
+[SHOT] speed=201.1mph VLA=18.6° → TM match: speed=188.8mph VLA=9.2° err=9.4°
+[SHOT] speed=76mph VLA=22.4° → TM match: speed=75.9mph VLA=22.5° err=-0.1°
+[SHOT] speed=71mph VLA=33.7° → TM match: speed=72mph VLA=31.5° err=2.2°
+[SHOT] speed=120mph VLA=12.8° → TM match: speed=119.6mph VLA=12.8° err=0.0°
+[SHOT] speed=60.2mph VLA=31.3° → TM match: speed=61.6mph VLA=31.1° err=0.2°
+[SHOT] speed=102.2mph VLA=12.8° → TM match: speed=102.3mph VLA=12.8° err=0.0°
+[SHOT] speed=105.6mph VLA=12.2° → TM match: speed=105.5mph VLA=12.1° err=0.1°
+[SHOT] speed=44mph VLA=5.7° → TM match: speed=72.3mph VLA=20.4° err=-14.7°
+[SHOT] speed=82.3mph VLA=17.3° → TM match: speed=82.1mph VLA=17.1° err=0.2°
+[SHOT] speed=87mph VLA=19° → TM match: speed=87.4mph VLA=19° err=0.0°
+[SHOT] speed=82.2mph VLA=18.2° → TM match: speed=82.2mph VLA=18.2° err=0.0°
+[SHOT] speed=38.8mph VLA=46.7° → TM match: speed=63.2mph VLA=33.9° err=12.8°
+[SHOT] speed=16.4mph VLA=4° → TM match: speed=72.3mph VLA=20.4° err=-16.4°
+[SHOT] speed=154.5mph VLA=7° → TM match: speed=154.4mph VLA=7.1° err=-0.1°
+[SHOT] speed=187.4mph VLA=11° → TM match: speed=186mph VLA=10.2° err=0.8°
+[SHOT] speed=88.9mph VLA=16.8° → TM match: speed=88.9mph VLA=16.8° err=0.0°
+[SHOT] speed=177.3mph VLA=18.6° → TM match: speed=174.4mph VLA=11.7° err=6.9°
+[SHOT] speed=193.4mph VLA=7.6° → TM match: speed=188.8mph VLA=9.2° err=-1.6°
+[SHOT] speed=24.1mph VLA=10.8° → TM match: speed=65.3mph VLA=25.3° err=-14.5°
+[SHOT] speed=88.5mph VLA=11.6° → TM match: speed=92.1mph VLA=11.8° err=-0.2°
+[SHOT] speed=79.4mph VLA=17.9° → TM match: speed=80mph VLA=17.9° err=0.0°
+[SHOT] speed=16.3mph VLA=31.2° → TM match: speed=61.3mph VLA=28.9° err=2.3°
+[SHOT] speed=22.9mph VLA=32.3° → TM match: speed=61.6mph VLA=31.1° err=1.2°
+[SHOT] speed=110.1mph VLA=15.5° → TM match: speed=109.9mph VLA=15.4° err=0.1°
+[SHOT] speed=226.9mph VLA=17.6° → TM match: speed=188.8mph VLA=9.2° err=8.4°
+[SHOT] speed=81.6mph VLA=7° → TM match: speed=92mph VLA=9.7° err=-2.7°
+[SHOT] speed=99mph VLA=19.5° → TM match: speed=98.8mph VLA=19.5° err=0.0°
+[SHOT] speed=74.8mph VLA=20.5° → TM match: speed=75.5mph VLA=21.1° err=-0.6°
+[SHOT] speed=96.9mph VLA=20.7° → TM match: speed=96.4mph VLA=20.7° err=0.0°
+[SHOT] speed=36.2mph VLA=9.7° → TM match: speed=72.3mph VLA=20.4° err=-10.7°
+[SHOT] speed=30.2mph VLA=14.6° → TM match: speed=65.3mph VLA=25.3° err=-10.7°
+[SHOT] speed=125.5mph VLA=11.2° → TM match: speed=125.4mph VLA=11.2° err=0.0°
+[SHOT] speed=75mph VLA=16.9° → TM match: speed=79.8mph VLA=17° err=-0.1°
+[SHOT] speed=69.2mph VLA=19.5° → TM match: speed=72.3mph VLA=20.4° err=-0.9°
+[SHOT] speed=32.8mph VLA=19.5° → TM match: speed=62.7mph VLA=27.4° err=-7.9°
+[SHOT] speed=46.9mph VLA=20.5° → TM match: speed=65.3mph VLA=25.3° err=-4.8°
+[SHOT] speed=24.4mph VLA=25.7° → TM match: speed=61.3mph VLA=28.9° err=-3.2°
+[SHOT] speed=29.5mph VLA=35.1° → TM match: speed=61.6mph VLA=31.1° err=4.0°
+[SHOT] speed=76.8mph VLA=17.9° → TM match: speed=78.1mph VLA=18.9° err=-1.0°
+[SHOT] speed=42.5mph VLA=29.7° → TM match: speed=61.3mph VLA=28.9° err=0.8°
+[SHOT] speed=115.7mph VLA=19.7° → TM match: speed=115.5mph VLA=19.7° err=0.0°
+[SHOT] speed=134.8mph VLA=14.1° → TM match: speed=134.9mph VLA=14.1° err=0.0°
+[SHOT] speed=90.7mph VLA=15.6° → TM match: speed=90.7mph VLA=15.7° err=-0.1°
+[SHOT] speed=53.6mph VLA=23.5° → TM match: speed=62.7mph VLA=27.4° err=-3.9°
+[SHOT] speed=97.2mph VLA=19.9° → TM match: speed=97.3mph VLA=20° err=-0.1°
+[SHOT] speed=45.5mph VLA=35.2° → TM match: speed=63.2mph VLA=33.9° err=1.3°
+[SHOT] speed=96.7mph VLA=20.7° → TM match: speed=96.4mph VLA=20.7° err=0.0°
+[SHOT] speed=67.8mph VLA=28.7° → TM match: speed=67.8mph VLA=28.6° err=0.1°
+[SHOT] speed=105.4mph VLA=13.5° → TM match: speed=105.5mph VLA=13.5° err=0.0°
+[SHOT] speed=115.3mph VLA=20.3° → TM match: speed=115.3mph VLA=20.3° err=0.0°
+[SHOT] speed=24.2mph VLA=21.2° → TM match: speed=61.3mph VLA=28.9° err=-7.7°
+[SHOT] speed=59mph VLA=26.2° → TM match: speed=62.7mph VLA=27.4° err=-1.2°
+[SHOT] speed=146.4mph VLA=8.1° → TM match: speed=146.2mph VLA=8.1° err=0.0°
+[SHOT] speed=68.4mph VLA=33.2° → TM match: speed=69.2mph VLA=30.9° err=2.3°
+[SHOT] speed=54.4mph VLA=30.2° → TM match: speed=61.3mph VLA=28.9° err=1.3°
+[SHOT] speed=9.3mph VLA=10.8° → TM match: speed=62.7mph VLA=27.4° err=-16.6°
+[SHOT] speed=18.5mph VLA=8.9° → TM match: speed=65.3mph VLA=25.3° err=-16.4°
+[SHOT] speed=22.9mph VLA=31.5° → TM match: speed=61.6mph VLA=31.1° err=0.4°
+[SHOT] speed=8.5mph VLA=5° → TM match: speed=65.3mph VLA=25.3° err=-20.3°
+[SHOT] speed=55.3mph VLA=32.9° → TM match: speed=61.6mph VLA=31.1° err=1.8°
+[SHOT] speed=30.8mph VLA=21.7° → TM match: speed=61.3mph VLA=28.9° err=-7.2°
+[SHOT] speed=99.1mph VLA=17.4° → TM match: speed=99.5mph VLA=17.3° err=0.1°
+[SHOT] speed=73.7mph VLA=22.5° → TM match: speed=73.9mph VLA=22.5° err=0.0°
+[SHOT] speed=23.9mph VLA=21.3° → TM match: speed=61.3mph VLA=28.9° err=-7.6°
+[SHOT] speed=88.3mph VLA=20.6° → TM match: speed=88mph VLA=20.8° err=-0.2°
+[SHOT] speed=35.7mph VLA=34.4° → TM match: speed=61.6mph VLA=31.1° err=3.3°
+[SHOT] speed=24.2mph VLA=26.8° → TM match: speed=61.3mph VLA=28.9° err=-2.1°
+[SHOT] speed=19.5mph VLA=27.9° → TM match: speed=61.3mph VLA=28.9° err=-1.0°
+[SHOT] speed=42.1mph VLA=5° → TM match: speed=72.3mph VLA=20.4° err=-15.4°
+[SHOT] speed=29mph VLA=36.1° → TM match: speed=61.6mph VLA=31.1° err=5.0°
+[SHOT] speed=35.5mph VLA=29° → TM match: speed=61.3mph VLA=28.9° err=0.1°
+[SHOT] speed=43.5mph VLA=31.5° → TM match: speed=61.6mph VLA=31.1° err=0.4°
+[SHOT] speed=83mph VLA=17.4° → TM match: speed=82.9mph VLA=17.2° err=0.2°
+[SHOT] speed=5.3mph VLA=5.3° → TM match: speed=65.3mph VLA=25.3° err=-20.0°
+[SHOT] speed=76.7mph VLA=15.6° → TM match: speed=79.8mph VLA=17° err=-1.4°
+[SHOT] speed=23.6mph VLA=18.4° → TM match: speed=62.7mph VLA=27.4° err=-9.0°
+[SHOT] speed=89.6mph VLA=18.2° → TM match: speed=89.6mph VLA=18.3° err=-0.1°
+[SHOT] speed=72.7mph VLA=29.4° → TM match: speed=72.7mph VLA=29.3° err=0.1°
+[SHOT] speed=27.1mph VLA=24.1° → TM match: speed=61.3mph VLA=28.9° err=-4.8°
+[SHOT] speed=130.6mph VLA=23.2° → TM match: speed=128mph VLA=20.3° err=2.9°
+[SHOT] speed=65.1mph VLA=26.9° → TM match: speed=65.5mph VLA=26.8° err=0.1°
+[SHOT] speed=79mph VLA=39.3° → TM match: speed=73.8mph VLA=31.5° err=7.8°
+[SHOT] speed=68.4mph VLA=6.4° → TM match: speed=82mph VLA=15.5° err=-9.1°
+[SHOT] speed=79.1mph VLA=21.6° → TM match: speed=79.1mph VLA=21.7° err=-0.1°
+[SHOT] speed=25.2mph VLA=19.1° → TM match: speed=62.7mph VLA=27.4° err=-8.3°
+[SHOT] speed=69.5mph VLA=33.4° → TM match: speed=72mph VLA=31.5° err=1.9°
+[SHOT] speed=73.4mph VLA=30.8° → TM match: speed=73.8mph VLA=30.5° err=0.3°
+[SHOT] speed=69.2mph VLA=35.7° → TM match: speed=63.2mph VLA=33.9° err=1.8°
+[SHOT] speed=40.3mph VLA=30.8° → TM match: speed=61.6mph VLA=31.1° err=-0.3°
+[SHOT] speed=75.2mph VLA=32.2° → TM match: speed=73.8mph VLA=31.5° err=0.7°
+[SHOT] speed=46.3mph VLA=24.2° → TM match: speed=62.7mph VLA=27.4° err=-3.2°
+[SHOT] speed=69.7mph VLA=22.7° → TM match: speed=70.5mph VLA=23.3° err=-0.6°
+[SHOT] speed=97.7mph VLA=22.3° → TM match: speed=97.8mph VLA=22.3° err=0.0°
+[SHOT] speed=91.4mph VLA=35.1° → TM match: speed=90.4mph VLA=30.6° err=4.5°
+[SHOT] speed=74.7mph VLA=33.4° → TM match: speed=73.8mph VLA=31.5° err=1.9°
+[SHOT] speed=35.6mph VLA=32.2° → TM match: speed=61.6mph VLA=31.1° err=1.1°
+[SHOT] speed=82.5mph VLA=22.1° → TM match: speed=82.4mph VLA=22.2° err=-0.1°
+[SHOT] speed=60.5mph VLA=22.3° → TM match: speed=65.3mph VLA=25.3° err=-3.0°
+[SHOT] speed=74.9mph VLA=25.1° → TM match: speed=74.9mph VLA=25° err=0.1°
+[SHOT] speed=136.2mph VLA=41.1° → TM match: speed=116.3mph VLA=23.8° err=17.3°
+[SHOT] speed=121.3mph VLA=22.2° → TM match: speed=119.9mph VLA=21.5° err=0.7°
+[SHOT] speed=70.8mph VLA=32.9° → TM match: speed=72mph VLA=31.5° err=1.4°
+[SHOT] speed=62.6mph VLA=28.5° → TM match: speed=62.8mph VLA=28.5° err=0.0°
+[SHOT] speed=66.8mph VLA=26.4° → TM match: speed=67.3mph VLA=26.4° err=0.0°
+[SHOT] speed=88.5mph VLA=19.1° → TM match: speed=88.5mph VLA=19.1° err=0.0°
+[SHOT] speed=74.7mph VLA=24.5° → TM match: speed=74.9mph VLA=24.5° err=0.0°
+[SHOT] speed=173.6mph VLA=18.1° → TM match: speed=174.4mph VLA=11.7° err=6.4°
+[SHOT] speed=24.5mph VLA=36.4° → TM match: speed=61.6mph VLA=31.1° err=5.3°
+[SHOT] speed=63.5mph VLA=8.6° → TM match: speed=82mph VLA=15.5° err=-6.9°
+[SHOT] speed=66.2mph VLA=25.9° → TM match: speed=66.4mph VLA=25.7° err=0.2°
+[SHOT] speed=30.3mph VLA=32.8° → TM match: speed=61.6mph VLA=31.1° err=1.7°
+[SHOT] speed=53.3mph VLA=45.8° → TM match: speed=63.2mph VLA=33.9° err=11.9°
+[SHOT] speed=54.9mph VLA=37.2° → TM match: speed=63.2mph VLA=33.9° err=3.3°
+[SHOT] speed=37.5mph VLA=38.4° → TM match: speed=63.2mph VLA=33.9° err=4.5°
+[SHOT] speed=34.9mph VLA=36.3° → TM match: speed=61.6mph VLA=31.1° err=5.2°
+[SHOT] speed=74.7mph VLA=36.8° → TM match: speed=73.8mph VLA=31.5° err=5.3°
+[SHOT] speed=61.3mph VLA=34.5° → TM match: speed=63.2mph VLA=33.9° err=0.6°
+[SHOT] speed=22.1mph VLA=36.6° → TM match: speed=61.6mph VLA=31.1° err=5.5°
+[SHOT] speed=58.1mph VLA=34° → TM match: speed=63.2mph VLA=33.9° err=0.1°
+[SHOT] speed=82.8mph VLA=24.2° → TM match: speed=82.9mph VLA=24.1° err=0.1°
+[SHOT] speed=67.7mph VLA=24.8° → TM match: speed=67.6mph VLA=24.8° err=0.0°
+[SHOT] speed=115.7mph VLA=26.6° → TM match: speed=116.3mph VLA=23.8° err=2.8°
+[SHOT] speed=107.7mph VLA=30.4° → TM match: speed=106.3mph VLA=27.3° err=3.1°
+[SHOT] speed=100.3mph VLA=27.2° → TM match: speed=100.6mph VLA=27.3° err=-0.1°
+[SHOT] speed=86.2mph VLA=29.3° → TM match: speed=86.3mph VLA=29.4° err=-0.1°
+[SHOT] speed=104.4mph VLA=36.7° → TM match: speed=98.1mph VLA=31.4° err=5.3°
+[SHOT] speed=72.4mph VLA=33.2° → TM match: speed=72mph VLA=31.5° err=1.7°
+[SHOT] speed=75.8mph VLA=36° → TM match: speed=73.8mph VLA=31.5° err=4.5°
+[SHOT] speed=142.8mph VLA=33.9° → TM match: speed=128mph VLA=20.3° err=13.6°
+[SHOT] speed=26.1mph VLA=14.3° → TM match: speed=65.3mph VLA=25.3° err=-11.0°
+[SHOT] speed=212.7mph VLA=14.4° → TM match: speed=188.8mph VLA=9.2° err=5.2°
+[SHOT] speed=153mph VLA=22.1° → TM match: speed=156mph VLA=14.5° err=7.6°
+[SHOT] speed=180.2mph VLA=14.1° → TM match: speed=181.3mph VLA=10.7° err=3.4°
+[SHOT] speed=119.6mph VLA=13.1° → TM match: speed=119.6mph VLA=13.1° err=0.0°
+[SHOT] speed=113.7mph VLA=25.6° → TM match: speed=114.2mph VLA=23.8° err=1.8°
+[SHOT] speed=185.1mph VLA=10° → TM match: speed=186mph VLA=10.2° err=-0.2°
+[SHOT] speed=117.3mph VLA=18.4° → TM match: speed=117.5mph VLA=18.4° err=0.0°
+[SHOT] speed=179.7mph VLA=8.9° → TM match: speed=179.5mph VLA=8.7° err=0.2°
+[SHOT] speed=112mph VLA=18.5° → TM match: speed=112.4mph VLA=18.5° err=0.0°
+[SHOT] speed=132.5mph VLA=19.7° → TM match: speed=131.9mph VLA=17.6° err=2.1°
+[SHOT] speed=53.9mph VLA=30.7° → TM match: speed=61.6mph VLA=31.1° err=-0.4°
+[SHOT] speed=203.9mph VLA=12.1° → TM match: speed=188.8mph VLA=9.2° err=2.9°
+[SHOT] speed=228mph VLA=30.5° → TM match: speed=188.8mph VLA=9.2° err=21.3°
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] [2026-05-22T06:23:05.361Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633c37 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:warn] [LiveShots] Connecting to ws://localhost:3000 (http://localhost:5173/src/hooks/useLiveShots.ts:22)
+[WS] Browser connected (1 total)
+[renderer:warn] [LiveShots] Connected (http://localhost:5173/src/hooks/useLiveShots.ts:27)
+[renderer:warn] [LiveShots] Closed — reconnecting in 2s (http://localhost:5173/src/hooks/useLiveShots.ts:47)
+[2m7:33:17 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m7:37:26 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[2m7:37:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[2m7:37:36 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m7:38:57 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m9:10:36 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
+[2m9:12:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[2m9:13:29 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[2m9:14:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m9:15:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m9:16:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[2m9:16:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m9:17:06 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:130)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)

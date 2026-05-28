@@ -586,7 +586,7 @@ export function ShotSequenceTester() {
         body: JSON.stringify({ speed: metrics.speed, vla: metrics.vla }),
       });
       const matched = data?.tm;
-      if (!matched) throw new Error("No TrackMan match found.");
+    if (!matched) throw new Error("No reference match found.");
 
       const apex = estimateApexFromMetrics(+matched.speed, +matched.vla, +matched.spin);
       setTm({
@@ -599,7 +599,7 @@ export function ShotSequenceTester() {
       });
       setError("");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "TrackMan lookup failed.";
+    const msg = e instanceof Error ? e.message : "Reference lookup failed.";
       setError(msg);
     } finally {
       setLoadingLookup(false);
@@ -728,7 +728,7 @@ export function ShotSequenceTester() {
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1d2e" }}>Shot Sequence Tester</h2>
         <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
-          Upload frame images and run YOLO, or paste tracked JSON/CSV. The tester computes speed, launch, spin, carry, and apex for TrackMan comparison.
+              Upload frame images and run YOLO, or paste tracked JSON/CSV. The tester computes speed, launch, spin, carry, and apex for reference comparison.
         </p>
       </div>
 
@@ -1000,9 +1000,9 @@ export function ShotSequenceTester() {
           <Card>
             <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>TrackMan Comparison</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Reference Comparison</h3>
                 <Button variant="default" onClick={lookupTrackMan} disabled={loadingLookup}>
-                  {loadingLookup ? "Looking up..." : "Auto Fill from TM Dataset"}
+                {loadingLookup ? "Looking up..." : "Auto Fill from Dataset"}
                 </Button>
               </div>
 
@@ -1021,7 +1021,7 @@ export function ShotSequenceTester() {
                     <tr style={{ borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
                       <th style={{ padding: "10px 8px", color: "#64748b" }}>Metric</th>
                       <th style={{ padding: "10px 8px", color: "#64748b" }}>Shot Seq</th>
-                      <th style={{ padding: "10px 8px", color: "#64748b" }}>TrackMan</th>
+                    <th style={{ padding: "10px 8px", color: "#64748b" }}>Reference</th>
                       <th style={{ padding: "10px 8px", color: "#64748b" }}>% Delta</th>
                     </tr>
                   </thead>

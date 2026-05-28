@@ -212,6 +212,7 @@ export function useDesktopBridge() {
   const [connectorLogs, setConnectorLogs] = useState<ConnectorLogs>({ gspro: [], "infinite-tee": [] });
   const [loading, setLoading] = useState(bridgeEnabled);
   const [error, setError] = useState<string | null>(null);
+  const [autoConnectAttemptedPairingKey, setAutoConnectAttemptedPairingKey] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!bridgeEnabled) {
@@ -327,16 +328,19 @@ export function useDesktopBridge() {
   }, [bridge, pairing]);
 
   const gsproScanUrl = useMemo(() => {
-    if (!bridge) return "";
+    if (!bridge || !pairing?.token) return "";
 
     const params = new URLSearchParams({
       host: bridge.ip,
+      httpPort: String(bridge.httpPort),
       shotPort: String(bridge.shotPort),
-      mode: "gspro-bridge",
+      token: pairing.token,
+      mode: "offline-companion",
+      connector: "gspro",
     });
 
     return `spivot://desktop-pair?${params.toString()}`;
-  }, [bridge]);
+  }, [bridge, pairing]);
 
   const manualCode = pairing?.token ? pairing.token.slice(0, 8).toUpperCase() : null;
 
@@ -438,6 +442,25 @@ export function useDesktopBridge() {
     await refresh();
     return payload;
   }, [bridgeBaseUrl, bridgeEnabled, refresh]);
+
+  const gsproConnector = useMemo(
+    () => connectors.find((connector) => connector.id === "gspro") ?? null,
+    [connectors]
+  );
+
+  useEffect(() => {
+    if (!bridgeEnabled || !bridge) return;
+    if (!pairing?.paired || !pairing.token) return;
+    if (!gsproConnector?.available || gsproConnector.status !== "idle") return;
+    const pairingKey = `${pairing.token}:${pairing.pairedAt ?? "unpaired"}`;
+    if (autoConnectAttemptedPairingKey === pairingKey) return;
+
+    setAutoConnectAttemptedPairingKey(pairingKey);
+
+    void connectConnector("gspro").catch((connectError) => {
+      console.error("[DesktopBridge] Failed to auto-start GSPro after phone scan:", connectError);
+    });
+  }, [autoConnectAttemptedPairingKey, bridge, bridgeEnabled, connectConnector, gsproConnector, pairing]);
 
   return {
     isDesktop: desktop,

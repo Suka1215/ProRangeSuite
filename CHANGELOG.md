@@ -56,7 +56,7 @@ See `INTEGRATION_GUIDE.md` for instructions on adding a Python backend endpoint 
 ## 📊 Model Performance
 
 Target metrics for ProRange ball tracking:
-- **30+ detections** in 36 frames (150ms @ 240fps) = TrackMan-level
+- **30+ detections** in 36 frames (150ms @ 240fps) = top-tier
 - **89.2% model recall** × **95% crop success** = **85% effective recall**
 - Optimal settings: 400-450px crop, 0.10-0.15 confidence
 

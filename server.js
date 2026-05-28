@@ -21,8 +21,19 @@ export const DEFAULT_SHOT_PORT = 9211;
 const CONNECTOR_TIMEOUT_MS = 30_000;
 const INFINITE_TEE_LAUNCH_GRACE_MS = 1_500;
 const GSPRO_HELPER_HOST = "127.0.0.1";
-const GSPRO_HELPER_PORT = 9210;
 const GSPRO_HELPER_TIMEOUT_MS = 4_000;
+const SIM_CONNECTORS = {
+  gspro: {
+    simName: "GSPro",
+    simPort: 921,
+    helperPort: 9210,
+  },
+  "infinite-tee": {
+    simName: "Infinite Tee",
+    simPort: 999,
+    helperPort: 9990,
+  },
+};
 const isWindows = process.platform === "win32";
 const DEFAULT_GSPRO_BRIDGE_SCRIPT_NAME = "gspro_bridge.py";
 const LEGACY_GSPRO_BRIDGE_SCRIPT = "/Users/jmmiller/Downloads/gspro_bridge.py";
@@ -91,7 +102,7 @@ function getGsproUnavailableDetail() {
 }
 
 function getInfiniteTeeUnavailableDetail() {
-  return "Infinite Tee is not configured yet. Set INFINITE_TEE_CONNECT_COMMAND to enable one-click launch.";
+  return "Infinite Tee helper not configured. Bundle gspro_bridge.py with the app resources or set GSPRO_BRIDGE_SCRIPT.";
 }
 
 function buildGsproTestShot() {
@@ -148,11 +159,17 @@ function normalizeGsproPayload(input, fallbackShotNumber = Date.now()) {
   return normalized;
 }
 
-function sendPayloadToGsproHelper(payload) {
+function sendPayloadToHelper(connectorId, payload) {
+  const helperConfig = SIM_CONNECTORS[connectorId];
+
+  if (!helperConfig) {
+    return Promise.reject(new Error(`Unknown simulator connector: ${connectorId}`));
+  }
+
   return new Promise((resolve, reject) => {
     const socket = net.createConnection({
       host: GSPRO_HELPER_HOST,
-      port: GSPRO_HELPER_PORT,
+      port: helperConfig.helperPort,
     });
 
     let settled = false;
@@ -172,7 +189,7 @@ function sendPayloadToGsproHelper(payload) {
     const rejectOnce = finish(reject);
 
     timer = setTimeout(() => {
-      rejectOnce(new Error("Timed out waiting for the GSPro helper."));
+      rejectOnce(new Error(`Timed out waiting for the ${helperConfig.simName} helper.`));
     }, GSPRO_HELPER_TIMEOUT_MS);
 
     socket.on("connect", () => {
@@ -187,6 +204,14 @@ function sendPayloadToGsproHelper(payload) {
 
     socket.on("error", rejectOnce);
   });
+}
+
+function sendPayloadToGsproHelper(payload) {
+  return sendPayloadToHelper("gspro", payload);
+}
+
+function sendPayloadToInfiniteTeeHelper(payload) {
+  return sendPayloadToHelper("infinite-tee", payload);
 }
 
 
@@ -400,8 +425,7 @@ export async function startBridgeServer(options = {}) {
   const staticDir = options.staticDir ?? path.join(baseDir, "dist");
   const gsproScriptPath = resolveGsproScriptPath(baseDir, options.gsproScriptPath);
   const gsproHelperAvailable = fs.existsSync(gsproScriptPath);
-  const infiniteTeeCommand = options.infiniteTeeCommand?.trim() || process.env.INFINITE_TEE_CONNECT_COMMAND?.trim() || "";
-  const infiniteTeeAvailable = Boolean(infiniteTeeCommand);
+  const infiniteTeeAvailable = gsproHelperAvailable;
   const tmAll = loadTMDatabase(baseDir);
   const clients = new Set();
   const connectorLogs = {
@@ -547,33 +571,34 @@ export async function startBridgeServer(options = {}) {
       if (!trimmed) return;
       pushConnectorLog(connectorId, trimmed, /error|failed/i.test(trimmed) ? "error" : "info");
 
-      if (connectorId === "gspro") {
-        if (trimmed.includes("Connected to GSPro")) {
-          clearConnectorTimer("gspro");
-          connectors.gspro.connected = true;
-          updateConnector("gspro", {
-            status: "connected",
-            detail: "Connected to GSPro. SPIVOT is forwarding shots through the local bridge.",
-          });
-          return;
-        }
+      const helperConfig = SIM_CONNECTORS[connectorId];
+      if (!helperConfig) return;
 
-        if (trimmed.includes("GSPro unavailable") && connectors.gspro.status === "establishing") {
-          updateConnector("gspro", {
-            status: "establishing",
-            detail: "Establishing GSPro connection. Open GSPro Open Connect to finish pairing.",
-          });
-          return;
-        }
+      if (trimmed.includes(`Connected to ${helperConfig.simName}`)) {
+        clearConnectorTimer(connectorId);
+        connectors[connectorId].connected = true;
+        updateConnector(connectorId, {
+          status: "connected",
+          detail: `Connected to ${helperConfig.simName}. SPIVOT is forwarding shots through the local bridge.`,
+        });
+        return;
+      }
 
-        if (trimmed.includes("Send error")) {
-          connectors.gspro.connected = false;
-          updateConnector("gspro", {
-            status: "failed",
-            detail: "GSPro rejected the bridge payload. Re-open Open Connect and try again.",
-          });
-          stopConnectorProcess("gspro");
-        }
+      if (trimmed.includes(`${helperConfig.simName} unavailable`) && connectors[connectorId].status === "establishing") {
+        updateConnector(connectorId, {
+          status: "establishing",
+          detail: `Establishing ${helperConfig.simName} connection. Open ${helperConfig.simName} to finish pairing.`,
+        });
+        return;
+      }
+
+      if (trimmed.includes("Send error")) {
+        connectors[connectorId].connected = false;
+        updateConnector(connectorId, {
+          status: "failed",
+          detail: `${helperConfig.simName} rejected the bridge payload. Re-open the simulator and try again.`,
+        });
+        stopConnectorProcess(connectorId);
       }
     };
 
@@ -686,6 +711,25 @@ export async function startBridgeServer(options = {}) {
     }
   }
 
+  async function forwardShotToInfiniteTee(payload, sourceLabel = "live shot") {
+    if (!connectors["infinite-tee"].connected) return false;
+
+    try {
+      await sendPayloadToInfiniteTeeHelper(payload);
+      pushConnectorLog("infinite-tee", `Forwarded ${sourceLabel} to the Infinite Tee helper.`);
+      return true;
+    } catch (error) {
+      connectors["infinite-tee"].connected = false;
+      pushConnectorLog("infinite-tee", `Forwarding ${sourceLabel} failed: ${error.message}`, "error");
+      updateConnector("infinite-tee", {
+        status: "failed",
+        detail: `Infinite Tee bridge send failed: ${error.message}`,
+      });
+      stopConnectorProcess("infinite-tee");
+      throw error;
+    }
+  }
+
   function disconnectGspro() {
     const connector = connectors.gspro;
     if (connector.status === "idle" && !connector.process) {
@@ -734,29 +778,45 @@ export async function startBridgeServer(options = {}) {
     }
 
     connector.available = true;
-    const child = spawn(infiniteTeeCommand, {
-      cwd: baseDir,
-      stdio: ["ignore", "pipe", "pipe"],
-      shell: true,
-    });
+    pushConnectorLog("infinite-tee", `Launching Infinite Tee helper from ${gsproScriptPath}`);
+    const python = resolveGsproPythonCommand();
+    const child = spawn(
+      python.command,
+      [
+        ...python.args,
+        "-u",
+        gsproScriptPath,
+        "--listen-port",
+        String(SIM_CONNECTORS["infinite-tee"].helperPort),
+        "--sim-port",
+        String(SIM_CONNECTORS["infinite-tee"].simPort),
+        "--sim-name",
+        SIM_CONNECTORS["infinite-tee"].simName,
+      ],
+      {
+        cwd: path.dirname(gsproScriptPath),
+        stdio: ["ignore", "pipe", "pipe"],
+      }
+    );
 
     connector.process = child;
     connector.connected = false;
 
     updateConnector("infinite-tee", {
       status: "establishing",
-      detail: "Launching Infinite Tee...",
+      detail: "Establishing Infinite Tee connection...",
     });
 
     connector.timer = setTimeout(() => {
       if (connectors["infinite-tee"].process === child && connectors["infinite-tee"].status === "establishing") {
-        connectors["infinite-tee"].connected = true;
         updateConnector("infinite-tee", {
-          status: "connected",
-          detail: "Infinite Tee launched from the local bridge.",
+          status: "establishing",
+          detail: "Helper launched. Waiting for Infinite Tee to accept the local bridge connection.",
         });
       }
     }, INFINITE_TEE_LAUNCH_GRACE_MS);
+
+    attachProcessLogging("infinite-tee", child);
 
     child.on("error", (error) => {
       updateConnector("infinite-tee", {
@@ -924,6 +984,9 @@ export async function startBridgeServer(options = {}) {
         (body) => {
           const payload = JSON.parse(body || "{}");
           const token = String(payload?.token ?? "");
+          const requestedMode = typeof payload?.mode === "string" ? payload.mode.trim().toLowerCase() : "";
+          const requestedConnector =
+            typeof payload?.connector === "string" ? payload.connector.trim().toLowerCase() : "";
           const isPremium = payload?.isPremium === true;
           const premiumExpiresAt =
             typeof payload?.premiumExpiresAt === "string" ? payload.premiumExpiresAt : null;
@@ -952,10 +1015,24 @@ export async function startBridgeServer(options = {}) {
           offlinePairing.premiumExpiresAt = premiumExpiresAt;
           offlinePairing.pairedAt = new Date().toISOString();
 
+          const shouldLaunchGspro =
+            requestedConnector === "gspro" ||
+            requestedMode === "gspro-bridge" ||
+            requestedMode === "gspro";
+
+          if (shouldLaunchGspro && connectors.gspro.available) {
+            pushConnectorLog("gspro", "Phone pairing completed. Launching GSPro helper from the local bridge.");
+            beginGsproConnect();
+          }
+
           broadcast({ type: "offline_status", pairing: pairingSnapshot() });
 
           res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ ok: true, pairing: pairingSnapshot() }));
+          res.end(JSON.stringify({
+            ok: true,
+            pairing: pairingSnapshot(),
+            connectors: connectorsSnapshot(),
+          }));
         },
         (error) => {
           res.writeHead(400, { "Content-Type": "application/json" });
@@ -1073,11 +1150,13 @@ export async function startBridgeServer(options = {}) {
         }
 
         const tmRef = findTMRef(tmAll, prSpeed, prVla);
+        const capturedAt = Date.now();
 
         const shot = {
-          id: `live-${Date.now()}`,
+          id: `live-${capturedAt}`,
           club: "7-Iron",   // UI club selector controls display label
           timestamp: new Date().toLocaleTimeString(),
+          capturedAt,
           source: "live",
           pr: { speed: prSpeed, vla: prVla, hla: prHla, carry: prCarry, spin: prSpin },
           tm: tmRef ? { speed: tmRef.speed, vla: tmRef.vla, hla: tmRef.hla, carry: tmRef.carry, spin: tmRef.spin } : null,
@@ -1087,7 +1166,11 @@ export async function startBridgeServer(options = {}) {
 
         console.log(`[SHOT] speed=${prSpeed}mph VLA=${prVla}° → TM match: speed=${tmRef?.speed ?? "?"}mph VLA=${tmRef?.vla ?? "?"}° err=${tmRef ? (prVla - tmRef.vla).toFixed(1) : "?"}°`);
         broadcast({ type: "shot", shot });
-        void forwardShotToGspro(normalizeGsproPayload(gspro), "live shot").catch(() => {});
+        const simulatorPayload = normalizeGsproPayload(gspro);
+        void Promise.allSettled([
+          forwardShotToGspro(simulatorPayload, "live shot"),
+          forwardShotToInfiniteTee(simulatorPayload, "live shot"),
+        ]);
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ status: "ok" }));

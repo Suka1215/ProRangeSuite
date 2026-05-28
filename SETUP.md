@@ -89,11 +89,11 @@ Speed, VLA, HLA, Carry, Spin all update live.
 
 ## Accumulating Test Sessions
 
-After a testing session with TrackMan:
+After a testing session with your reference system:
 
 1. In the browser, go to **Input Data** tab
-2. Manually enter the TrackMan readings for each shot
-   (or export from TrackMan and paste the CSV)
+2. Manually enter the reference readings for each shot
+   (or export from your reference system and paste the CSV)
 3. Go to **+ Session** → enter the version, date, notes
 4. All sessions persist in your browser's local storage
 
@@ -187,4 +187,4 @@ ProRange sends standard GSPro JSON — the bridge translates it:
 }
 ```
 
-TrackMan readings are entered manually via the **Input Data** tab and matched to shots by shot number within a session.
+Reference readings are entered manually via the **Input Data** tab and matched to shots by shot number within a session.

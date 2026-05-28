@@ -77,7 +77,7 @@ export const METRIC_LABELS: Record<MetricKey, string> = {
 export const METRIC_META: Record<MetricKey, MetricMeta> = {
   speed: { label: "Ball Speed", unit: "mph", tolerance: "±0.9 mph", color: "#1a6bff" },
   vla:   { label: "VLA",        unit: "°",   tolerance: "±0.17°",   color: "#f97316" },
-  hla:   { label: "HLA",        unit: "°",   tolerance: "±0.03°",   color: "#8b5cf6" },
+  hla:   { label: "HLA",        unit: "°",   tolerance: "±0.3°",    color: "#8b5cf6" },
   carry: { label: "Carry",      unit: "yd",  tolerance: "±1.6 yd",  color: "#22c55e" },
   spin:  { label: "Spin",       unit: "rpm", tolerance: "±70 rpm",  color: "#06b6d4" },
 };

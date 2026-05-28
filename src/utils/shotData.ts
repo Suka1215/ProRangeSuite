@@ -18,9 +18,11 @@ export function generateSyntheticShot(club: string = "7-Iron", addNoise = true):
 
   // True shot from TrackMan distribution
   const speed = Math.max(50, randn(tm_s.speed[0], tm_s.speed[1]));
+  const clubSpeed = Math.max(35, speed / Math.max(randn(1.34, 0.04), 1.18));
   const vla   = Math.max(1,  randn(tm_s.vla[0],   tm_s.vla[1]));
   const hla   = randn(tm_s.hla[0], tm_s.hla[1]);
   const spin  = Math.max(500, randn(tm_s.spin[0],  tm_s.spin[1]));
+  const smashFactor = speed / clubSpeed;
 
   // Carry: no carry column in TM data — estimate with loft-adjusted factor
   const carryFactor = 1.55 + (vla / 40) * 0.35;
@@ -51,6 +53,8 @@ export function generateSyntheticShot(club: string = "7-Iron", addNoise = true):
       carry: +(trueCarry + noise.carry).toFixed(0),
       spin:  +(spin  + noise.spin ).toFixed(0),
       total: +(trueTotal + noise.carry).toFixed(0),
+      clubSpeed: +clubSpeed.toFixed(1),
+      smashFactor: +smashFactor.toFixed(2),
     },
     tm: {
       speed: +speed.toFixed(1),
@@ -59,6 +63,8 @@ export function generateSyntheticShot(club: string = "7-Iron", addNoise = true):
       carry: +trueCarry.toFixed(0),
       spin:  +spin.toFixed(0),
       total: +trueTotal.toFixed(0),
+      clubSpeed: +clubSpeed.toFixed(1),
+      smashFactor: +smashFactor.toFixed(2),
     },
     trackPts:  Math.floor(rand(10, 16)),
     trajectory: simulateFlight(speed + noise.speed, degreesToRadians(vla + noise.vla), spin + noise.spin),
@@ -105,7 +111,9 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
     if (!club) { skipped++; return; }
     if (filterClub && club !== filterClub) return;
 
+    const clubSpeed    = parseFloat(vals[col["Club Speed"]]);
     const ballSpeed    = parseFloat(vals[col["Ball Speed"]]);
+    const smashFactor  = parseFloat(vals[col["Smash Factor"]]);
     const launchAngle  = parseFloat(vals[col["Launch Angle"]]);
     const launchDir    = parseFloat(vals[col["Launch Direction"]]);
     const spinRate     = parseFloat(vals[col["Spin Rate"]]);
@@ -123,7 +131,7 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
       timestamp: `TM #${i + 1}`,
       capturedAt: Date.now() + i,
       source:    "trackman-import",
-      pr:        { speed:0, vla:0, hla:0, carry:0, spin:0 }, // no ProRange data yet
+      pr:        { speed:0, vla:0, hla:0, carry:0, spin:0, clubSpeed: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1), smashFactor: isNaN(smashFactor) ? undefined : +smashFactor.toFixed(2) }, // no ProRange data yet
       tm: {
         speed: +ballSpeed.toFixed(1),
         vla:   +launchAngle.toFixed(1),
@@ -131,6 +139,8 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
         carry,
         spin:  +spinRate.toFixed(0),
         total: carry,
+        clubSpeed: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1),
+        smashFactor: isNaN(smashFactor) ? undefined : +smashFactor.toFixed(2),
       },
       trackPts: 0,
     } as unknown as Shot);

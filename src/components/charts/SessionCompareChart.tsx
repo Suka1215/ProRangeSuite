@@ -59,7 +59,7 @@ export function SessionCompareChart({ sessions, selectedIds, metric, height = 26
   if (!data.length) {
     return (
       <div style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13, background: "#f8faff", borderRadius: 10 }}>
-        No TrackMan comparison data available
+          No reference comparison data available
       </div>
     );
   }

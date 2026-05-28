@@ -1,0 +1,23 @@
+node:net:1904
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3010
+    at Server.setupListenHandle [as _listen2] (node:net:1904:16)
+    at listenInCluster (node:net:1961:12)
+    at Server.listen (node:net:2063:7)
+    at file:///C:/Users/Mark%20Miller/Documents/Development/ProRangeSuite/server.js:375:12
+    at new Promise (<anonymous>)
+    at listen (file:///C:/Users/Mark%20Miller/Documents/Development/ProRangeSuite/server.js:368:10)
+    at startBridgeServer (file:///C:/Users/Mark%20Miller/Documents/Development/ProRangeSuite/server.js:1184:9)
+    at file:///C:/Users/Mark%20Miller/Documents/Development/ProRangeSuite/.codex-bridge-test.mjs:2:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:234:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:473:24) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3010
+}
+
+Node.js v20.17.0

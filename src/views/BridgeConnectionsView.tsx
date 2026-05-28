@@ -60,8 +60,8 @@ const CONNECTOR_DEFINITIONS: Record<DesktopConnectorId, ConnectorDefinition> = {
     id: "infinite-tee",
     vendor: "Infinite Tee",
     title: "Infinite Tee Connector",
-    subtitle: "Prepare a dedicated connector profile for Infinite Tee with the same streamlined one-click workflow.",
-    tags: ["Connector Profile", "Third-Party App", "Coming Next"],
+    subtitle: "Launch the same local bridge helper with the Infinite Tee payload target and stream SPIVOT shots into port 999.",
+    tags: ["Local Bridge", "Simulator", "Port 999"],
     monogram: "IT",
   },
 };
@@ -119,8 +119,8 @@ function getConnectorFallback(
     name: definition.vendor,
     status: bridge ? "idle" : "failed",
     detail: bridge
-      ? "Connector profile ready."
-      : "The local connector is offline. Start the Connector app before preparing this profile.",
+      ? "Ready to start the Infinite Tee bridge."
+      : "The local connector is offline. Start the Connector app before connecting Infinite Tee.",
     updatedAt: new Date().toISOString(),
     commandLabel: "Connect to Infinite Tee",
     available: Boolean(bridge),
@@ -153,6 +153,7 @@ export default function BridgeConnectionsView({
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [gsproQrDataUrl, setGsproQrDataUrl] = useState<string>("");
   const [sendingTestShot, setSendingTestShot] = useState(false);
+  const [selectedLogConnector, setSelectedLogConnector] = useState<DesktopConnectorId>("gspro");
 
   useEffect(() => {
     let active = true;
@@ -239,7 +240,48 @@ export default function BridgeConnectionsView({
   const gsproOrbPulsing = gsproConnecting || gsproConnected;
   const gsproLogs = connectorLogs.gspro ?? [];
   const showGsproQr = Boolean(gsproQrDataUrl);
-  const gsproStatusLabel = gsproConnected ? "Connected" : gsproConnecting ? "Connecting" : "Waiting";
+  const gsproCanConnect = bridgeAvailable && !gsproConnecting;
+  const gsproStatusLabel = gsproConnected
+    ? "Connected"
+    : gsproConnecting
+      ? "Connecting"
+      : gsproConnector.status === "failed"
+        ? "Retry"
+        : "Connect";
+  const infiniteTeeConnected = infiniteTeeConnector.status === "connected";
+  const infiniteTeeConnecting = infiniteTeeConnector.status === "establishing";
+  const infiniteTeeLogs = connectorLogs["infinite-tee"] ?? [];
+  const infiniteTeeCanConnect = bridgeAvailable && !infiniteTeeConnecting;
+  const infiniteTeeStatusLabel = infiniteTeeConnected
+    ? "Connected"
+    : infiniteTeeConnecting
+      ? "Connecting"
+      : infiniteTeeConnector.status === "failed"
+        ? "Retry"
+        : "Connect";
+  const activeLogConnector: DesktopConnectorId =
+    selectedLogConnector ??
+    (infiniteTeeConnected || infiniteTeeConnecting
+      ? "infinite-tee"
+      : gsproConnected || gsproConnecting
+        ? "gspro"
+        : infiniteTeeLogs.length > gsproLogs.length
+          ? "infinite-tee"
+          : "gspro");
+  const activeLogs = activeLogConnector === "infinite-tee" ? infiniteTeeLogs : gsproLogs;
+  const activeLogTitle = activeLogConnector === "infinite-tee" ? "Infinite Tee logs" : "GSPro logs";
+  const activeLogEmpty = activeLogConnector === "infinite-tee" ? "No Infinite Tee logs yet." : "No GSPro logs yet.";
+
+  useEffect(() => {
+    if (infiniteTeeConnected || infiniteTeeConnecting) {
+      setSelectedLogConnector("infinite-tee");
+      return;
+    }
+
+    if (gsproConnected || gsproConnecting) {
+      setSelectedLogConnector("gspro");
+    }
+  }, [gsproConnected, gsproConnecting, infiniteTeeConnected, infiniteTeeConnecting]);
 
   if (compact) {
     return (
@@ -306,10 +348,9 @@ export default function BridgeConnectionsView({
       <div className="pr-bridge-head pr-connector-head">
         <div>
           <span className="pr-bridge-eyebrow">Bridge Connectors</span>
-          <h1>Connect GSPro with one phone scan</h1>
+          <h1>Connect GSPro or Infinite Tee with one local bridge</h1>
           <p>
-            The GSPro card now carries the scan flow directly. Scan once to start the connector workflow, hand shots to
-            your phone, and keep Open Connect fed from SPIVOT.
+            Use the same SPIVOT bridge workflow for both simulators. GSPro targets port 921, Infinite Tee targets port 999, and both use the same live shot payload.
           </p>
         </div>
 
@@ -449,7 +490,7 @@ export default function BridgeConnectionsView({
               </div>
               <button
                 className={`pr-connector-connect-button pr-connector-footer-button ${gsproConnected ? "is-connected" : ""}`}
-                disabled
+                disabled={!gsproCanConnect}
                 onClick={() => void onConnectConnector("gspro")}
               >
                 {gsproStatusLabel}
@@ -485,13 +526,66 @@ export default function BridgeConnectionsView({
               ))}
             </div>
 
+            <div className="pr-connector-card-divider" />
+
+            <div className="pr-connector-card-inline">
+              <div className="pr-connector-feature-meta pr-connector-card-meta">
+                <div>
+                  <span>Bridge host</span>
+                  <strong>{bridge?.ip ?? "Waiting for bridge"}</strong>
+                </div>
+                <div>
+                  <span>Port</span>
+                  <strong>9990 to 999</strong>
+                </div>
+              </div>
+
+              <div className="pr-connector-card-qr-column">
+                <div className="pr-connector-card-qr-copy">
+                  <span className="pr-connector-panel-kicker">Phone scan</span>
+                  <strong className="pr-connector-card-qr-headline">
+                    Scan to launch the connector, connect to Infinite Tee, and send the session to your phone.
+                  </strong>
+                </div>
+
+                <div className="pr-bridge-showcase-qr-shell pr-connector-card-qr-shell">
+                  {showGsproQr ? (
+                    <img
+                      src={gsproQrDataUrl}
+                      alt="Infinite Tee bridge QR code"
+                      className="pr-bridge-showcase-qr pr-connector-card-qr"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="pr-bridge-showcase-qr is-placeholder">
+                      {loading ? "Preparing QR..." : "QR unavailable"}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="pr-connector-card-footer">
               <div className="pr-connector-card-footer-copy">
-                <strong>Connector profile</strong>
-                <span>Third-party app</span>
+                <strong>Phone scan ready</strong>
+                <span>Scan once to launch bridge plus phone handoff</span>
               </div>
-              <span className="pr-connector-card-cta">Coming soon</span>
+              <button
+                className={`pr-connector-connect-button pr-connector-footer-button ${infiniteTeeConnected ? "is-connected" : ""}`}
+                disabled={!infiniteTeeCanConnect}
+                onClick={() => void onConnectConnector("infinite-tee")}
+              >
+                {infiniteTeeStatusLabel}
+              </button>
             </div>
+
+            <button
+              className="pr-secondary-pill pr-connector-disconnect-pill"
+              disabled={!onDisconnectConnector || (!infiniteTeeConnected && !infiniteTeeConnecting)}
+              onClick={() => void onDisconnectConnector?.("infinite-tee")}
+            >
+              Disconnect
+            </button>
           </article>
         </div>
       </div>
@@ -499,11 +593,11 @@ export default function BridgeConnectionsView({
       <div className="pr-connector-detail-page">
         <div className="pr-connector-detail-grid is-single">
           <article className="pr-connector-instruction-panel">
-            <span className="pr-connector-panel-kicker">GSPro logs</span>
+            <span className="pr-connector-panel-kicker">{activeLogTitle}</span>
             <h3>Connector activity</h3>
             <div className="pr-connector-log-list">
-              {gsproLogs.length ? (
-                gsproLogs.slice().reverse().map((entry) => (
+              {activeLogs.length ? (
+                activeLogs.slice().reverse().map((entry) => (
                   <div key={entry.id} className={`pr-connector-log-entry is-${entry.level}`}>
                     <strong>{new Date(entry.createdAt).toLocaleTimeString()}</strong>
                     <span>{entry.message}</span>
@@ -511,7 +605,7 @@ export default function BridgeConnectionsView({
                 ))
               ) : (
                 <div className="pr-connector-log-entry">
-                  <span>No GSPro logs yet.</span>
+                  <span>{activeLogEmpty}</span>
                 </div>
               )}
             </div>

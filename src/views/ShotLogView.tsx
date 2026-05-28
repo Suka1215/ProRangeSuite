@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { SessionLibraryBucket } from "../hooks/useSessionLibrary";
 import type { Shot } from "../types";
+import { calcSessionStats } from "../utils/stats";
+import { exportShotsToCSV } from "../utils/shotData";
 
 interface ShotLogViewProps {
   buckets: SessionLibraryBucket[];
@@ -11,6 +13,7 @@ interface ShotLogViewProps {
   onStartSession: () => Promise<void> | void;
   onEndSession: () => Promise<void> | void;
   onDeleteBucket: (bucketId: string) => Promise<void> | void;
+  onClearBucket: (bucketId: string) => Promise<void> | void;
 }
 
 type DateFilter = "all" | "week" | "day";
@@ -138,14 +141,21 @@ function mixColor(base: string, target: string, amount: number) {
 
 function sourceLabel(bucket: SessionLibraryBucket) {
   if (bucket.kind === "misc") return "Misc";
+  if (bucket.source === "dashboard-session") return "Dashboard";
   if (bucket.source === "suite") return "Suite";
   if (bucket.source === "app") return "App";
   if (bucket.source === "gspro") return "GSPro";
   return "Session";
 }
 
+function statusLabel(bucket: SessionLibraryBucket) {
+  if (bucket.kind === "misc") return "Misc";
+  if (bucket.isActive) return "Active";
+  return "Saved";
+}
+
 function cardTheme(bucket: SessionLibraryBucket, isSelected: boolean) {
-  const accent = bucket.kind === "misc" ? "#eff2ef" : bucket.color;
+  const accent = bucket.kind === "misc" ? "#eff2ef" : "#6ad87c";
   const text = bucket.kind === "misc" ? "#20242c" : mixColor(accent, "#101317", 0.86);
   const muted = bucket.kind === "misc" ? "rgba(32,36,44,0.62)" : mixColor(accent, "#5f6878", 0.76);
 
@@ -182,27 +192,6 @@ function shotSortValue(row: SessionShotRow, key: ShotSortKey) {
   }
 }
 
-function matchesShotSearch(row: SessionShotRow, query: string) {
-  if (!query) return true;
-
-  const haystack = [
-    row.shot.id,
-    row.shot.club,
-    formatShotTime(row.shot),
-    row.shot.timestamp,
-    row.shot.pr.speed.toFixed(1),
-    row.shot.pr.vla.toFixed(1),
-    row.shot.pr.hla.toFixed(1),
-    Math.round(row.shot.pr.spin).toString(),
-    Math.round(row.shot.pr.carry).toString(),
-    Math.round(row.shot.pr.total ?? row.shot.pr.carry).toString(),
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(query);
-}
-
 export default function ShotLogView({
   buckets,
   loading,
@@ -212,13 +201,15 @@ export default function ShotLogView({
   onStartSession,
   onEndSession,
   onDeleteBucket,
+  onClearBucket,
 }: ShotLogViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
-  const [shotSearch, setShotSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clearingId, setClearingId] = useState<string | null>(null);
   const [shotSortKey, setShotSortKey] = useState<ShotSortKey>("capturedAt");
   const [shotSortDirection, setShotSortDirection] = useState<SortDirection>("desc");
+  const [selectedShotIds, setSelectedShotIds] = useState<string[]>([]);
 
   const visibleBuckets = useMemo(() => {
     const filtered = buckets.filter((bucket) => bucket.kind === "misc" || matchesDateFilter(bucket.updatedAt, dateFilter));
@@ -256,11 +247,14 @@ export default function ShotLogView({
     null;
 
   const cardCount = visibleBuckets.filter((bucket) => bucket.kind === "session").length;
+  const featuredBucket =
+    visibleBuckets.find((bucket) => bucket.isActive && bucket.kind === "session") ??
+    visibleBuckets.find((bucket) => bucket.kind === "session") ??
+    null;
 
   const shotRows = useMemo(() => {
     if (!selectedBucket) return [];
 
-    const query = shotSearch.trim().toLowerCase();
     const direction = shotSortDirection === "asc" ? 1 : -1;
     const rows = selectedBucket.shots.map((shot, index) => ({
       shot,
@@ -268,13 +262,25 @@ export default function ShotLogView({
     }));
 
     return rows
-      .filter((row) => matchesShotSearch(row, query))
       .sort((left, right) => {
         const delta = shotSortValue(left, shotSortKey) - shotSortValue(right, shotSortKey);
         if (delta !== 0) return delta * direction;
         return (right.shot.capturedAt ?? 0) - (left.shot.capturedAt ?? 0);
       });
-  }, [selectedBucket, shotSearch, shotSortDirection, shotSortKey]);
+  }, [selectedBucket, shotSortDirection, shotSortKey]);
+
+  useEffect(() => {
+    setSelectedShotIds([]);
+  }, [selectedBucket?.id, shotSortDirection, shotSortKey]);
+
+  const selectedShots = useMemo(() => {
+    const selectedIdSet = new Set(selectedShotIds);
+    return shotRows
+      .filter((row) => selectedIdSet.has(String(row.shot.id)))
+      .map((row) => row.shot);
+  }, [selectedShotIds, shotRows]);
+
+  const allVisibleSelected = shotRows.length > 0 && shotRows.every((row) => selectedShotIds.includes(String(row.shot.id)));
 
   function toggleSort(nextKey: ShotSortKey) {
     if (shotSortKey === nextKey) {
@@ -297,6 +303,38 @@ export default function ShotLogView({
     } finally {
       setDeletingId(null);
     }
+  }
+
+  async function handleClearSelectedBucket() {
+    if (!selectedBucket) return;
+    setClearingId(selectedBucket.id);
+    try {
+      await onClearBucket(selectedBucket.id);
+      setSelectedShotIds([]);
+    } finally {
+      setClearingId(null);
+    }
+  }
+
+  function toggleShotSelection(shotId: string) {
+    setSelectedShotIds((current) =>
+      current.includes(shotId) ? current.filter((value) => value !== shotId) : [...current, shotId]
+    );
+  }
+
+  function toggleSelectAllRows() {
+    if (allVisibleSelected) {
+      setSelectedShotIds([]);
+      return;
+    }
+
+    setSelectedShotIds(shotRows.map((row) => String(row.shot.id)));
+  }
+
+  function handleExportRows(scope: "selected" | "session") {
+    const shotsToExport = scope === "selected" ? selectedShots : shotRows.map((row) => row.shot);
+    if (!shotsToExport.length) return;
+    exportShotsToCSV(shotsToExport);
   }
 
   function renderCard(bucket: SessionLibraryBucket, index: number) {
@@ -336,7 +374,9 @@ export default function ShotLogView({
         <div className="pr-shotsession-pills">
           <span>{shots} Shots</span>
           <span>{averageCarry != null ? `${Math.round(averageCarry)} YD` : "— YD"}</span>
-          <span>{bucket.isActive ? "Active" : sourceLabel(bucket)}</span>
+          <span className={`pr-shotsession-status is-${bucket.isActive ? "active" : bucket.kind === "misc" ? "misc" : "saved"}`}>
+            {statusLabel(bucket)}
+          </span>
         </div>
       </button>
     );
@@ -397,52 +437,76 @@ export default function ShotLogView({
         ) : (
           <>
             <div className="pr-shotledger-toolbar">
-              <label className="pr-shotledger-search">
-                <span>Search shots</span>
-                <input
-                  value={shotSearch}
-                  onChange={(event) => setShotSearch(event.target.value)}
-                  placeholder="Search time, speed, carry, spin"
-                />
-              </label>
-
-              <div className="pr-shotledger-summary">
-                <span>{selectedBucket.title}</span>
-                <span>{bucketShotCount(selectedBucket)} shots</span>
+              <div className="pr-shotledger-heading">
+                <strong>{selectedBucket.title}</strong>
+                <span>{bucketShotCount(selectedBucket)} shots in this session</span>
               </div>
 
-              <div className="pr-shotledger-actions">
-                <button
-                  className="pr-shotledger-btn"
-                  onClick={() => void onEndSession()}
-                  disabled={!selectedBucket.isActive}
-                >
-                  End Session
-                </button>
-                <button
-                  className="pr-shotledger-btn is-danger"
-                  onClick={() => void handleDeleteSelected()}
-                  disabled={deletingId === selectedBucket.id || selectedBucket.isActive}
-                >
-                  {deletingId === selectedBucket.id
-                    ? "Deleting..."
-                    : selectedBucket.kind === "misc"
-                      ? "Clear Misc"
-                      : "Delete Session"}
-                </button>
+              <div className="pr-shotledger-toolbar-right">
+                <div className="pr-shotledger-actions">
+                  <button
+                    className="pr-shotledger-btn is-secondary"
+                    onClick={() => handleExportRows("selected")}
+                    disabled={!selectedShots.length}
+                  >
+                    Export Selected
+                  </button>
+                  <button
+                    className="pr-shotledger-btn is-secondary"
+                    onClick={() => handleExportRows("session")}
+                    disabled={!shotRows.length}
+                  >
+                    Export Session
+                  </button>
+                  <button
+                    className="pr-shotledger-btn"
+                    onClick={() => void onEndSession()}
+                    disabled={!selectedBucket.isActive}
+                  >
+                    End Session
+                  </button>
+                  <button
+                    className="pr-shotledger-btn is-secondary"
+                    onClick={() => void handleClearSelectedBucket()}
+                    disabled={clearingId === selectedBucket.id || !bucketShotCount(selectedBucket)}
+                  >
+                    {clearingId === selectedBucket.id
+                      ? "Clearing..."
+                      : selectedBucket.kind === "misc"
+                        ? "Clear Misc"
+                        : "Clear Shots"}
+                  </button>
+                  <button
+                    className="pr-shotledger-btn is-danger"
+                    onClick={() => void handleDeleteSelected()}
+                    disabled={deletingId === selectedBucket.id || selectedBucket.isActive}
+                  >
+                    {deletingId === selectedBucket.id
+                      ? "Deleting..."
+                      : selectedBucket.kind === "misc"
+                        ? "Clear Misc"
+                        : "Delete Session"}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="pr-shotledger-wrap">
+            <div className="pr-shotledger-wrap is-admin">
               {shotRows.length === 0 ? (
                 <div className="pr-shotdesk-empty is-panel">
                   <h3>No shots in this session</h3>
                   <p>Keep the session open while you hit and the shot list will update in real time.</p>
                 </div>
               ) : (
-                <table className="pr-shotledger-table">
+                <table className="pr-shotledger-table is-admin">
                   <thead>
                     <tr>
+                      <th className="is-check">
+                        <label className="pr-shotledger-check">
+                          <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAllRows} />
+                          <span />
+                        </label>
+                      </th>
                       <th>Shot</th>
                       {SHOT_COLUMNS.map((column) => (
                         <th key={column.key}>
@@ -461,6 +525,16 @@ export default function ShotLogView({
                   <tbody>
                     {shotRows.map((row) => (
                       <tr key={String(row.shot.id)} onClick={() => onSelectShot(row.shot)}>
+                        <td className="is-check" onClick={(event) => event.stopPropagation()}>
+                          <label className="pr-shotledger-check">
+                            <input
+                              type="checkbox"
+                              checked={selectedShotIds.includes(String(row.shot.id))}
+                              onChange={() => toggleShotSelection(String(row.shot.id))}
+                            />
+                            <span />
+                          </label>
+                        </td>
                         <td className="is-shot">
                           <strong>#{row.shotNumber}</strong>
                           <span>{row.shot.club}</span>

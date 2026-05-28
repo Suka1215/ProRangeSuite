@@ -136,7 +136,7 @@ export default function CompareView({ sessions, selectedIds, onToggleSession }: 
         </div>
 
         {chartData.filter(d=>Object.keys(d).length>1).length === 0 ? (
-          <div style={{height:250,display:"flex",alignItems:"center",justifyContent:"center",color:"#9ca3af",fontSize:13}}>No TrackMan comparison data available</div>
+        <div style={{height:250,display:"flex",alignItems:"center",justifyContent:"center",color:"#9ca3af",fontSize:13}}>No reference comparison data available</div>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData} margin={{top:8,right:16,left:4,bottom:24}}>

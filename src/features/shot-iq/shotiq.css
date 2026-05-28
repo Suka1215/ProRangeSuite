@@ -781,6 +781,100 @@
   overflow: visible;
 }
 
+.shotiq-target-ring {
+  fill: rgba(255, 255, 255, 0.56);
+  stroke: rgba(38, 41, 48, 0.08);
+  stroke-width: 1.4;
+}
+
+.shotiq-target-ring.is-mid {
+  fill: rgba(106, 216, 124, 0.06);
+}
+
+.shotiq-target-ring.is-inner {
+  fill: rgba(106, 216, 124, 0.1);
+}
+
+.shotiq-target-core {
+  fill: rgba(106, 216, 124, 0.86);
+  stroke: rgba(255, 255, 255, 0.94);
+  stroke-width: 6;
+}
+
+.shotiq-target-axis {
+  stroke: rgba(38, 41, 48, 0.08);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 8;
+}
+
+.shotiq-target-axis-label {
+  fill: rgba(38, 41, 48, 0.54);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shotiq-target-arc {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 7;
+  opacity: 0.9;
+}
+
+.shotiq-target-arc.is-ideal {
+  stroke: rgba(38, 41, 48, 0.18);
+  stroke-dasharray: 10 10;
+}
+
+.shotiq-target-arc.is-actual {
+  stroke: #6ad87c;
+  filter: drop-shadow(0 10px 18px rgba(106, 216, 124, 0.2));
+}
+
+.shotiq-target-point {
+  cursor: pointer;
+  outline: none;
+}
+
+.shotiq-target-hit-area {
+  fill: transparent;
+}
+
+.shotiq-target-shot-dot {
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-width: 3;
+}
+
+.shotiq-target-shot-dot.is-good {
+  fill: #72ec8e;
+}
+
+.shotiq-target-shot-dot.is-okay {
+  fill: #ffc430;
+}
+
+.shotiq-target-shot-dot.is-bad {
+  fill: #262930;
+}
+
+.shotiq-target-shot-glow {
+  fill: rgba(106, 216, 124, 0.18);
+}
+
+.shotiq-target-point.is-hovered .shotiq-target-shot-dot {
+  stroke: #262930;
+  stroke-width: 4;
+}
+
+.shotiq-target-shot-label {
+  fill: #ffffff;
+  font-family: "Outfit", sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
 .shotiq-drift-frame {
   fill: rgba(255, 255, 255, 0.82);
 }
@@ -1049,6 +1143,29 @@
   gap: 10px;
 }
 
+.shotiq-target-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.shotiq-target-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 106px;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(38, 41, 48, 0.045);
+  text-align: left;
+}
+
+.shotiq-target-metric-card strong {
+  font-size: 1.7rem;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
 .shotiq-score-card {
   display: flex;
   flex-direction: column;
@@ -1222,6 +1339,7 @@
   }
 
   .shotiq-score-grid,
+  .shotiq-target-metric-grid,
   .shotiq-thumb-strip,
   .shotiq-control-grid {
     grid-template-columns: 1fr;

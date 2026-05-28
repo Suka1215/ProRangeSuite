@@ -1,0 +1,491 @@
+.ci-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(106, 216, 124, 0.2), transparent 28%),
+    rgba(18, 22, 25, 0.72);
+  animation: ci-backdrop-in 0.22s ease both, ci-screen-kick 0.42s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+
+.ci-backdrop--out {
+  animation: ci-backdrop-out 0.4s ease forwards;
+}
+
+.ci-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ci-impact-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9), rgba(106, 216, 124, 0.26) 18%, transparent 42%);
+  mix-blend-mode: screen;
+  animation: ci-impact-flash 0.48s ease-out both;
+}
+
+.ci-card {
+  position: relative;
+  width: min(480px, 100%);
+  overflow: hidden;
+  padding: 40px 44px 32px;
+  text-align: center;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #5dcaa5;
+  border-radius: 28px;
+  box-shadow: 0 32px 90px rgba(8, 80, 65, 0.25), 0 0 0 0 rgba(106, 216, 124, 0);
+  animation: ci-card-slam 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ci-card--out {
+  animation: ci-card-out 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.ci-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  pointer-events: none;
+  border-radius: 50%;
+  transform-origin: center;
+}
+
+.ci-ring-1 {
+  border: 3px solid #1d9e75;
+  animation: ci-ring-out 1s ease-out 0.04s both;
+}
+
+.ci-ring-2 {
+  border: 2px solid #5dcaa5;
+  animation: ci-ring-out2 1.3s ease-out 0.12s both;
+}
+
+.ci-ring-3 {
+  border: 1.5px solid #9fe1cb;
+  animation: ci-ring-out3 1.6s ease-out 0.22s both;
+}
+
+.ci-impact-slab {
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 28%, rgba(255, 255, 255, 0.85) 46%, transparent 62%),
+    radial-gradient(circle at 50% 10%, rgba(106, 216, 124, 0.18), transparent 44%);
+  transform: translateX(-130%);
+  animation: ci-impact-slab 0.62s ease-out 0.08s both;
+}
+
+.ci-shockwave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  pointer-events: none;
+  border: 2px solid rgba(29, 158, 117, 0.5);
+  border-radius: 50%;
+}
+
+.ci-shockwave-1 {
+  animation: ci-shockwave 0.78s ease-out both;
+}
+
+.ci-shockwave-2 {
+  animation: ci-shockwave 0.95s ease-out 0.1s both;
+}
+
+.ci-bottom-bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #085041, #1d9e75, #5dcaa5, #1d9e75, #085041);
+}
+
+.ci-sparkle {
+  position: absolute;
+  pointer-events: none;
+  animation: ci-sparkle 1.2s ease both;
+}
+
+.ci-countdown {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+}
+
+.ci-countdown-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: #1d9e75;
+  font-size: 13px;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+}
+
+.ci-content {
+  position: relative;
+  z-index: 1;
+}
+
+.ci-pill {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  padding: 5px 18px;
+  margin-bottom: 20px;
+  color: #0f6e56;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: #e8faf0;
+  border: 0.5px solid #9fe1cb;
+  border-radius: 999px;
+  animation: ci-pill-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s both;
+}
+
+.ci-pill-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  background: #1d9e75;
+  border-radius: 50%;
+}
+
+.ci-title {
+  margin: 0 0 2px;
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0;
+  background: linear-gradient(135deg, #085041 0%, #1d9e75 45%, #5dcaa5 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ci-title-slam 0.62s cubic-bezier(0.18, 1.7, 0.35, 1) 0.18s both;
+}
+
+.ci-subtitle {
+  margin: 0 0 20px;
+  color: #6b7280;
+  font-size: 14px;
+  animation: ci-stat-in 0.4s ease 0.8s both;
+}
+
+.ci-speed-wrap {
+  margin-bottom: 24px;
+  line-height: 1;
+  animation: ci-num-impact 0.78s cubic-bezier(0.16, 1, 0.3, 1) 0.38s both;
+}
+
+.ci-speed-num {
+  display: block;
+  color: #1d9e75;
+  font-size: 96px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-shadow: 0 14px 42px rgba(29, 158, 117, 0.22);
+}
+
+.ci-speed-label {
+  display: block;
+  margin-top: 0;
+  color: #5dcaa5;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.ci-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ci-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  padding: 16px 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.ci-stat-card:nth-child(1) {
+  animation: ci-stat-in 0.4s ease 0.9s both;
+}
+
+.ci-stat-card:nth-child(2) {
+  animation: ci-stat-in 0.4s ease 1.02s both;
+}
+
+.ci-stat-card:nth-child(3) {
+  animation: ci-stat-in 0.4s ease 1.14s both;
+}
+
+.ci-stat-label {
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.ci-stat-val {
+  color: #111827;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.ci-stat-unit {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.ci-trend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  background: #e8faf0;
+  border-radius: 10px;
+  animation: ci-trend-in 0.45s ease 1.25s both;
+}
+
+.ci-trend svg {
+  flex-shrink: 0;
+}
+
+.ci-trend > div {
+  text-align: left;
+}
+
+.ci-trend-main {
+  margin: 0;
+  color: #0f6e56;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ci-trend-sub {
+  margin: 2px 0 0;
+  color: #1d9e75;
+  font-size: 12px;
+}
+
+.ci-actions {
+  display: flex;
+  gap: 10px;
+  animation: ci-stat-in 0.4s ease 1.35s both;
+}
+
+.ci-btn-secondary,
+.ci-btn-primary {
+  min-height: 44px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ci-btn-secondary {
+  flex: 1;
+  color: #6b7280;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+}
+
+.ci-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.ci-btn-primary {
+  flex: 2;
+  color: #ffffff;
+  font-weight: 800;
+  background: #1d9e75;
+  border: none;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.ci-btn-primary:hover {
+  background: #0f6e56;
+}
+
+.ci-btn-primary:active {
+  transform: scale(0.97);
+}
+
+@keyframes ci-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ci-screen-kick {
+  0% { transform: scale(1.012); filter: brightness(1.18); }
+  28% { transform: scale(0.998); filter: brightness(1.05); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes ci-impact-flash {
+  0% { opacity: 0; transform: scale(0.82); }
+  9% { opacity: 1; transform: scale(1); }
+  58% { opacity: 0.18; transform: scale(1.18); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+@keyframes ci-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes ci-card-pop {
+  0% { opacity: 0; transform: scale(0.5) translateY(60px); }
+  65% { transform: scale(1.05) translateY(-8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes ci-card-slam {
+  0% {
+    opacity: 0;
+    transform: translateY(-130px) scale(1.18) rotate(-1.5deg);
+    filter: blur(4px);
+  }
+  32% {
+    opacity: 1;
+    transform: translateY(12px) scale(0.96) rotate(0.45deg);
+    filter: blur(0);
+    box-shadow: 0 20px 50px rgba(8, 80, 65, 0.24), 0 0 0 18px rgba(106, 216, 124, 0.16);
+  }
+  48% {
+    transform: translateY(-6px) scale(1.025) rotate(-0.2deg);
+  }
+  72% {
+    transform: translateY(2px) scale(0.995) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    box-shadow: 0 32px 90px rgba(8, 80, 65, 0.25), 0 0 0 0 rgba(106, 216, 124, 0);
+  }
+}
+
+@keyframes ci-impact-slab {
+  0% { opacity: 0; transform: translateX(-130%) skewX(-16deg); }
+  18% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(130%) skewX(-16deg); }
+}
+
+@keyframes ci-shockwave {
+  0% { opacity: 0.9; transform: scale(0.28); }
+  100% { opacity: 0; transform: scale(5.4); }
+}
+
+@keyframes ci-card-out {
+  0% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0.75) translateY(30px); }
+}
+
+@keyframes ci-ring-out {
+  0% { opacity: 1; transform: scale(0.1); }
+  100% { opacity: 0; transform: scale(3.5); }
+}
+
+@keyframes ci-ring-out2 {
+  0% { opacity: 0.8; transform: scale(0.1); }
+  100% { opacity: 0; transform: scale(4.5); }
+}
+
+@keyframes ci-ring-out3 {
+  0% { opacity: 0.6; transform: scale(0.1); }
+  100% { opacity: 0; transform: scale(5.5); }
+}
+
+@keyframes ci-pill-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  70% { transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ci-title-slam {
+  0% { opacity: 0; transform: scale(0.4) translateY(30px); }
+  70% { transform: scale(1.06) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes ci-stat-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ci-num-bounce {
+  0% { opacity: 0; transform: scale(0.6); }
+  65% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ci-num-impact {
+  0% { opacity: 0; transform: translateY(26px) scale(0.62); filter: blur(3px); }
+  34% { opacity: 1; transform: translateY(-8px) scale(1.14); filter: blur(0); }
+  52% { transform: translateY(4px) scale(0.96); }
+  74% { transform: translateY(-2px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ci-trend-in {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ci-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
+@media (max-width: 560px) {
+  .ci-card {
+    padding: 36px 22px 28px;
+  }
+
+  .ci-title {
+    font-size: 48px;
+  }
+
+  .ci-speed-num {
+    font-size: 76px;
+  }
+
+  .ci-stats,
+  .ci-actions {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+}

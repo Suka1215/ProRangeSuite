@@ -66,9 +66,9 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
         const clubSummary = Object.entries(result.clubs)
           .map(([c, n]) => `${c}: ${n}`)
           .join(", ");
-        onNotify(`✓ ${result.shots.length} TrackMan shots imported (${clubSummary})${result.skipped ? ` · ${result.skipped} skipped` : ""}`);
+        onNotify(`✓ ${result.shots.length} reference shots imported (${clubSummary})${result.skipped ? ` · ${result.skipped} skipped` : ""}`);
       } else {
-        onNotify("Unknown CSV format — use TrackMan export or ProRange CSV", "err");
+        onNotify("Unknown CSV format — use the reference export or ProRange CSV", "err");
       }
     } catch (e: unknown) {
       onNotify(`Import failed: ${e instanceof Error ? e.message : "unknown error"}`, "err");
@@ -89,7 +89,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
       const text = await res.text();
       const result = importTrackManCSV(text, filterClub as ClubName);
       result.shots.forEach((s) => onAddShot(s));
-      onNotify(`✓ Loaded ${result.shots.length} real TrackMan ${filterClub} shots as reference`);
+      onNotify(`✓ Loaded ${result.shots.length} ${filterClub} reference shots`);
     } catch {
       onNotify("Could not load reference dataset", "err");
     } finally {
@@ -106,7 +106,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
     <div style={{ animation: "slideUp 0.25s ease" }}>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800 }}>Input Data</h1>
-        <p style={{ color: "#6b7280", fontSize: 13, marginTop: 3 }}>Manual entry · TrackMan CSV import · Reference dataset · Synthetic generator</p>
+        <p style={{ color: "#6b7280", fontSize: 13, marginTop: 3 }}>Manual entry · Reference CSV import · Reference dataset · Synthetic generator</p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -135,7 +135,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
               ))}
             </div>
 
-            <SectionLabel>TrackMan Ground Truth (optional)</SectionLabel>
+            <SectionLabel>Reference Ground Truth (optional)</SectionLabel>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
               {METRICS.map((m) => (
                 <div key={m}>
@@ -143,7 +143,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
                   <input
                     type="number"
                     style={{ ...inputStyle, background: "#fffbeb" }}
-                    value={tmForm[m]} placeholder="TM value"
+                    value={tmForm[m]} placeholder="Reference value"
                     onChange={(e) => setTmForm((f) => ({ ...f, [m]: e.target.value }))}
                   />
                 </div>
@@ -160,7 +160,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
 
           {/* ── TrackMan CSV import ── */}
           <Card>
-            <CardHeader title="📂 Import TrackMan CSV" />
+            <CardHeader title="📂 Import Reference CSV" />
             <CardBody>
               <div
                 onDragOver={(e) => { e.preventDefault(); setCsvDrag(true); }}
@@ -176,8 +176,8 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
                 }}
               >
                 <div style={{ fontSize: 26, marginBottom: 4 }}>📄</div>
-                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>Drop TrackMan CSV or click to browse</div>
-                <div style={{ fontSize: 11, color: "#9ca3af" }}>Accepts native TrackMan export format</div>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>Drop reference CSV or click to browse</div>
+                <div style={{ fontSize: 11, color: "#9ca3af" }}>Accepts the native reference export format</div>
                 <input ref={fileRef} type="file" accept=".csv" style={{ display: "none" }}
                   onChange={(e) => { if (e.target.files?.[0]) handleCSV(e.target.files[0]); }} />
               </div>
@@ -191,7 +191,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
                   📊 Load from Reference Dataset
                 </div>
                 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, lineHeight: 1.5 }}>
-                  10,000 real PGA TrackMan shots across 10 clubs. Use as ground truth baseline.
+                  10,000 real PGA reference shots across 10 clubs. Use as the ground truth baseline.
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <select
@@ -226,7 +226,7 @@ export default function InputDataView({ selectedClub, onAddShot, onNotify }: Inp
             <CardHeader title="🎲 Synthetic Generator" />
             <CardBody>
               <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 10, lineHeight: 1.5 }}>
-                Draws from real TrackMan normal distributions (mean ± std per club). Adds simulated ProRange measurement noise including the current +12° VLA offset.
+                Draws from real reference normal distributions (mean ± std per club). Adds simulated ProRange measurement noise including the current +12° VLA offset.
               </p>
               <div style={{ marginBottom: 10 }}>
                 <label style={labelStyle}>Club</label>

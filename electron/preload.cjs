@@ -1,4 +1,4 @@
-import { contextBridge } from "electron";
+const { contextBridge } = require("electron");
 
 const bridgeUrlArg = process.argv.find((arg) => arg.startsWith("--bridge-url="));
 const bridgeBaseUrl = bridgeUrlArg ? bridgeUrlArg.replace("--bridge-url=", "") : null;

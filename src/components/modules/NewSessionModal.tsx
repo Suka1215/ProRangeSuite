@@ -33,17 +33,11 @@ export default function NewSessionModal({
   const [club, setClub] = useState(defaultClub || "7-Iron");
   const [color, setColor] = useState(SESSION_COLORS[0]);
 
-  const liveShotCount = sourceShots.length;
   const canSave = !isSaving;
   const sessionName = label.trim() || `${club} Session`;
-
   const helperCopy = useMemo(() => {
-    if (!liveShotCount) {
-      return "Start a synced session now and new shots from the app or suite will land here automatically.";
-    }
-
-    return `Start a synced session with ${liveShotCount} live shot${liveShotCount === 1 ? "" : "s"} currently loaded in the suite.`;
-  }, [liveShotCount]);
+    return "Start a synced session now and new shots from the app or suite will land here automatically.";
+  }, []);
 
   const handleSave = () => {
     if (!canSave) return;
@@ -143,7 +137,7 @@ export default function NewSessionModal({
             <p style={summaryBodyStyle}>{helperCopy}</p>
             <div style={summaryMetaStyle}>
               <span>{club}</span>
-              <span>{liveShotCount ? `${liveShotCount} live shots loaded` : "Ready for fresh shots"}</span>
+              <span>Ready for fresh shots</span>
             </div>
           </div>
         </div>

@@ -152,7 +152,7 @@ If you want to run inference in the browser (not recommended for YOLO):
 - **Avg Confidence**: Mean confidence score across detections
 - **Effective Recall**: Model recall × Crop success rate
 - **Status**:
-  - ✅✅✅ Excellent (30+ points): TrackMan-level
+- ✅✅✅ Excellent (30+ points): top-tier
   - ✅✅ Good (25-29 points): Highly accurate
   - ✅ Fair (20-24 points): Usable
   - ❌ Poor (<20 points): Needs improvement
