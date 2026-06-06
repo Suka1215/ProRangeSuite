@@ -166,6 +166,15 @@ async function deleteSessionShotDocs(uid: string, bucketId: string) {
   await Promise.all(snapshot.docs.map((shotDoc) => deleteDoc(shotDoc.ref)));
 }
 
+async function deleteNamedSessionShotDocs(uid: string, bucketId: string, shotIds: string[]) {
+  if (!shotIds.length) return;
+  await Promise.all(
+    shotIds.map((shotId) =>
+      deleteDoc(doc(db, "users", uid, "dashboard-sessions", bucketId, "shots", encodeURIComponent(shotId)))
+    )
+  );
+}
+
 function sessionUpdatedAt(bucket: Partial<SessionLibraryBucket>) {
   return typeof bucket.updatedAt === "number" && Number.isFinite(bucket.updatedAt) ? bucket.updatedAt : 0;
 }
@@ -491,6 +500,53 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
     }
   }, [activeClub, uid]);
 
+  const deleteShotsFromBucket = useCallback(async (bucketId: string, shotIds: string[]) => {
+    const normalizedIds = Array.from(new Set(shotIds.map(String))).filter(Boolean);
+    if (!normalizedIds.length) return;
+
+    let bucketToSync: SessionLibraryBucket | null = null;
+    let deletedSessionShotIds: string[] = [];
+
+    setState((current) => {
+      const nextBuckets = normalizeBuckets(current.buckets, activeClub, current.activeSessionId);
+      const targetIndex = nextBuckets.findIndex((bucket) => bucket.id === bucketId);
+      if (targetIndex < 0) return current;
+
+      const targetBucket = nextBuckets[targetIndex];
+      const nextShots = targetBucket.shots.filter((shot) => !normalizedIds.includes(String(shot.id)));
+      if (nextShots.length === targetBucket.shots.length) return current;
+
+      deletedSessionShotIds = targetBucket.shots
+        .filter((shot) => normalizedIds.includes(String(shot.id)))
+        .map((shot) => String(shot.id));
+
+      const updatedBucket: SessionLibraryBucket = {
+        ...targetBucket,
+        shotCount: nextShots.length,
+        updatedAt: nextShots[nextShots.length - 1]?.capturedAt ?? targetBucket.createdAt ?? 0,
+        shots: nextShots,
+      };
+
+      nextBuckets[targetIndex] = updatedBucket;
+      bucketToSync = updatedBucket.kind === "session" ? updatedBucket : null;
+
+      return {
+        ...current,
+        buckets: nextBuckets,
+      };
+    });
+
+    if (uid && bucketToSync) {
+      try {
+        await deleteNamedSessionShotDocs(uid, bucketId, deletedSessionShotIds);
+        await setDoc(doc(db, "users", uid, "dashboard-sessions", bucketId), serializeBucket(bucketToSync));
+      } catch (writeError) {
+        console.error("[SessionLibrary] Failed to delete selected dashboard session shots in Firestore:", writeError);
+        setError("We couldn't delete the selected shots from that session.");
+      }
+    }
+  }, [activeClub, uid]);
+
   const deleteBucket = useCallback(async (bucketId: string) => {
     if (bucketId !== MISC_BUCKET_ID && activeSessionIdRef.current === bucketId) {
       activeSessionIdRef.current = null;
@@ -585,6 +641,22 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
         shots: nextShots,
       };
 
+      if (currentResolvedActiveSessionId) {
+        const miscIndex = nextBuckets.findIndex((bucket) => bucket.id === MISC_BUCKET_ID);
+        if (miscIndex >= 0) {
+          const miscBucket = nextBuckets[miscIndex];
+          const filteredMiscShots = miscBucket.shots.filter((existingShot) => !sameShotIdentity(existingShot, normalizedShot));
+          if (filteredMiscShots.length !== miscBucket.shots.length) {
+            nextBuckets[miscIndex] = {
+              ...miscBucket,
+              shotCount: filteredMiscShots.length,
+              updatedAt: filteredMiscShots[filteredMiscShots.length - 1]?.capturedAt ?? 0,
+              shots: filteredMiscShots,
+            };
+          }
+        }
+      }
+
       return {
         ...current,
         buckets: nextBuckets,
@@ -618,6 +690,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
     startSession,
     endSession,
     clearBucketShots,
+    deleteShotsFromBucket,
     deleteBucket,
     recordShot,
   };

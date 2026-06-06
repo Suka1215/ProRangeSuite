@@ -187,6 +187,7 @@ export default function App() {
     startSession,
     endSession,
     clearBucketShots,
+    deleteShotsFromBucket,
     deleteBucket,
     recordShot,
   } = useSessionLibrary(user?.uid, club);
@@ -388,7 +389,7 @@ export default function App() {
 
   const sectionCopy = TAB_COPY[tab];
   const isBridgeStage = tab === "bridge";
-  const isImmersiveStage = tab === "accuracy" || tab === "shots" || tab === "progress" || isBridgeStage;
+  const isImmersiveStage = tab === "accuracy" || tab === "shots" || tab === "progress" || tab === "compare" || isBridgeStage;
 
   return (
     <div className="pr-page">
@@ -460,7 +461,7 @@ export default function App() {
               onToggleLive={toggleLive}
             />
           ) : (
-            <section className={`pr-secondary-stage ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""}`}>
+            <section className={`pr-secondary-stage ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""} ${tab === "compare" ? "is-compare" : ""}`}>
               {!isImmersiveStage && (
                 <div className="pr-secondary-intro">
                   <div>
@@ -475,7 +476,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className={`pr-secondary-stage-inner ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""}`}>
+              <div className={`pr-secondary-stage-inner ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""} ${tab === "compare" ? "is-compare" : ""}`}>
                 <SecPage
                   tab={tab}
                   shots={shots}
@@ -501,6 +502,7 @@ export default function App() {
                     notify("Shot logged");
                   }}
                   onNotify={notify}
+                  onOpenTab={openTab}
                   onClear={() => {
                     clearLiveShots();
                     setActiveShot(null);
@@ -524,6 +526,11 @@ export default function App() {
                   onClearBucket={(bucketId) => {
                     void clearBucketShots(bucketId).then(() =>
                       notify(bucketId === "misc" ? "Misc shots cleared" : "Session shots cleared")
+                    );
+                  }}
+                  onDeleteShots={(bucketId: string, shotIds: string[]) => {
+                    void deleteShotsFromBucket(bucketId, shotIds).then(() =>
+                      notify(shotIds.length === 1 ? "Shot deleted" : `${shotIds.length} shots deleted`)
                     );
                   }}
                   bridgeDesktop={desktopBridge}
@@ -1449,6 +1456,7 @@ interface SecProps {
   onPlayDone: () => void;
   onAddShot: (shot: Shot) => void;
   onNotify: (message: string, type?: "ok" | "err") => void;
+  onOpenTab: (tab: TabId) => void;
   onClear: () => void;
   onExport: () => void;
   sessionBuckets: import("./hooks/useSessionLibrary").SessionLibraryBucket[];
@@ -1459,6 +1467,7 @@ interface SecProps {
   onEndSession: () => void;
   onDeleteBucket: (bucketId: string) => void;
   onClearBucket: (bucketId: string) => void;
+  onDeleteShots: (bucketId: string, shotIds: string[]) => void;
   bridgeDesktop: ReturnType<typeof useDesktopBridge>;
 }
 
@@ -1475,6 +1484,7 @@ function SecPage({
   onPlayDone,
   onAddShot,
   onNotify,
+  onOpenTab,
   onClear,
   onExport,
   sessionBuckets,
@@ -1485,6 +1495,7 @@ function SecPage({
   onEndSession,
   onDeleteBucket,
   onClearBucket,
+  onDeleteShots,
   bridgeDesktop,
 }: SecProps) {
   return (
@@ -1504,9 +1515,10 @@ function SecPage({
             onEndSession={onEndSession}
             onDeleteBucket={onDeleteBucket}
             onClearBucket={onClearBucket}
+            onDeleteShots={onDeleteShots}
           />
         )}
-        {tab === "progress" && <ProgressView sessions={sessions} />}
+        {tab === "progress" && <ProgressView sessions={sessions} onOpenTab={onOpenTab} />}
         {tab === "compare" && (
           <CompareView sessions={sessions} selectedIds={sessions.map((session) => session.id)} onToggleSession={() => {}} />
         )}

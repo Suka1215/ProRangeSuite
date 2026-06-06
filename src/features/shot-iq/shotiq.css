@@ -281,8 +281,9 @@
 }
 
 .shotiq-panel-head strong {
-  width: 28px;
+  min-width: 28px;
   height: 28px;
+  padding: 0 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -290,6 +291,7 @@
   background: rgba(38, 41, 48, 0.06);
   font-size: 12px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .shotiq-session-picker-copy {
@@ -600,8 +602,6 @@
 
 .shotiq-floating-card-pulse {
   justify-self: end;
-  position: relative;
-  padding-bottom: 24px;
 }
 
 .shotiq-floating-ai {
@@ -855,11 +855,19 @@
 }
 
 .shotiq-target-shot-dot.is-bad {
-  fill: #262930;
+  fill: #ff7a7a;
 }
 
 .shotiq-target-shot-glow {
   fill: rgba(106, 216, 124, 0.18);
+}
+
+.shotiq-target-shot-glow.is-okay {
+  fill: rgba(255, 196, 48, 0.22);
+}
+
+.shotiq-target-shot-glow.is-bad {
+  fill: rgba(255, 122, 122, 0.24);
 }
 
 .shotiq-target-point.is-hovered .shotiq-target-shot-dot {
@@ -1078,12 +1086,74 @@
   background: rgba(255, 89, 89, 0.14);
 }
 
+.shotiq-panel-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px 0 10px;
+  flex-wrap: wrap;
+}
+
+.shotiq-panel-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shotiq-panel-legend .shotiq-drift-legend-dot {
+  width: 9px;
+  height: 9px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.shotiq-panel-legend .is-good {
+  color: #4fa961;
+  background: rgba(106, 216, 124, 0.12);
+}
+
+.shotiq-panel-legend .is-okay {
+  color: #b07e12;
+  background: rgba(255, 196, 48, 0.16);
+}
+
+.shotiq-panel-legend .is-bad {
+  color: #c14444;
+  background: rgba(255, 89, 89, 0.12);
+}
+
 .shotiq-prompt-card {
   position: relative;
   width: min(100%, 720px);
   padding: 14px 18px 14px;
   margin: 0 auto;
   border-radius: 28px;
+}
+
+.shotiq-prompt-card.is-drill-mode {
+  width: min(100%, 980px);
+  display: grid;
+  grid-template-columns: minmax(250px, 0.78fr) minmax(420px, 1.22fr);
+  gap: 8px 18px;
+  align-items: start;
+  padding: 14px 16px;
+}
+
+.shotiq-prompt-card.is-drill-mode .shotiq-prompt-head,
+.shotiq-prompt-card.is-drill-mode > p,
+.shotiq-prompt-card.is-drill-mode .shotiq-prompt-subcopy,
+.shotiq-prompt-card.is-drill-mode .shotiq-prompt-footer {
+  grid-column: 1;
+}
+
+.shotiq-prompt-card.is-drill-mode .shotiq-prompt-footer {
+  align-self: end;
+  margin-top: 6px;
 }
 
 .shotiq-prompt-card p {
@@ -1097,6 +1167,97 @@
   color: rgba(38, 41, 48, 0.58);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.shotiq-drill-stack {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(38, 41, 48, 0.08);
+}
+
+.shotiq-prompt-card.is-drill-mode .shotiq-drill-stack {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  margin-top: 0;
+  padding-top: 0;
+  padding-left: 16px;
+  border-top: 0;
+  border-left: 1px solid rgba(38, 41, 48, 0.08);
+}
+
+.shotiq-drill-stack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shotiq-drill-stack-head span {
+  color: rgba(38, 41, 48, 0.52);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.shotiq-drill-stack-head strong {
+  min-width: 0;
+  color: rgba(38, 41, 48, 0.66);
+  font-size: 10px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.shotiq-drill-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 18px;
+  background: rgba(106, 216, 124, 0.12);
+  border: 1px solid rgba(106, 216, 124, 0.18);
+}
+
+.shotiq-drill-card > span {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #262930;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.shotiq-drill-card div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.shotiq-drill-card strong {
+  color: #262930;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.shotiq-drill-card p,
+.shotiq-drill-card em,
+.shotiq-drill-card small {
+  margin: 0;
+  color: rgba(38, 41, 48, 0.63);
+  font-size: 10.5px;
+  line-height: 1.32;
+}
+
+.shotiq-drill-card em {
+  color: rgba(38, 41, 48, 0.82);
+  font-style: normal;
+  font-weight: 800;
 }
 
 .shotiq-prompt-footer {
@@ -1129,6 +1290,31 @@
 
 .shotiq-prompt-send {
   margin-left: auto;
+}
+
+.shotiq-prompt-send.is-drill {
+  width: auto;
+  min-width: 0;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shotiq-prompt-send.is-drill span {
+  font-weight: 900;
+}
+
+.shotiq-prompt-send.is-drill strong {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.shotiq-prompt-send.is-drill:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .shotiq-prompt-close {
@@ -1311,6 +1497,28 @@
 
   .shotiq-stage {
     min-height: 720px;
+  }
+
+  .shotiq-prompt-card.is-drill-mode {
+    grid-template-columns: 1fr;
+    width: min(100%, 760px);
+  }
+
+  .shotiq-prompt-card.is-drill-mode .shotiq-prompt-head,
+  .shotiq-prompt-card.is-drill-mode > p,
+  .shotiq-prompt-card.is-drill-mode .shotiq-prompt-subcopy,
+  .shotiq-prompt-card.is-drill-mode .shotiq-prompt-footer,
+  .shotiq-prompt-card.is-drill-mode .shotiq-drill-stack {
+    grid-column: 1;
+  }
+
+  .shotiq-prompt-card.is-drill-mode .shotiq-drill-stack {
+    grid-row: auto;
+    margin-top: 12px;
+    padding-top: 12px;
+    padding-left: 0;
+    border-top: 1px solid rgba(38, 41, 48, 0.08);
+    border-left: 0;
   }
 }
 

@@ -41,6 +41,7 @@ export interface TrajectoryPoint {
 export interface Shot {
   id: number | string;
   club: string;
+  shotNumber?: number;
   timestamp: string;
   capturedAt?: number;
   pr: MetricSet;

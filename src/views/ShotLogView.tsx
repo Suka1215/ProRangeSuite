@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { SessionLibraryBucket } from "../hooks/useSessionLibrary";
 import type { Shot } from "../types";
-import { calcSessionStats } from "../utils/stats";
-import { exportShotsToCSV } from "../utils/shotData";
 
 interface ShotLogViewProps {
   buckets: SessionLibraryBucket[];
@@ -14,6 +12,7 @@ interface ShotLogViewProps {
   onEndSession: () => Promise<void> | void;
   onDeleteBucket: (bucketId: string) => Promise<void> | void;
   onClearBucket: (bucketId: string) => Promise<void> | void;
+  onDeleteShots: (bucketId: string, shotIds: string[]) => Promise<void> | void;
 }
 
 type DateFilter = "all" | "week" | "day";
@@ -192,6 +191,89 @@ function shotSortValue(row: SessionShotRow, key: ShotSortKey) {
   }
 }
 
+function csvCell(value: unknown) {
+  if (value == null) return "";
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function csvNumber(value: number | null | undefined, digits = 1) {
+  return value == null || !Number.isFinite(value) ? "" : value.toFixed(digits);
+}
+
+function safeFilename(value: string) {
+  const cleaned = value
+    .trim()
+    .replace(/[^a-z0-9_-]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
+  return cleaned || "session";
+}
+
+function exportShotTableToCSV(rows: SessionShotRow[], bucket: SessionLibraryBucket, scope: "selected" | "session") {
+  const header = [
+    "session_id",
+    "session_title",
+    "session_club",
+    "session_source",
+    "shot",
+    "shot_id",
+    "club",
+    "timestamp",
+    "captured_at",
+    "pr_speed",
+    "pr_vla",
+    "pr_hla",
+    "pr_carry",
+    "pr_total",
+    "pr_spin",
+    "tm_speed",
+    "tm_vla",
+    "tm_hla",
+    "tm_carry",
+    "tm_total",
+    "tm_spin",
+    "track_points",
+  ];
+  const body = rows.map((row) => {
+    const shot = row.shot;
+
+    return [
+      csvCell(bucket.id),
+      csvCell(bucket.title),
+      csvCell(bucket.club),
+      csvCell(bucket.source),
+      row.shotNumber,
+      csvCell(shot.id),
+      csvCell(shot.club),
+      csvCell(shot.timestamp),
+      shot.capturedAt ? new Date(shot.capturedAt).toISOString() : "",
+      csvNumber(shot.pr.speed),
+      csvNumber(shot.pr.vla),
+      csvNumber(shot.pr.hla),
+      csvNumber(shot.pr.carry, 0),
+      csvNumber(shot.pr.total ?? shot.pr.carry, 0),
+      csvNumber(shot.pr.spin, 0),
+      csvNumber(shot.tm?.speed),
+      csvNumber(shot.tm?.vla),
+      csvNumber(shot.tm?.hla),
+      csvNumber(shot.tm?.carry, 0),
+      csvNumber(shot.tm?.total ?? shot.tm?.carry, 0),
+      csvNumber(shot.tm?.spin, 0),
+      shot.trackPts ?? "",
+    ].join(",");
+  });
+  const blob = new Blob([[header.join(","), ...body].join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = Object.assign(document.createElement("a"), {
+    href: url,
+    download: `prorange-${safeFilename(bucket.title)}-${scope}-${Date.now()}.csv`,
+  });
+
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ShotLogView({
   buckets,
   loading,
@@ -202,6 +284,7 @@ export default function ShotLogView({
   onEndSession,
   onDeleteBucket,
   onClearBucket,
+  onDeleteShots,
 }: ShotLogViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
@@ -316,6 +399,12 @@ export default function ShotLogView({
     }
   }
 
+  async function handleDeleteSelectedShots() {
+    if (!selectedBucket || !selectedShotIds.length) return;
+    await onDeleteShots(selectedBucket.id, selectedShotIds);
+    setSelectedShotIds([]);
+  }
+
   function toggleShotSelection(shotId: string) {
     setSelectedShotIds((current) =>
       current.includes(shotId) ? current.filter((value) => value !== shotId) : [...current, shotId]
@@ -332,9 +421,14 @@ export default function ShotLogView({
   }
 
   function handleExportRows(scope: "selected" | "session") {
-    const shotsToExport = scope === "selected" ? selectedShots : shotRows.map((row) => row.shot);
-    if (!shotsToExport.length) return;
-    exportShotsToCSV(shotsToExport);
+    if (!selectedBucket) return;
+
+    const rowsToExport = scope === "selected"
+      ? shotRows.filter((row) => selectedShotIds.includes(String(row.shot.id)))
+      : shotRows;
+
+    if (!rowsToExport.length) return;
+    exportShotTableToCSV(rowsToExport, selectedBucket, scope);
   }
 
   function renderCard(bucket: SessionLibraryBucket, index: number) {
@@ -450,6 +544,13 @@ export default function ShotLogView({
                     disabled={!selectedShots.length}
                   >
                     Export Selected
+                  </button>
+                  <button
+                    className="pr-shotledger-btn is-secondary"
+                    onClick={() => void handleDeleteSelectedShots()}
+                    disabled={!selectedShotIds.length}
+                  >
+                    Delete Selected
                   </button>
                   <button
                     className="pr-shotledger-btn is-secondary"

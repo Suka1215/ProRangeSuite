@@ -1,0 +1,910 @@
+{
+  "version": "1.0",
+  "drills": [
+    {
+      "id": "driver_high_center",
+      "title": "Tee Height Reset",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Driver launching too high \u2014 losing distance and carry efficiency",
+      "drill": "Drop your tee height by half an inch. Place an alignment stick flat on the ground under the ball path. Focus on catching the ball on the upswing by moving the ball 1 inch forward of your normal position. Hit 10 shots feeling like you're launching off a ramp, not chopping down.",
+      "cue": "Sweep up through it \u2014 feel the club head rise before impact",
+      "reps": "10 shots, 5 min",
+      "priority": 3
+    },
+    {
+      "id": "driver_high_left",
+      "title": "In-to-Out Path Drill (Driver)",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "High launch + left start = steep over-the-top path, likely pulling with added loft",
+      "drill": "Put an alignment stick in the ground at 45\u00b0 just outside your right foot, angled away from you. Practice swinging under and past the stick without touching it \u2014 this forces an in-to-out path. Combine with a low tee. 3 slow-motion swings, then 7 real shots.",
+      "cue": "Start the ball right of the target, let it draw back",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "driver_high_right",
+      "title": "Stack and Tilt Entry Drill",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "High launch + right start = too much secondary axis tilt at address, flipping through impact",
+      "drill": "Set up with your sternum slightly forward of normal (over the ball vs behind it). Feel like your weight stays 60% on your lead side even at the top. This reduces dynamic loft and helps square the face. Hit 10 shots with that forward sternum feel.",
+      "cue": "Chest stays over the ball \u2014 don't fall back",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "driver_low_center",
+      "title": "Upswing Launch Drill",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Driver launching too low \u2014 ball coming off too hot with low trajectory, wind exposure",
+      "drill": "Tee the ball higher than normal so the equator of the ball sits above the crown of the driver. Move ball position to just inside your front heel. Practice making 5 rehearsal swings where you feel the club bottom out 4 inches behind the ball and sweep up. Hit 10 shots.",
+      "cue": "Hit up on it \u2014 feel the club head climbing at impact",
+      "reps": "10 shots, 6 min",
+      "priority": 3
+    },
+    {
+      "id": "driver_low_left",
+      "title": "Axis Tilt Recovery Drill",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Low launch + left = driver path too far left with delofted face, steep and pulling",
+      "drill": "Place a headcover 6 inches behind the ball on the target line. Practice swinging without hitting the headcover \u2014 this forces a shallower approach. Focus on your right shoulder staying back and under, not driving toward the ball. Tee up high. Hit 10 shots.",
+      "cue": "Right shoulder stays low and back \u2014 shallow the entry",
+      "reps": "10 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "driver_low_right",
+      "title": "Face Rotation Drill (Driver)",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Low launch + right = open face at impact, ball starting right with low spin and low angle",
+      "drill": "Hold the club with your lead hand only and make 10 slow swings focusing on rotating the face closed through impact. Then hit 5 shots with both hands, feeling the same forearm rotation. Tee high. The goal is to get the face squaring up earlier.",
+      "cue": "Feel the logo on your glove rotate toward the sky post-impact",
+      "reps": "15 swings + 5 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "driver_high_spin_any",
+      "title": "Low Spin Contact Drill",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "any",
+        "spin": "high"
+      },
+      "problem": "Driver spin too high \u2014 ballooning, losing distance, especially in wind",
+      "drill": "Put a small piece of impact tape on the face. Hit 10 shots and check where you're striking it. High spin almost always means strikes on the top of the face or toe. Focus on finding the center-low contact. Feel like you're hitting 'through' the ball with the center of the face, not glancing.",
+      "cue": "Center-low contact kills spin \u2014 find the sweet spot",
+      "reps": "10 shots with impact tape, 8 min",
+      "priority": 2
+    },
+    {
+      "id": "driver_low_spin_any",
+      "title": "Spin Rate Restoration Drill",
+      "clubGroups": [
+        "driver"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "any",
+        "spin": "low"
+      },
+      "problem": "Driver spin too low \u2014 ball falling out of sky early, no carry",
+      "drill": "Loft up 1\u20132 degrees on the hosel if adjustable. If not, work on catching the ball slightly higher on the face (top 1/3) by teeing 1/4 inch higher. Hit 10 shots with a slightly steeper angle of attack feeling. Low spin with low VLA = no lift at all.",
+      "cue": "Catch it higher on the face \u2014 more dynamic loft",
+      "reps": "10 shots, 6 min",
+      "priority": 2
+    },
+    {
+      "id": "wood_high_center",
+      "title": "Ball Back Fairway Drill",
+      "clubGroups": [
+        "wood",
+        "hybrid"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Fairway wood launching too high \u2014 losing distance, steep angle of attack",
+      "drill": "Move the ball back 1 inch in your stance. Feel like you're 'trapping' it at the bottom of your arc, not scooping. Place a tee in the ground where the ball was and practice clipping the new tee position with ball moved back. 10 shots.",
+      "cue": "Trap it at the bottom \u2014 no scoop",
+      "reps": "10 shots, 6 min",
+      "priority": 3
+    },
+    {
+      "id": "wood_high_left",
+      "title": "Outside-In Path Fix (Fairway)",
+      "clubGroups": [
+        "wood",
+        "hybrid"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Fairway wood going high and left \u2014 over-the-top path with added loft",
+      "drill": "Set two alignment sticks in a gate \u2014 one just inside the target line at address width, one just outside. Practice swinging through the gate without hitting the inner stick on the downswing. This forces an in-to-out path. 3 slow swings, then 7 real shots.",
+      "cue": "Swing out to the right side of the fairway at impact",
+      "reps": "10 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "wood_high_right",
+      "title": "Release Timing Drill (Fairway)",
+      "clubGroups": [
+        "wood",
+        "hybrid"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Fairway wood going high and right \u2014 holding off the release, open face",
+      "drill": "Hit 10 shots trying to start the ball 10 yards left of target. This forces early forearm rotation and a closed face. Don't aim left \u2014 just swing with intention to release early. Compare the actual HLA. You should see the ball start moving toward center.",
+      "cue": "Release early \u2014 turn the face over through impact",
+      "reps": "10 shots, 6 min",
+      "priority": 3
+    },
+    {
+      "id": "wood_low_center",
+      "title": "Sweep and Launch Drill",
+      "clubGroups": [
+        "wood",
+        "hybrid"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Fairway wood launching too low \u2014 hitting down too much, killing carry",
+      "drill": "Place a tee in the ground 4 inches in front of the ball on the target line. Your goal is to clip that forward tee after you hit the ball \u2014 this proves a shallowing, sweeping path. Ball forward in stance. 10 shots.",
+      "cue": "Sweep through it \u2014 feel like you're brushing grass forward",
+      "reps": "10 shots, 6 min",
+      "priority": 3
+    },
+    {
+      "id": "wood_low_left",
+      "title": "Path and Loft Recovery (Fairway)",
+      "clubGroups": [
+        "wood",
+        "hybrid"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Low launch + left start from fairway = delofted and over the top \u2014 worst combo",
+      "drill": "Drop down to a 7-iron and hit 5 high draws to reset your delivery feel. Then come back to the fairway wood. The 7-iron exaggerates the correct release and shallowing. When you return to the wood, try to replicate that same 'around and through' feeling.",
+      "cue": "Shallow the downswing \u2014 come from inside and release",
+      "reps": "5 irons + 10 wood shots, 10 min",
+      "priority": 3
+    },
+    {
+      "id": "wood_low_right",
+      "title": "Face Square Drill (Fairway)",
+      "clubGroups": [
+        "wood",
+        "hybrid"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Low launch + right = steep and open face \u2014 a pushed low shot",
+      "drill": "Set up with an alignment stick pointing at your target. Hit 5 shots trying to start every ball online or left of the stick. If the ball starts right \u2014 open face at impact. Practice closing the face in your grip setup (rotate both hands slightly clockwise) then hit 10 shots.",
+      "cue": "Strengthen grip slightly \u2014 feel the face close at impact",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "long_iron_high_center",
+      "title": "Handle Forward Impact Drill",
+      "clubGroups": [
+        "long_iron"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Long iron launching too high \u2014 flipping at impact, adding loft at the wrong time",
+      "drill": "Place a golf glove under your lead armpit and keep it there through impact. This stops the chicken wing and keeps the handle leading. Hit 10 shots with the glove drill. The ball should launch noticeably lower and more penetrating.",
+      "cue": "Handle leads the face \u2014 feel the shaft lean forward at impact",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "long_iron_high_left",
+      "title": "Path Fix + Handle Lead (Long Iron)",
+      "clubGroups": [
+        "long_iron"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Long iron high and left \u2014 over-the-top with flip, double trouble",
+      "drill": "Choke down 2 inches on the grip. Place a headcover just outside the ball on the target line \u2014 hit the ball without touching the headcover. Choking down shortens the arc and forces a more downward, in-to-out strike. 10 shots.",
+      "cue": "Short and steep is wrong \u2014 long and shallow from inside",
+      "reps": "10 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "long_iron_high_right",
+      "title": "Swing Left Release Drill",
+      "clubGroups": [
+        "long_iron"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Long iron high and right \u2014 path going too far right, holding off the face",
+      "drill": "Pick a target 20 yards left of your actual target. Swing toward that left target aggressively. Don't fear the ball going left \u2014 the open face will keep it on line. After 5 shots like this, go back to your real target. Feel how much more rotation you have.",
+      "cue": "Swing hard left \u2014 rotation fixes the height and direction",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "long_iron_low_center",
+      "title": "Low Point Forward Drill",
+      "clubGroups": [
+        "long_iron"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Long iron launching too low \u2014 hitting too far past center, delofting excessively",
+      "drill": "Place a tee 1 inch in front of the ball. Practice striking the ball first AND then the tee. If you're launching low with center HLA, you're hitting down TOO aggressively. Work on shallowing out \u2014 ball slightly more forward. 10 shots with the forward tee target.",
+      "cue": "Down + forward, not just down \u2014 keep the loft working",
+      "reps": "10 shots, 6 min",
+      "priority": 3
+    },
+    {
+      "id": "long_iron_low_left",
+      "title": "Gate Drill \u2014 Shallow and Square",
+      "clubGroups": [
+        "long_iron"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Long iron low and left \u2014 steep path, closed face, toe strike likely",
+      "drill": "Build a 2-tee gate just wider than your clubhead. Practice swinging through the gate without disturbing either tee. Gate forces a shallower entry. After 5 gate swings (no ball), hit 5 real shots. Focus on path \u2014 the low-left combo is usually steep + too much rotation.",
+      "cue": "Let the path shallow \u2014 turn the body, don't force the arms",
+      "reps": "5 gate + 10 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "long_iron_low_right",
+      "title": "Grip Pressure Release Drill",
+      "clubGroups": [
+        "long_iron"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Long iron low and right \u2014 block, open face, tight grip holding off release",
+      "drill": "Hit 5 shots with grip pressure at 3/10 \u2014 barely holding the club. The low grip tension forces the face to naturally square through forearm rotation. You'll feel the face closing and the ball starting left. Gradually increase tension and maintain that release feel on 10 real shots.",
+      "cue": "Soft grip = natural release = square face",
+      "reps": "5 soft-grip + 10 normal, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "mid_iron_high_center",
+      "title": "Strike Down Drill (Mid Iron)",
+      "clubGroups": [
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Mid iron launching too high \u2014 scooping, thin strikes, or ball too far forward",
+      "drill": "Tee a ball very low to the ground (half-tee). Your only job is to clip it cleanly. If you scoop, you'll pop the tee without clipping the ball cleanly. Hit 10 low-tee shots focusing on a descending strike that takes the tee out. Then hit 5 off the ground.",
+      "cue": "Clip the tee \u2014 hands ahead, strike down",
+      "reps": "10 tee + 5 ground, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "mid_iron_high_left",
+      "title": "Feet Together Drill (Mid Iron)",
+      "clubGroups": [
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Mid iron high and left \u2014 over-the-top, steep, too much body drive left",
+      "drill": "Hit 10 shots with your feet together (touching). This eliminates lateral slide and forces rotation as your only power source. High-left patterns almost always involve a lateral body thrust \u2014 feet together stops it cold. After 10, widen stance and carry the rotation feel.",
+      "cue": "Rotate around your spine \u2014 not slide toward target",
+      "reps": "10 feet-together + 5 normal, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "mid_iron_high_right",
+      "title": "Pump Drill \u2014 Slot and Release",
+      "clubGroups": [
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Mid iron high and right \u2014 coming over-the-top but with open face, a weak fade/push",
+      "drill": "At the top of your backswing, 'pump' the club down 6 inches toward your right pocket (slot it) before transitioning into the forward swing. Do this 3 times in slow motion, then hit a ball. This shallows the club and keeps the face from opening. 10 shots.",
+      "cue": "Drop it into the slot before you hit \u2014 right pocket first",
+      "reps": "3 pumps + 10 shots, 10 min",
+      "priority": 3
+    },
+    {
+      "id": "mid_iron_low_center",
+      "title": "Towel Behind Ball Drill",
+      "clubGroups": [
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Mid iron launching too low \u2014 excessive forward shaft lean, killing dynamic loft",
+      "drill": "Place a folded towel 4 inches behind the ball. Make a full swing and hit the ball WITHOUT touching the towel. If you hit the towel, you're coming in too steeply. This drill teaches a shallower delivery that preserves loft. 10 shots.",
+      "cue": "Miss the towel \u2014 shallower entry, more loft at impact",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "mid_iron_low_left",
+      "title": "Right Hand Release Drill",
+      "clubGroups": [
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Mid iron low and left \u2014 steep path, closed face, too aggressive a roll through",
+      "drill": "Hit 10 shots with right hand only on the club. Single-hand forces proper wrist mechanics \u2014 you can't muscle it steep. After 5 right-hand-only shots, reconnect both hands and replicate the feel. The ball should launch higher and the left miss should clear up.",
+      "cue": "Right hand only \u2014 find the correct wrist release naturally",
+      "reps": "5 right-hand + 10 two-hand, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "mid_iron_low_right",
+      "title": "Clockface Path Drill",
+      "clubGroups": [
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Mid iron low and right \u2014 block with open face and steep delivery",
+      "drill": "Imagine a clockface on the ground. Your swing path should exit toward 7 o'clock (slightly left of target). Currently it's exiting toward 4\u20135 o'clock (right of target). Place a stick at 7 o'clock position and practice swinging toward it. The left-exit path naturally squares the face and adds loft. 10 shots.",
+      "cue": "Swing to 7 o'clock \u2014 left exit, not right",
+      "reps": "10 shots, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_high_center",
+      "title": "Knockdown Wedge Drill",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Wedge launching too high \u2014 scooping, flipping, no compression on short shots",
+      "drill": "Choke down 2 inches. Move ball back in stance by 1 ball width. Hit 10 'knockdown' wedges where the ball flight stays below 20 feet. This forces a trapped, compressed strike. Then hit 5 normal wedges and feel the same compression but with full loft. Check your VLA \u2014 it should drop significantly.",
+      "cue": "Compress and trap \u2014 hands forward, low flight",
+      "reps": "10 knockdowns + 5 normal, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_high_left",
+      "title": "Open Face Recovery Drill (Wedge)",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Wedge high and left \u2014 flippy release with path going left, pulling shots that balloon",
+      "drill": "Open your stance 15 degrees but keep the face square to your original target. Hit 10 shots. This exaggerates the left path but forces the face to stay open relative to path \u2014 you'll feel the difference between path and face. After 10, close the stance back and notice the natural release. 10 more shots.",
+      "cue": "Face controls the height \u2014 path controls direction",
+      "reps": "10 open + 10 normal, 10 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_high_right",
+      "title": "Lead Hand Rotation Drill (Wedge)",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "high",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Wedge high and right \u2014 flipping with open face, a push-balloon",
+      "drill": "Hit 10 wedges with lead hand only. Focus on the back of your lead hand facing the target at impact (not sky-facing). This is the correct wrist position for a square face. High-right wedge shots almost always mean the back of the lead hand is facing up at impact. Fix it with one hand.",
+      "cue": "Back of lead hand faces target \u2014 not the sky",
+      "reps": "10 lead-hand + 10 two-hand, 10 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_low_center",
+      "title": "Loft Preservation Drill",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "center",
+        "spin": "any"
+      },
+      "problem": "Wedge launching too low \u2014 too much shaft lean, killing bounce and loft",
+      "drill": "Address the ball with the shaft vertical (no forward lean) and make 5 half-swings. Feel how the face opens and loft increases. Now return to your normal setup but reduce shaft lean by 2 inches. Hit 10 wedges. Wedges need 4\u20136 degrees of lean max \u2014 not 15+.",
+      "cue": "Less shaft lean \u2014 let the loft of the club do the work",
+      "reps": "5 vertical + 10 normal, 7 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_low_left",
+      "title": "Steep Path Reset Drill (Wedge)",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "left",
+        "spin": "any"
+      },
+      "problem": "Wedge low and left \u2014 too steep, too closed, killing bounce \u2014 worst for full wedges",
+      "drill": "Take a pitching wedge and hit 10 chips from 20 yards. No full swing. Focus purely on a soft, square impact where the face is looking at the flag at impact. Then take a full wedge swing at 60% speed keeping that same 'face up' feel. Hit 10 full shots.",
+      "cue": "Soft hands, face to flag \u2014 don't roll through it",
+      "reps": "10 chip + 10 full, 10 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_low_right",
+      "title": "Hip Rotation Clear Drill",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "low",
+        "hla": "right",
+        "spin": "any"
+      },
+      "problem": "Wedge low and right \u2014 hips stalling, arms getting trapped, push with low launch",
+      "drill": "At address, feel your lead hip already slightly open (pre-rotated). Hit 10 wedges where your first move is to fire the lead hip open \u2014 before your arms move. The hips leading will un-trap the arms and get the face squaring. Low-right wedges are almost always a hip-stall pattern.",
+      "cue": "Lead hip fires first \u2014 clear the body, free the arms",
+      "reps": "10 shots, 6 min",
+      "priority": 3
+    },
+    {
+      "id": "wedge_high_spin",
+      "title": "Contact Quality Drill (Spin Control)",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "any",
+        "spin": "high"
+      },
+      "problem": "Wedge spinning too high \u2014 could be a clean grooves + descending path issue, or thin strikes",
+      "drill": "Check your grooves first \u2014 clean them with a groove brush. Then hit 10 shots focusing on hitting the bottom half of the ball (not center). A slightly lower contact point on the face reduces spin on full wedges. Compare spin across the session. If ball is striking high on the face, move ball back 1/2 inch.",
+      "cue": "Clean grooves, bottom-half contact \u2014 control the spin",
+      "reps": "10 shots, 6 min",
+      "priority": 2
+    },
+    {
+      "id": "wedge_low_spin",
+      "title": "Compression and Groove Drill",
+      "clubGroups": [
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "any",
+        "spin": "low"
+      },
+      "problem": "Wedge not spinning enough \u2014 ball releasing too far, hard to hold greens",
+      "drill": "Wedge spin comes from: (1) clean grooves, (2) clean ball, (3) compressed contact. Clean your grooves now. Use a new ball. Hit 10 shots focusing on a crisp, slightly descending blow \u2014 you should hear a sharp 'click', not a 'thud'. Low spin is almost always contact quality or dirty equipment.",
+      "cue": "Sharp click = compressed spin contact \u2014 hear the difference",
+      "reps": "10 shots with clean ball/grooves, 6 min",
+      "priority": 2
+    },
+    {
+      "id": "all_extreme_left",
+      "title": "Anti-Pull Path Drill",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "extreme_left",
+        "spin": "any"
+      },
+      "problem": "Consistent pull or pull-hook \u2014 severe over-the-top, path way left of target",
+      "drill": "Place an alignment stick in the ground pointing at 3 o'clock (directly right). Hit 10 shots where your finish position has the club pointing at or right of that stick. This is extreme exaggeration \u2014 your current path is so left that you need to feel 'wildly right' to get to center. Build up over 3 sessions.",
+      "cue": "Finish to the right \u2014 feel ridiculous doing it",
+      "reps": "10 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "all_extreme_right",
+      "title": "Anti-Slice Path Drill",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "extreme_right",
+        "spin": "any"
+      },
+      "problem": "Consistent push or push-slice \u2014 path too far right, open face through impact",
+      "drill": "Place an alignment stick 2 feet outside the ball on the target line (outside). Hit 10 shots without touching the stick on the follow-through. This forces your swing path to exit left of the stick \u2014 in-to-out to slightly out-to-in. The natural result is a squarer face and centered start line.",
+      "cue": "Exit left of the stick \u2014 path correction first, face follows",
+      "reps": "10 shots, 8 min",
+      "priority": 3
+    },
+    {
+      "id": "all_scatter_tempo",
+      "title": "Metronome Tempo Drill",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "scatter",
+        "spin": "any"
+      },
+      "problem": "Shots scattering everywhere \u2014 no consistent pattern, tempo and sequencing issue",
+      "drill": "Use a metronome app at 72 BPM. Every beat is one count. Backswing = 2 beats (count 1-2), downswing = 1 beat (count 3). Hit 15 shots at exactly this tempo. Scattershot patterns almost always come from inconsistent tempo \u2014 some shots rushed, some held. The metronome forces a 2:1 back-to-through ratio.",
+      "cue": "2 beats back, 1 beat through \u2014 every single swing",
+      "reps": "15 shots with metronome, 10 min",
+      "priority": 3
+    },
+    {
+      "id": "all_scatter_preset",
+      "title": "Pre-Shot Routine Lock Drill",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "scatter",
+        "spin": "any"
+      },
+      "problem": "Inconsistent scatter pattern \u2014 no pre-shot routine, setup varying between shots",
+      "drill": "Build a 30-second pre-shot routine: (1) Stand behind ball, pick intermediate target 3 feet ahead. (2) Walk in from the side, align clubface to intermediate target. (3) Set feet. (4) One forward press trigger. (5) Go. Hit 20 shots with this exact routine \u2014 same time every time. Scatter closes dramatically with consistent setup.",
+      "cue": "Same routine = same result \u2014 no routine = no repeatability",
+      "reps": "20 shots with full routine, 15 min",
+      "priority": 2
+    },
+    {
+      "id": "all_center_refine",
+      "title": "Tighten the Window Drill",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "normal",
+        "hla": "center",
+        "spin": "normal"
+      },
+      "problem": "Good pattern \u2014 now make the window tighter",
+      "drill": "You're in the zone for this club. Now make it smaller. Set a target flag or cone. Hit 20 shots aiming to land within 5 yards left/right of the flag. Track how many you hit. Your goal: 15/20 inside the window. If you're already there \u2014 tighten to 3 yards. This is competitive pressure simulation.",
+      "cue": "Good isn't good enough \u2014 make the window smaller",
+      "reps": "20 shots, track result, 12 min",
+      "priority": 1
+    },
+    {
+      "id": "all_center_pressure",
+      "title": "Competitive Pressure Simulation",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "vla": "normal",
+        "hla": "center",
+        "spin": "normal"
+      },
+      "problem": "Pattern is solid \u2014 need to maintain it under pressure",
+      "drill": "Hit 10 shots with normal routine. Now hit 10 more where each shot has a consequence: if it misses the window, you do 5 pushups before the next shot. The mild stress activates the same physiological response as competition. Your scores with and without pressure should be within 2\u20133 shots of each other at your skill level.",
+      "cue": "Stay in your routine under stress \u2014 process over result",
+      "reps": "20 shots with consequence structure, 15 min",
+      "priority": 1
+    },
+    {
+      "id": "all_carry_short",
+      "title": "Speed and Compression Drill",
+      "clubGroups": [
+        "driver",
+        "wood",
+        "hybrid",
+        "long_iron",
+        "mid_iron",
+        "wedge"
+      ],
+      "conditions": {
+        "carry": "short",
+        "vla": "any",
+        "hla": "any",
+        "spin": "any"
+      },
+      "problem": "Carrying short of baseline \u2014 losing distance somewhere in the chain",
+      "drill": "Step 1: Hit 5 shots at 70% effort, focus only on center contact. Step 2: Hit 5 at 85% effort, same contact focus. Step 3: Hit 5 at 100% effort. Compare your carry on each set. If the 70% shots carry close to the 100% shots \u2014 you're losing energy through impact, not generating it. The fix is a rotation and hip speed drill, not grip pressure.",
+      "cue": "Speed comes from rotation \u2014 not arms and grip",
+      "reps": "15 shots (3 sets of 5), 10 min",
+      "priority": 2
+    },
+    {
+      "id": "iron_high_spin",
+      "title": "Attack Angle Calibration Drill",
+      "clubGroups": [
+        "long_iron",
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "any",
+        "spin": "high"
+      },
+      "problem": "Iron spinning too high \u2014 likely steep attack angle, not necessarily bad contact",
+      "drill": "Move the ball 1 inch forward in your stance. This naturally shallows the attack angle because your low point shifts back relative to the ball. A shallower angle of attack with the same speed = significantly less spin. Hit 10 shots with the ball forward and compare. You should see spin drop without losing distance.",
+      "cue": "Ball forward = shallower AoA = less spin",
+      "reps": "10 shots, 6 min",
+      "priority": 2
+    },
+    {
+      "id": "iron_low_spin",
+      "title": "Descending Blow Recovery Drill",
+      "clubGroups": [
+        "long_iron",
+        "mid_iron"
+      ],
+      "conditions": {
+        "vla": "any",
+        "hla": "any",
+        "spin": "low"
+      },
+      "problem": "Iron spinning too low \u2014 thin contact, sweeping, not compressing the ball",
+      "drill": "Place a coin 1 inch in front of the ball. Your goal is to take a divot that starts at the coin and goes forward (past it). If your divot is behind the coin \u2014 you're hitting up on it. The coin drill confirms you're catching ball-first. Low spin irons are almost always thin/sweeping contacts. 15 shots with coin.",
+      "cue": "Divot starts after the coin \u2014 ball first, dirt second",
+      "reps": "15 shots with coin drill, 8 min",
+      "priority": 2
+    }
+  ],
+  "clubGroups": {
+    "driver": {
+      "label": "Driver",
+      "speedRangeMph": [
+        100,
+        999
+      ]
+    },
+    "wood": {
+      "label": "Fairway Wood",
+      "speedRangeMph": [
+        80,
+        115
+      ]
+    },
+    "hybrid": {
+      "label": "Hybrid",
+      "speedRangeMph": [
+        70,
+        105
+      ]
+    },
+    "long_iron": {
+      "label": "Long Iron (4\u20137)",
+      "speedRangeMph": [
+        60,
+        95
+      ]
+    },
+    "mid_iron": {
+      "label": "Mid Iron (8\u20139)",
+      "speedRangeMph": [
+        50,
+        82
+      ]
+    },
+    "wedge": {
+      "label": "Wedge",
+      "speedRangeMph": [
+        30,
+        70
+      ]
+    }
+  },
+  "thresholds": {
+    "vla": {
+      "driver": {
+        "low": 8.0,
+        "high": 16.0
+      },
+      "wood": {
+        "low": 10.0,
+        "high": 18.0
+      },
+      "hybrid": {
+        "low": 12.0,
+        "high": 20.0
+      },
+      "long_iron": {
+        "low": 14.0,
+        "high": 22.0
+      },
+      "mid_iron": {
+        "low": 18.0,
+        "high": 28.0
+      },
+      "wedge": {
+        "low": 22.0,
+        "high": 35.0
+      }
+    },
+    "hla": {
+      "center": {
+        "min": -3.0,
+        "max": 3.0
+      },
+      "left": {
+        "min": -12.0,
+        "max": -3.0
+      },
+      "right": {
+        "min": 3.0,
+        "max": 12.0
+      },
+      "extreme_left": {
+        "min": -999,
+        "max": -12.0
+      },
+      "extreme_right": {
+        "min": 12.0,
+        "max": 999
+      }
+    },
+    "spin": {
+      "driver": {
+        "low": 2000,
+        "high": 3800
+      },
+      "wood": {
+        "low": 2800,
+        "high": 4800
+      },
+      "hybrid": {
+        "low": 3200,
+        "high": 5500
+      },
+      "long_iron": {
+        "low": 4000,
+        "high": 7000
+      },
+      "mid_iron": {
+        "low": 5500,
+        "high": 8500
+      },
+      "wedge": {
+        "low": 6500,
+        "high": 9500
+      }
+    },
+    "carry": {
+      "shortThresholdYards": -10
+    }
+  },
+  "matchingWeights": {
+    "vla": 3,
+    "hla": 3,
+    "spin": 2,
+    "club": 2,
+    "carry": 1
+  }
+}

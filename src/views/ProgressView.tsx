@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   CartesianGrid,
@@ -11,21 +11,39 @@ import {
 } from "recharts";
 import { METRIC_META, PASS_THRESHOLD, VERSION_COLORS } from "../constants";
 import { formatDateFull, formatDateShort } from "../utils/dates";
-import type { MetricKey, MetricStats, Session } from "../types";
+import type { MetricKey, MetricStats, Session, TabId } from "../types";
 
 interface Props {
   sessions: Session[];
+  onOpenTab?: (tab: TabId) => void;
 }
 
 type PanelTab = "total" | "session" | "forecast";
+type TimeScope = "year" | "recent";
+
+interface BenchmarkSnapshot {
+  avgError: number;
+  createdAt: number;
+  passRate: number;
+  score: number;
+  sessions: number;
+}
 
 const METRIC_KEYS: MetricKey[] = ["speed", "vla", "hla", "carry", "spin"];
+const BENCHMARK_KEY = "pr-progress-benchmark-v1";
 
-export default function ProgressView({ sessions }: Props) {
+export default function ProgressView({ sessions, onOpenTab }: Props) {
   const [panelTab, setPanelTab] = useState<PanelTab>("forecast");
-  const [selectedMetric, setSelectedMetric] = useState<MetricKey>("vla");
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>("carry");
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [timeScope, setTimeScope] = useState<TimeScope>("year");
+  const [impactPercent, setImpactPercent] = useState(55);
+  const [benchmark, setBenchmark] = useState<BenchmarkSnapshot | null>(() => readBenchmark());
 
-  const dashboard = useMemo(() => buildProgressDashboard(sessions, selectedMetric), [sessions, selectedMetric]);
+  const dashboard = useMemo(
+    () => buildProgressDashboard(sessions, selectedMetric, timeScope),
+    [sessions, selectedMetric, timeScope]
+  );
   const {
     rows,
     chartData,
@@ -38,18 +56,104 @@ export default function ProgressView({ sessions }: Props) {
     panelChartData,
   } = dashboard;
 
-  const spotlight = getSpotlight(panelTab, dashboard);
+  useEffect(() => {
+    if (!rows.length) {
+      setSelectedSessionId(null);
+      return;
+    }
+
+    setSelectedSessionId((current) => (current && rows.some((row) => row.id === current) ? current : rows[rows.length - 1].id));
+  }, [rows]);
+
+  const selectedSession = rows.find((row) => row.id === selectedSessionId) ?? latest;
+  const spotlight = getSpotlight(panelTab, dashboard, selectedSession);
   const activeMetric = metricBreakdown.find((metric) => metric.key === selectedMetric) ?? metricBreakdown[0];
+  const impact = buildImpactPreview(latest, activeMetric, impactPercent);
+  const missions = buildMissionCards(selectedSession, activeMetric, impact, {
+    onBoost: () => {
+      setImpactPercent((current) => Math.max(current, 75));
+      setPanelTab("forecast");
+    },
+    onForecast: () => setPanelTab("forecast"),
+    onSession: () => setPanelTab("session"),
+  });
+  const benchmarkDelta = benchmark && latest
+    ? {
+        score: latest.score - benchmark.score,
+        passRate: latest.passRate - benchmark.passRate,
+        avgError: benchmark.avgError - latest.avgError,
+      }
+    : null;
+
+  function handleBenchmark() {
+    const snapshot: BenchmarkSnapshot = {
+      avgError: latest?.avgError ?? 0,
+      createdAt: Date.now(),
+      passRate: latest?.passRate ?? 0,
+      score: latest?.score ?? 0,
+      sessions: rows.length,
+    };
+    saveBenchmark(snapshot);
+    setBenchmark(snapshot);
+    setPanelTab("total");
+  }
+
+  function cycleMetric() {
+    const index = METRIC_KEYS.indexOf(selectedMetric);
+    setSelectedMetric(METRIC_KEYS[(index + 1) % METRIC_KEYS.length]);
+    setPanelTab("forecast");
+  }
 
   return (
-    <section className="pr-progress-board">
+    <section className="pr-progress-board is-command-center">
       <div className="pr-progress-main">
         <div className="pr-progress-topbar">
-          <h1>Overview</h1>
-          <button className="pr-progress-new" onClick={() => downloadProgressReport(dashboard)}>
-            New benchmark
-          </button>
+          <div className="pr-progress-titleblock">
+            <span>Progress command center</span>
+            <h1>Overview</h1>
+            <p>Live calibration health, session drift, and a next-move forecast from your saved practice data.</p>
+          </div>
+
+          <div className="pr-progress-top-actions">
+            <button
+              className={`pr-progress-scope ${timeScope === "recent" ? "is-active" : ""}`}
+              onClick={() => setTimeScope((current) => (current === "year" ? "recent" : "year"))}
+            >
+              {timeScope === "year" ? "This year" : "Last 90"}
+            </button>
+            <button className="pr-progress-new" onClick={handleBenchmark}>
+              New benchmark
+            </button>
+          </div>
         </div>
+
+        <section className="pr-progress-hero">
+          <div className="pr-progress-score-orb" style={{ "--progress-score": `${latest?.score ?? 0}%` } as React.CSSProperties}>
+            <span>Fit score</span>
+            <strong>{formatPercent(latest?.score ?? 0)}</strong>
+            <em>{latest && previous ? formatDelta(latest.score - previous.score) : "Live baseline"}</em>
+          </div>
+
+          <div className="pr-progress-briefing">
+            <span>Coach readout</span>
+            <h2>{forecast.title}</h2>
+            <p>{forecast.coachCopy}</p>
+            <div className="pr-progress-briefing-actions">
+              <button onClick={() => onOpenTab?.("accuracy")}>Open Shot IQ</button>
+              <button onClick={() => onOpenTab?.("shots")}>Review shots</button>
+            </div>
+          </div>
+
+          <div className="pr-progress-dna">
+            {dashboard.dna.map((item) => (
+              <div key={item.label}>
+                <span>{item.label}</span>
+                <strong>{formatPercent(item.value)}</strong>
+                <em style={{ width: `${item.value}%`, background: item.color }} />
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="pr-progress-statgrid">
           <SummaryCard
@@ -97,39 +201,36 @@ export default function ProgressView({ sessions }: Props) {
                 </div>
               </div>
             </div>
+
             <div className="pr-progress-selectors" aria-label="Progress chart filters">
-              <button>This year</button>
-              <button>{METRIC_META[selectedMetric].label}</button>
+              <button onClick={() => setTimeScope((current) => (current === "year" ? "recent" : "year"))}>
+                {timeScope === "year" ? "This year" : "Last 90"}
+              </button>
+              <button onClick={cycleMetric}>{METRIC_META[selectedMetric].label}</button>
             </div>
           </div>
 
           <div className="pr-progress-chart">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 16, right: 12, left: 0, bottom: 4 }}>
-                <defs>
-                  <linearGradient id="progressScoreFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#4f5cff" stopOpacity={0.16} />
-                    <stop offset="100%" stopColor="#4f5cff" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid stroke="#eef0f4" vertical={false} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#9b9ca6", fontSize: 11 }} />
                 <YAxis yAxisId="score" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: "#9b9ca6", fontSize: 11 }} width={34} />
                 <YAxis yAxisId="shots" orientation="right" hide domain={[0, "dataMax + 8"]} />
                 <Tooltip content={<ProgressTooltip />} />
-                <Bar yAxisId="shots" dataKey="shots" fill="#eceef2" radius={[3, 3, 0, 0]} barSize={9} isAnimationActive={false} />
+                <Bar yAxisId="shots" dataKey="shots" fill="#e6eaf0" radius={[3, 3, 0, 0]} barSize={10} isAnimationActive={false} />
                 <Line
                   yAxisId="score"
                   type="monotone"
                   dataKey="score"
-                  stroke="#5a61ff"
-                  strokeWidth={2.8}
-                  dot={false}
-                  activeDot={{ r: 5, fill: "#111217", stroke: "#fff", strokeWidth: 2 }}
+                  stroke="#4f5cff"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: "#4f5cff", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: "#111217", stroke: "#fff", strokeWidth: 2 }}
                   connectNulls
                   isAnimationActive={false}
                 />
-                <Line yAxisId="score" type="monotone" dataKey="consistency" stroke="#d4d6dc" strokeWidth={2.5} dot={false} connectNulls isAnimationActive={false} />
+                <Line yAxisId="score" type="monotone" dataKey="consistency" stroke="#cfd4de" strokeWidth={2.5} dot={false} connectNulls isAnimationActive={false} />
                 <Line
                   yAxisId="score"
                   type="monotone"
@@ -146,8 +247,68 @@ export default function ProgressView({ sessions }: Props) {
           </div>
         </section>
 
+        <section className="pr-progress-lab-grid">
+          <div className="pr-progress-impact-lab">
+            <span>What-if lab</span>
+            <h2>Correct {activeMetric?.label ?? "metric"} by {impactPercent}%</h2>
+            <p>
+              If the next session trims that error by this amount, projected fit moves from
+              {" "}<strong>{formatPercent(latest?.score ?? 0)}</strong> to <strong>{formatPercent(impact.projectedScore)}</strong>.
+            </p>
+            <input
+              aria-label="Correction percent"
+              max={100}
+              min={10}
+              onChange={(event) => setImpactPercent(Number(event.target.value))}
+              step={5}
+              type="range"
+              value={impactPercent}
+            />
+            <div className="pr-progress-impact-row">
+              <span>Score lift</span>
+              <strong>{formatDelta(impact.scoreLift)}</strong>
+            </div>
+          </div>
+
+          <div className="pr-progress-mission">
+            <span>Next 5 shot mission</span>
+            {missions.map((mission) => (
+              <button key={mission.title} onClick={mission.onClick}>
+                <em>{mission.kicker}</em>
+                <strong>{mission.title}</strong>
+                <small>{mission.copy}</small>
+              </button>
+            ))}
+          </div>
+
+          <div className="pr-progress-benchmark">
+            <span>Saved benchmark</span>
+            {benchmark ? (
+              <>
+                <strong>{formatPercent(benchmark.score)}</strong>
+                <p>Saved {new Date(benchmark.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} from {benchmark.sessions} sessions.</p>
+                <div>
+                  <span>Score {benchmarkDelta ? formatDelta(benchmarkDelta.score) : "+0.00%"}</span>
+                  <span>Pass {benchmarkDelta ? formatDelta(benchmarkDelta.passRate) : "+0.00%"}</span>
+                  <span>Error {benchmarkDelta ? formatDelta(benchmarkDelta.avgError) : "+0.00%"}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <strong>No baseline yet</strong>
+                <p>Hit New benchmark to freeze today's score and make future sessions compare against it.</p>
+                <button onClick={handleBenchmark}>Save baseline</button>
+              </>
+            )}
+          </div>
+        </section>
+
         <section className="pr-progress-ledger">
-          <h2>Sessions</h2>
+          <div className="pr-progress-ledger-head">
+            <h2>Sessions</h2>
+            <p>Click a session to load its details into the side panel and jump the forecast to its weakest metric.</p>
+          </div>
+
           <div className="pr-progress-table">
             <div className="pr-progress-row is-head">
               <span>Session ID</span>
@@ -159,8 +320,16 @@ export default function ProgressView({ sessions }: Props) {
             </div>
 
             {recentRows.length ? (
-              recentRows.map((row, index) => (
-                <button className="pr-progress-row" key={row.id} onClick={() => setSelectedMetric(row.focusMetric)}>
+              recentRows.map((row) => (
+                <button
+                  className={`pr-progress-row ${selectedSession?.id === row.id ? "is-selected" : ""}`}
+                  key={row.id}
+                  onClick={() => {
+                    setSelectedSessionId(row.id);
+                    setSelectedMetric(row.focusMetric);
+                    setPanelTab("session");
+                  }}
+                >
                   <span className="pr-progress-session">
                     <span className="pr-progress-avatar" style={{ background: row.color }}>
                       {row.initial}
@@ -205,7 +374,7 @@ export default function ProgressView({ sessions }: Props) {
           ))}
         </div>
 
-        <div className="pr-progress-spotlight">
+        <div className={`pr-progress-spotlight is-${panelTab}`}>
           <strong>{spotlight.value}</strong>
           <p>{spotlight.copy}</p>
         </div>
@@ -223,12 +392,20 @@ export default function ProgressView({ sessions }: Props) {
           </ResponsiveContainer>
         </div>
 
+        <PanelDetail
+          activeMetric={activeMetric}
+          dashboard={dashboard}
+          impact={impact}
+          panelTab={panelTab}
+          selectedSession={selectedSession}
+        />
+
         <section className="pr-progress-metrics">
           <div className="pr-progress-metrics-head">
             <h2>Accuracy by Metric</h2>
             <div>
-              <button aria-label="Metric view">=</button>
-              <button aria-label="Metric target">+</button>
+              <button aria-label="Show total panel" onClick={() => setPanelTab("total")}>=</button>
+              <button aria-label="Cycle metric" onClick={cycleMetric}>+</button>
             </div>
           </div>
 
@@ -237,7 +414,10 @@ export default function ProgressView({ sessions }: Props) {
               <button
                 key={metric.key}
                 className={`pr-progress-metric ${selectedMetric === metric.key ? "is-active" : ""}`}
-                onClick={() => setSelectedMetric(metric.key)}
+                onClick={() => {
+                  setSelectedMetric(metric.key);
+                  setPanelTab("forecast");
+                }}
               >
                 <span>
                   <i style={{ background: metric.color }} />
@@ -262,7 +442,7 @@ export default function ProgressView({ sessions }: Props) {
 
         <div className="pr-progress-side-actions">
           <button onClick={() => exportProgressCsv(rows)}>Export</button>
-          <button onClick={() => downloadProgressReport(dashboard)}>Create Report</button>
+          <button onClick={() => downloadProgressReport(dashboard, benchmark, impact)}>Create Report</button>
         </div>
       </aside>
     </section>
@@ -289,6 +469,85 @@ function SummaryCard({
   );
 }
 
+function PanelDetail({
+  activeMetric,
+  dashboard,
+  impact,
+  panelTab,
+  selectedSession,
+}: {
+  activeMetric: ReturnType<typeof buildMetricBreakdown>[number] | undefined;
+  dashboard: ReturnType<typeof buildProgressDashboard>;
+  impact: ReturnType<typeof buildImpactPreview>;
+  panelTab: PanelTab;
+  selectedSession: ReturnType<typeof buildSessionRow> | null;
+}) {
+  if (panelTab === "session") {
+    return (
+      <section className="pr-progress-panel-detail">
+        <span>Selected session</span>
+        <strong>{selectedSession?.name ?? "No session"}</strong>
+        <div className="pr-progress-panel-grid">
+          <div>
+            <em>Club</em>
+            <b>{selectedSession?.club ?? "--"}</b>
+          </div>
+          <div>
+            <em>Shots</em>
+            <b>{selectedSession?.shots ?? 0}</b>
+          </div>
+          <div>
+            <em>Fit</em>
+            <b>{formatPercent(selectedSession?.score ?? 0)}</b>
+          </div>
+          <div>
+            <em>Weakest</em>
+            <b>{selectedSession ? METRIC_META[selectedSession.focusMetric].label : "--"}</b>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (panelTab === "total") {
+    return (
+      <section className="pr-progress-panel-detail">
+        <span>Total data health</span>
+        <strong>{formatPercent(dashboard.totals.avgScore)}</strong>
+        <p>{dashboard.rows.length} sessions, {dashboard.totals.activeClubs} active clubs, and {dashboard.totals.passed} approved metric checks.</p>
+        <div className="pr-progress-panel-grid">
+          <div>
+            <em>Avg error</em>
+            <b>{dashboard.totals.avgError.toFixed(2)}%</b>
+          </div>
+          <div>
+            <em>Improved</em>
+            <b>{dashboard.totals.improvedSessions}</b>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="pr-progress-panel-detail">
+      <span>Forecast lab</span>
+      <strong>{activeMetric?.label ?? "Metric"} impact</strong>
+      <p>{impactPercentCopy(impact)} The best next move is to reduce {activeMetric?.label.toLowerCase() ?? "metric"} error before chasing secondary metrics.</p>
+      <div className="pr-progress-panel-grid">
+        <div>
+          <em>Projected</em>
+          <b>{formatPercent(impact.projectedScore)}</b>
+        </div>
+        <div>
+          <em>Lift</em>
+          <b>{formatDelta(impact.scoreLift)}</b>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ProgressTooltip({ active, payload, label, compact }: any) {
   if (!active || !payload?.length) return null;
 
@@ -306,8 +565,11 @@ function ProgressTooltip({ active, payload, label, compact }: any) {
   );
 }
 
-function buildProgressDashboard(sessions: Session[], selectedMetric: MetricKey) {
-  const rows = sessions.map((session, index) => buildSessionRow(session, index));
+function buildProgressDashboard(sessions: Session[], selectedMetric: MetricKey, timeScope: TimeScope) {
+  const allRows = sessions
+    .map((session, index) => buildSessionRow(session, index))
+    .sort((left, right) => left.createdAt - right.createdAt);
+  const rows = filterRowsByScope(allRows, timeScope);
   const latest = rows[rows.length - 1] ?? null;
   const previous = rows[rows.length - 2] ?? null;
   const first = rows[0] ?? null;
@@ -342,6 +604,10 @@ function buildProgressDashboard(sessions: Session[], selectedMetric: MetricKey) 
     return row.avgError < rows[index - 1].avgError ? sum + 1 : sum;
   }, 0);
   const activeClubs = new Set(rows.map((row) => row.club)).size;
+  const avgScore = average(rows.map((row) => row.score));
+  const avgError = average(rows.map((row) => row.avgError));
+  const avgPass = average(rows.map((row) => row.passRate));
+  const avgConsistency = average(rows.map((row) => row.consistency));
   const totals = {
     passed,
     failed,
@@ -351,11 +617,20 @@ function buildProgressDashboard(sessions: Session[], selectedMetric: MetricKey) 
     failDelta: latest && previous ? (100 - latest.passRate) - (100 - previous.passRate) : 0,
     improvementDelta: first && latest ? first.avgError - latest.avgError : 0,
     clubDelta: activeClubs ? 1.23 : 0,
-    avgScore: average(rows.map((row) => row.score)),
-    avgError: average(rows.map((row) => row.avgError)),
+    avgScore,
+    avgError,
+    avgPass,
+    avgConsistency,
   };
+  const dna = [
+    { label: "Accuracy", value: avgScore, color: "#4f5cff" },
+    { label: "Consistency", value: avgConsistency, color: "#7adf8d" },
+    { label: "Pass rate", value: avgPass, color: "#20c875" },
+    { label: "Recovery", value: clamp(100 - avgError * 5, 0, 100), color: "#ffb84d" },
+  ];
 
   return {
+    allRows,
     rows,
     chartData,
     metricBreakdown,
@@ -364,8 +639,10 @@ function buildProgressDashboard(sessions: Session[], selectedMetric: MetricKey) 
     first,
     totals,
     forecast,
-    recentRows: rows.slice(-4).reverse(),
+    recentRows: rows.slice(-6).reverse(),
     panelChartData,
+    dna,
+    timeScope,
   };
 }
 
@@ -391,6 +668,7 @@ function buildSessionRow(session: Session, index: number) {
     initial: (session.version || session.label || "S").slice(0, 1).toUpperCase(),
     club: session.club,
     color: session.color ?? VERSION_COLORS[index % VERSION_COLORS.length],
+    createdAt: session.createdAt || new Date(`${session.date}T12:00:00`).getTime(),
     shortDate: formatDateShort(session.date),
     fullDate: formatDateFull(session.date),
     shots: session.shots.length,
@@ -484,10 +762,11 @@ function buildForecast(rows: ReturnType<typeof buildSessionRow>[], selectedMetri
   const sessionsToTarget = latestAbs <= PASS_THRESHOLD ? 0 : Math.ceil((latestAbs - PASS_THRESHOLD) / perSessionGain);
   const bias = latestMetric?.mean ?? 0;
   const direction = bias > 0 ? "lower" : bias < 0 ? "raise" : "hold";
+  const correctionAmount = Math.min(Math.max(latestAbs - PASS_THRESHOLD, 0), perSessionGain);
   const nextMove =
     latestAbs <= PASS_THRESHOLD
       ? "Protect the window"
-      : `${direction} ${METRIC_META[selectedMetric].label.toLowerCase()} by ${Math.min(latestAbs - PASS_THRESHOLD, perSessionGain).toFixed(1)}%`;
+      : `${direction} ${METRIC_META[selectedMetric].label.toLowerCase()} by ${correctionAmount.toFixed(1)}%`;
   const points = Array.from({ length: 5 }, (_, index) => {
     const projectedError = Math.max(0.25, latestAbs - perSessionGain * (index + 1));
     return {
@@ -500,6 +779,10 @@ function buildForecast(rows: ReturnType<typeof buildSessionRow>[], selectedMetri
   return {
     sessionsToTarget,
     title: sessionsToTarget === 0 ? "Target locked" : `${sessionsToTarget} sessions to target`,
+    coachCopy:
+      latestAbs <= PASS_THRESHOLD
+        ? `${METRIC_META[selectedMetric].label} is inside the target window. Keep the same pattern and protect consistency.`
+        : `The biggest gain is available by moving ${METRIC_META[selectedMetric].label.toLowerCase()} ${direction === "raise" ? "up" : direction === "lower" ? "down" : "steady"} by about ${correctionAmount.toFixed(1)}%.`,
     copy:
       latestAbs <= PASS_THRESHOLD
         ? `${METRIC_META[selectedMetric].label} is already inside the +/-1% window.`
@@ -511,12 +794,80 @@ function buildForecast(rows: ReturnType<typeof buildSessionRow>[], selectedMetri
   };
 }
 
-function getSpotlight(panelTab: PanelTab, dashboard: ReturnType<typeof buildProgressDashboard>) {
+function buildImpactPreview(
+  latest: ReturnType<typeof buildSessionRow> | null,
+  activeMetric: ReturnType<typeof buildMetricBreakdown>[number] | undefined,
+  impactPercent: number
+) {
+  const currentScore = latest?.score ?? 0;
+  const currentAbs = activeMetric?.mean == null ? 0 : Math.abs(activeMetric.mean);
+  const correctedAbs = Math.max(0, currentAbs * (1 - impactPercent / 100));
+  const scoreLift = clamp((currentAbs - correctedAbs) * 2.8, 0, 34);
+  const projectedScore = clamp(currentScore + scoreLift, 0, 100);
+
+  return {
+    currentAbs,
+    correctedAbs,
+    projectedScore,
+    scoreLift,
+  };
+}
+
+function buildMissionCards(
+  selectedSession: ReturnType<typeof buildSessionRow> | null,
+  activeMetric: ReturnType<typeof buildMetricBreakdown>[number] | undefined,
+  impact: ReturnType<typeof buildImpactPreview>,
+  actions: {
+    onBoost: () => void;
+    onForecast: () => void;
+    onSession: () => void;
+  }
+) {
+  return [
+    {
+      kicker: "Fix first",
+      title: activeMetric ? `${activeMetric.label} bias` : "Metric bias",
+      copy: activeMetric?.mean == null ? "Capture a matched session to unlock a correction target." : `Current read is ${formatSigned(activeMetric.mean)}%. Push it toward zero before changing the rest.`,
+      onClick: actions.onForecast,
+    },
+    {
+      kicker: "Session cue",
+      title: selectedSession?.club ?? "No club",
+      copy: selectedSession ? `${selectedSession.name} has ${selectedSession.shots} shots and a ${formatPercent(selectedSession.passRate)} pass rate.` : "Start a saved session and this card becomes a live mission.",
+      onClick: actions.onSession,
+    },
+    {
+      kicker: "Projected payoff",
+      title: `${formatDelta(impact.scoreLift)} lift`,
+      copy: `A focused correction can move the fit score to ${formatPercent(impact.projectedScore)}.`,
+      onClick: actions.onBoost,
+    },
+  ];
+}
+
+function filterRowsByScope(rows: ReturnType<typeof buildSessionRow>[], timeScope: TimeScope) {
+  if (timeScope === "year") {
+    const currentYear = new Date().getFullYear();
+    const scoped = rows.filter((row) => new Date(row.createdAt).getFullYear() === currentYear);
+    return scoped.length ? scoped : rows;
+  }
+
+  const latestTime = rows[rows.length - 1]?.createdAt ?? Date.now();
+  const cutoff = latestTime - 90 * 24 * 60 * 60 * 1000;
+  const scoped = rows.filter((row) => row.createdAt >= cutoff);
+  return scoped.length ? scoped : rows.slice(-4);
+}
+
+function getSpotlight(
+  panelTab: PanelTab,
+  dashboard: ReturnType<typeof buildProgressDashboard>,
+  selectedSession: ReturnType<typeof buildSessionRow> | null
+) {
   if (panelTab === "session") {
     return {
-      value: formatPercent(dashboard.latest?.score ?? 0),
-      copy: dashboard.latest
-        ? `${dashboard.latest.name} is ${formatDelta(dashboard.latest && dashboard.previous ? dashboard.latest.score - dashboard.previous.score : 0)} from the prior session.`
+      value: selectedSession ? formatPercent(selectedSession.score) : "0.0%",
+      copy: selectedSession
+        ? `${selectedSession.name} is ${selectedSession.status.toLowerCase()} with ${formatPercent(selectedSession.passRate)} pass rate.`
         : "No completed sessions yet.",
     };
   }
@@ -550,9 +901,9 @@ function getFocusMetric(metrics: Record<MetricKey, MetricStats | null>): MetricK
 function exportProgressCsv(rows: ReturnType<typeof buildSessionRow>[]) {
   const header = ["Session", "Club", "Date", "Score", "Consistency", "Pass Rate", "Avg Error", "Matched"];
   const body = rows.map((row) => [
-    row.name,
-    row.club,
-    row.fullDate,
+    csvCell(row.name),
+    csvCell(row.club),
+    csvCell(row.fullDate),
     row.score.toFixed(1),
     row.consistency.toFixed(1),
     row.passRate.toFixed(1),
@@ -562,7 +913,11 @@ function exportProgressCsv(rows: ReturnType<typeof buildSessionRow>[]) {
   downloadText("progress-export.csv", [header, ...body].map((line) => line.join(",")).join("\n"), "text/csv");
 }
 
-function downloadProgressReport(dashboard: ReturnType<typeof buildProgressDashboard>) {
+function downloadProgressReport(
+  dashboard: ReturnType<typeof buildProgressDashboard>,
+  benchmark: BenchmarkSnapshot | null,
+  impact: ReturnType<typeof buildImpactPreview>
+) {
   const lines = [
     "ProRange Progress Report",
     "",
@@ -571,6 +926,8 @@ function downloadProgressReport(dashboard: ReturnType<typeof buildProgressDashbo
     `Average error: ${dashboard.totals.avgError.toFixed(2)}%`,
     `Breakthrough forecast: ${dashboard.forecast.title}`,
     `Next move: ${dashboard.forecast.nextMove}`,
+    `What-if projected score: ${formatPercent(impact.projectedScore)} (${formatDelta(impact.scoreLift)} lift)`,
+    benchmark ? `Saved benchmark score: ${formatPercent(benchmark.score)}` : "Saved benchmark score: none",
     "",
     "Recent sessions:",
     ...dashboard.recentRows.map((row) => `${row.name} | ${row.club} | ${formatPercent(row.score)} | ${row.avgError.toFixed(2)}% avg error`),
@@ -586,6 +943,32 @@ function downloadText(filename: string, text: string, type: string) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function readBenchmark(): BenchmarkSnapshot | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(BENCHMARK_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as BenchmarkSnapshot;
+  } catch {
+    window.localStorage.removeItem(BENCHMARK_KEY);
+    return null;
+  }
+}
+
+function saveBenchmark(snapshot: BenchmarkSnapshot) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(BENCHMARK_KEY, JSON.stringify(snapshot));
+}
+
+function csvCell(value: string) {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function impactPercentCopy(impact: ReturnType<typeof buildImpactPreview>) {
+  return `Correcting the selected miss projects a ${formatDelta(impact.scoreLift)} fit-score lift.`;
 }
 
 function average(values: number[]) {

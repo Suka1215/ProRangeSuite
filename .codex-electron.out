@@ -599,3 +599,451 @@ Visit https://reactjs.org/link/error-boundaries to learn more about error bounda
 [renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
 [renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
 [renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] [2026-05-29T01:42:26.555Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633cab transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[SHOT] speed=19.3mph VLA=35.9° → TM match: speed=61.6mph VLA=31.1° err=4.8°
+[SHOT] speed=31.5mph VLA=30.9° → TM match: speed=61.3mph VLA=28.9° err=2.0°
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[SHOT] speed=47.1mph VLA=14° → TM match: speed=72.3mph VLA=20.4° err=-6.4°
+[SHOT] speed=36.5mph VLA=38.5° → TM match: speed=63.2mph VLA=33.9° err=4.6°
+[SHOT] speed=42.1mph VLA=20.3° → TM match: speed=62.7mph VLA=27.4° err=-7.1°
+[SHOT] speed=25.4mph VLA=48.2° → TM match: speed=63.2mph VLA=33.9° err=14.3°
+[SHOT] speed=35.1mph VLA=15.2° → TM match: speed=65.3mph VLA=25.3° err=-10.1°
+[SHOT] speed=30.7mph VLA=31.8° → TM match: speed=61.6mph VLA=31.1° err=0.7°
+[SHOT] speed=39.1mph VLA=24.5° → TM match: speed=61.3mph VLA=28.9° err=-4.4°
+[SHOT] speed=29.2mph VLA=48.5° → TM match: speed=63.2mph VLA=33.9° err=14.6°
+[SHOT] speed=27.8mph VLA=33.7° → TM match: speed=61.6mph VLA=31.1° err=2.6°
+[SHOT] speed=33.4mph VLA=28.4° → TM match: speed=61.3mph VLA=28.9° err=-0.5°
+[SHOT] speed=41.6mph VLA=11.9° → TM match: speed=72.3mph VLA=20.4° err=-8.5°
+[SHOT] speed=62.4mph VLA=35.1° → TM match: speed=63.2mph VLA=33.9° err=1.2°
+[SHOT] speed=60.4mph VLA=20.7° → TM match: speed=67.8mph VLA=23.8° err=-3.1°
+[SHOT] speed=82.2mph VLA=28.5° → TM match: speed=82.1mph VLA=28.6° err=-0.1°
+[SHOT] speed=45mph VLA=17.5° → TM match: speed=65.3mph VLA=25.3° err=-7.8°
+[SHOT] speed=47.1mph VLA=5.2° → TM match: speed=72.3mph VLA=20.4° err=-15.2°
+[SHOT] speed=79.3mph VLA=26.5° → TM match: speed=79.3mph VLA=26.4° err=0.1°
+[SHOT] speed=84.1mph VLA=27° → TM match: speed=83.9mph VLA=27° err=0.0°
+[SHOT] speed=83.1mph VLA=26° → TM match: speed=83mph VLA=26.2° err=-0.2°
+[SHOT] speed=79.5mph VLA=24.9° → TM match: speed=79.4mph VLA=24.9° err=0.0°
+[SHOT] speed=81.8mph VLA=22.9° → TM match: speed=82mph VLA=23° err=-0.1°
+[SHOT] speed=103.4mph VLA=25.2° → TM match: speed=103.6mph VLA=25.2° err=0.0°
+[SHOT] speed=87.7mph VLA=29.8° → TM match: speed=87.8mph VLA=29.6° err=0.2°
+[SHOT] speed=42.2mph VLA=35.9° → TM match: speed=63.2mph VLA=33.9° err=2.0°
+[SHOT] speed=71.1mph VLA=26.7° → TM match: speed=71.2mph VLA=26.6° err=0.1°
+[SHOT] speed=179.6mph VLA=29.2° → TM match: speed=174.4mph VLA=11.7° err=17.5°
+[SHOT] speed=44.1mph VLA=20° → TM match: speed=65.3mph VLA=25.3° err=-5.3°
+[SHOT] speed=109.1mph VLA=27.6° → TM match: speed=107.7mph VLA=26.7° err=0.9°
+[SHOT] speed=91.8mph VLA=14.8° → TM match: speed=91.4mph VLA=14.7° err=0.1°
+[SHOT] speed=147.7mph VLA=14.3° → TM match: speed=147.6mph VLA=13.3° err=1.0°
+[SHOT] speed=46.1mph VLA=22° → TM match: speed=62.7mph VLA=27.4° err=-5.4°
+[SHOT] speed=77.3mph VLA=31.5° → TM match: speed=76.7mph VLA=30.7° err=0.8°
+[SHOT] speed=35.5mph VLA=40.1° → TM match: speed=63.2mph VLA=33.9° err=6.2°
+[SHOT] speed=65.8mph VLA=16.6° → TM match: speed=72.3mph VLA=20.4° err=-3.8°
+[SHOT] speed=95.8mph VLA=32.4° → TM match: speed=98.1mph VLA=31.4° err=1.0°
+[SHOT] speed=52.1mph VLA=40.4° → TM match: speed=63.2mph VLA=33.9° err=6.5°
+[SHOT] speed=51.2mph VLA=28.8° → TM match: speed=61.3mph VLA=28.9° err=-0.1°
+[SHOT] speed=69.7mph VLA=25.1° → TM match: speed=69.6mph VLA=25.2° err=-0.1°
+[SHOT] speed=52.9mph VLA=12.4° → TM match: speed=72.3mph VLA=20.4° err=-8.0°
+[SHOT] speed=22.3mph VLA=29.8° → TM match: speed=61.3mph VLA=28.9° err=0.9°
+[SHOT] speed=75.2mph VLA=56.1° → TM match: speed=63.2mph VLA=33.9° err=22.2°
+[SHOT] speed=39.9mph VLA=36° → TM match: speed=63.2mph VLA=33.9° err=2.1°
+[SHOT] speed=33.8mph VLA=27.9° → TM match: speed=61.3mph VLA=28.9° err=-1.0°
+[SHOT] speed=58.7mph VLA=17.3° → TM match: speed=72.3mph VLA=20.4° err=-3.1°
+[SHOT] speed=74.1mph VLA=37.6° → TM match: speed=73.8mph VLA=31.5° err=6.1°
+[SHOT] speed=41.3mph VLA=23° → TM match: speed=62.7mph VLA=27.4° err=-4.4°
+[SHOT] speed=53.1mph VLA=4.3° → TM match: speed=82mph VLA=15.5° err=-11.2°
+[SHOT] speed=10.4mph VLA=35.1° → TM match: speed=61.6mph VLA=31.1° err=4.0°
+[SHOT] speed=19.1mph VLA=0.4° → TM match: speed=72.3mph VLA=20.4° err=-20.0°
+[SHOT] speed=123.3mph VLA=1.4° → TM match: speed=122.7mph VLA=6.7° err=-5.3°
+[SHOT] speed=66.1mph VLA=0.7° → TM match: speed=92mph VLA=9.7° err=-9.0°
+[SHOT] speed=16.2mph VLA=7.9° → TM match: speed=65.3mph VLA=25.3° err=-17.4°
+[SHOT] speed=17.8mph VLA=5.3° → TM match: speed=65.3mph VLA=25.3° err=-20.0°
+[SHOT] speed=20.6mph VLA=9.2° → TM match: speed=65.3mph VLA=25.3° err=-16.1°
+[SHOT] speed=75.9mph VLA=16.8° → TM match: speed=79.8mph VLA=17° err=-0.2°
+[SHOT] speed=128.6mph VLA=20° → TM match: speed=128mph VLA=20.3° err=-0.3°
+[SHOT] speed=57.6mph VLA=29.3° → TM match: speed=61.3mph VLA=28.9° err=0.4°
+[SHOT] speed=22.4mph VLA=17.2° → TM match: speed=62.7mph VLA=27.4° err=-10.2°
+[SHOT] speed=43.4mph VLA=32.3° → TM match: speed=61.6mph VLA=31.1° err=1.2°
+[SHOT] speed=26.8mph VLA=30.7° → TM match: speed=61.3mph VLA=28.9° err=1.8°
+[SHOT] speed=38.5mph VLA=47.1° → TM match: speed=63.2mph VLA=33.9° err=13.2°
+[SHOT] speed=37.7mph VLA=37° → TM match: speed=63.2mph VLA=33.9° err=3.1°
+[SHOT] speed=24.6mph VLA=33.5° → TM match: speed=61.6mph VLA=31.1° err=2.4°
+[SHOT] speed=35.5mph VLA=39.4° → TM match: speed=63.2mph VLA=33.9° err=5.5°
+[SHOT] speed=42.6mph VLA=5.9° → TM match: speed=72.3mph VLA=20.4° err=-14.5°
+[SHOT] speed=42.4mph VLA=38.6° → TM match: speed=63.2mph VLA=33.9° err=4.7°
+[SHOT] speed=22.4mph VLA=35.6° → TM match: speed=61.6mph VLA=31.1° err=4.5°
+[SHOT] speed=25.9mph VLA=27.5° → TM match: speed=61.3mph VLA=28.9° err=-1.4°
+[SHOT] speed=87.5mph VLA=29.3° → TM match: speed=87.7mph VLA=29.3° err=0.0°
+[SHOT] speed=20.3mph VLA=32.9° → TM match: speed=61.6mph VLA=31.1° err=1.8°
+[SHOT] speed=110.7mph VLA=29.3° → TM match: speed=106.3mph VLA=27.3° err=2.0°
+[SHOT] speed=21.7mph VLA=45.7° → TM match: speed=63.2mph VLA=33.9° err=11.8°
+[SHOT] speed=71.2mph VLA=34° → TM match: speed=72mph VLA=31.5° err=2.5°
+[SHOT] speed=50.9mph VLA=18.6° → TM match: speed=65.3mph VLA=25.3° err=-6.7°
+[SHOT] speed=113.5mph VLA=28.4° → TM match: speed=109.9mph VLA=25.8° err=2.6°
+[SHOT] speed=18.2mph VLA=39.7° → TM match: speed=63.2mph VLA=33.9° err=5.8°
+[SHOT] speed=48.6mph VLA=27.2° → TM match: speed=61.3mph VLA=28.9° err=-1.7°
+[SHOT] speed=36.2mph VLA=25.6° → TM match: speed=61.3mph VLA=28.9° err=-3.3°
+[SHOT] speed=67.2mph VLA=26° → TM match: speed=67.1mph VLA=25.9° err=0.1°
+[SHOT] speed=62.3mph VLA=25.2° → TM match: speed=65.3mph VLA=25.3° err=-0.1°
+[SHOT] speed=53.9mph VLA=20.6° → TM match: speed=65.3mph VLA=25.3° err=-4.7°
+[SHOT] speed=51.1mph VLA=22.4° → TM match: speed=62.7mph VLA=27.4° err=-5.0°
+[SHOT] speed=53.2mph VLA=26.9° → TM match: speed=61.3mph VLA=28.9° err=-2.0°
+[SHOT] speed=134.2mph VLA=28.3° → TM match: speed=128mph VLA=20.3° err=8.0°
+[SHOT] speed=107.8mph VLA=29.5° → TM match: speed=106.3mph VLA=27.3° err=2.2°
+[SHOT] speed=74.3mph VLA=14.9° → TM match: speed=79.8mph VLA=17° err=-2.1°
+[SHOT] speed=44.9mph VLA=26.6° → TM match: speed=61.3mph VLA=28.9° err=-2.3°
+[SHOT] speed=62.2mph VLA=26° → TM match: speed=62.7mph VLA=27.4° err=-1.4°
+[SHOT] speed=23.6mph VLA=24.9° → TM match: speed=61.3mph VLA=28.9° err=-4.0°
+[SHOT] speed=28.4mph VLA=33.1° → TM match: speed=61.6mph VLA=31.1° err=2.0°
+[SHOT] speed=51.4mph VLA=24.2° → TM match: speed=62.7mph VLA=27.4° err=-3.2°
+[SHOT] speed=42.3mph VLA=28.3° → TM match: speed=61.3mph VLA=28.9° err=-0.6°
+[SHOT] speed=49.3mph VLA=35.8° → TM match: speed=63.2mph VLA=33.9° err=1.9°
+[SHOT] speed=21.8mph VLA=30.1° → TM match: speed=61.3mph VLA=28.9° err=1.2°
+[SHOT] speed=54.8mph VLA=33° → TM match: speed=61.6mph VLA=31.1° err=1.9°
+[SHOT] speed=68.9mph VLA=17.1° → TM match: speed=72.3mph VLA=20.4° err=-3.3°
+[SHOT] speed=139.6mph VLA=33.9° → TM match: speed=128mph VLA=20.3° err=13.6°
+[SHOT] speed=23.3mph VLA=4.3° → TM match: speed=72.3mph VLA=20.4° err=-16.1°
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:130)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:130)
+[renderer:warn] [Auth] [object Object] (http://localhost:5173/src/auth/AuthProvider.tsx:133)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.closed call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7082)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] Cross-Origin-Opener-Policy policy would block the window.close call. (http://localhost:5173/node_modules/.vite/deps/firebase_auth.js?v=28d9f503:7548)
+[renderer:error] [2026-05-31T09:30:06.180Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d6e transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:30:12.653Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d6f transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:30:30.205Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d70 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:30:36.680Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d71 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:30:49.144Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d72 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:30:55.616Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d73 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:31:08.087Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d74 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:31:14.577Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d75 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:31:32.021Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d76 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:31:50.272Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d77 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:32:03.572Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d78 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:32:29.394Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d79 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:33:16.146Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d7a transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:33:51.732Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d7b transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:35:20.144Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d7c transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:23.310Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d7d transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:25.368Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d7e transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:25.372Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d7f transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:26.091Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d80 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:27.065Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d81 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:28.820Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d82 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:33.436Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d83 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:36:36.437Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d84 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:01.640Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d85 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:19.835Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d86 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:34.339Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d87 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:36.356Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d89 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:36.361Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d8a transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:37.342Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d8b transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:38.269Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d8c transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:40.322Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d8d transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:45.220Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d8e transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:50.591Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d8f transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:37:57.596Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d90 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:38:08.402Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d91 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:38:23.363Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d92 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:39:01.606Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d93 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:39:13.831Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d94 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:39:43.086Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d95 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:40:01.301Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d96 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:40:13.496Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d97 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:40:25.686Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d98 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:40:43.890Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d99 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:41:02.110Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d9a transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:41:14.272Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d9b transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:41:38.092Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d9c transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:42:01.274Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d9d transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:42:41.157Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d9e transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:43:41.393Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633d9f transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:44:42.305Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633da0 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:46:03.929Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633da1 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:47:02.787Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633da2 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-05-31T09:47:41.715Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633da3 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[SHOT] speed=140.6mph VLA=7.5° → TM match: speed=140.5mph VLA=7.5° err=0.0°
+[SHOT] speed=37.5mph VLA=8.1° → TM match: speed=72.3mph VLA=20.4° err=-12.3°
+[SHOT] speed=88.7mph VLA=22.6° → TM match: speed=88.4mph VLA=22.6° err=0.0°
+[SHOT] speed=66.7mph VLA=16.1° → TM match: speed=72.3mph VLA=20.4° err=-4.3°
+[SHOT] speed=83.1mph VLA=27° → TM match: speed=83.2mph VLA=26.9° err=0.1°
+[SHOT] speed=32.5mph VLA=23.6° → TM match: speed=61.3mph VLA=28.9° err=-5.3°
+[SHOT] speed=75.5mph VLA=18.5° → TM match: speed=76.2mph VLA=19.3° err=-0.8°
+[SHOT] speed=76mph VLA=14° → TM match: speed=82mph VLA=15.5° err=-1.5°
+[SHOT] speed=55mph VLA=31.7° → TM match: speed=61.6mph VLA=31.1° err=0.6°
+[SHOT] speed=48.2mph VLA=29.2° → TM match: speed=61.3mph VLA=28.9° err=0.3°
+[SHOT] speed=22.4mph VLA=27.9° → TM match: speed=61.3mph VLA=28.9° err=-1.0°
+[SHOT] speed=29.4mph VLA=20.6° → TM match: speed=61.3mph VLA=28.9° err=-8.3°
+[SHOT] speed=37.9mph VLA=12.1° → TM match: speed=67.8mph VLA=23.8° err=-11.7°
+[renderer:error] [2026-06-03T00:56:30.281Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633dab transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-03T02:08:36.418Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633dad transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T12:51:56.037Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633dd4 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[2m1:26:05 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m1:26:11 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m1:30:57 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:error] Warning: React has detected a change in the order of Hooks called by %s. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+%s   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%s App 1. useContext                 useContext
+2. useState                   useState
+3. useState                   useState
+4. useState                   useState
+5. useState                   useState
+6. useState                   useState
+7. useState                   useState
+8. useState                   useState
+9. useState                   useState
+10. useState                  useState
+11. useState                  useState
+12. useState                  useState
+13. useState                  useState
+14. useState                  useState
+15. useState                  useState
+16. useState                  useState
+17. useEffect                 useEffect
+18. useEffect                 useEffect
+19. useEffect                 useEffect
+20. useCallback               useCallback
+21. useState                  useState
+22. useCallback               useCallback
+23. useState                  useState
+24. useCallback               useCallback
+25. useCallback               useCallback
+26. useState                  useState
+27. useState                  useState
+28. useState                  useState
+29. useState                  useState
+30. useEffect                 useEffect
+31. useEffect                 useEffect
+32. useMemo                   useMemo
+33. useMemo                   useMemo
+34. useState                  useState
+35. useState                  useState
+36. useRef                    useRef
+37. useRef                    useRef
+38. useMemo                   useMemo
+39. useEffect                 useEffect
+40. useEffect                 useEffect
+41. useEffect                 useEffect
+42. useEffect                 useEffect
+43. useCallback               useCallback
+44. useCallback               useCallback
+45. useCallback               useCallback
+46. useCallback               useCallback
+47. useCallback               useCallback
+48. useMemo                   useCallback
+ 
+    at App (http://localhost:5173/src/App.tsx?t=1780597857870:120:28)
+    at AuthGate (http://localhost:5173/src/auth/AuthGate.tsx:120:28)
+    at AuthProvider (http://localhost:5173/src/auth/AuthProvider.tsx:116:32) (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:521)
+[renderer:error] Uncaught Error: Should have a queue. This is likely a bug in React. Please file an issue. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:11730)
+[renderer:error] Uncaught Error: Should have a queue. This is likely a bug in React. Please file an issue. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:11730)
+[renderer:error] The above error occurred in the <App> component:
+
+    at App (http://localhost:5173/src/App.tsx?t=1780597857870:120:28)
+    at AuthGate (http://localhost:5173/src/auth/AuthGate.tsx:120:28)
+    at AuthProvider (http://localhost:5173/src/auth/AuthProvider.tsx:116:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:14032)
+[renderer:error] Uncaught (in promise) Error: Should have a queue. This is likely a bug in React. Please file an issue. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:11730)
+[2m1:31:26 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m1:31:41 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ShotLogView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ShotLogView.tsx (http://localhost:5173/@vite/client:223)
+[2m1:32:20 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/shotiq.css (http://localhost:5173/@vite/client:223)
+[2m1:32:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m1:33:00 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m2:32:14 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[renderer:error] Uncaught ReferenceError: evaluateShotForTargetMap is not defined (http://localhost:5173/src/features/shot-iq/components/ShotIQDashboard.tsx?t=1780601534080:1031)
+[renderer:error] Uncaught ReferenceError: evaluateShotForTargetMap is not defined (http://localhost:5173/src/features/shot-iq/components/ShotIQDashboard.tsx?t=1780601534080:1031)
+[renderer:error] The above error occurred in the <ShotIQDashboard> component:
+
+    at ShotIQDashboard (http://localhost:5173/src/features/shot-iq/components/ShotIQDashboard.tsx?t=1780601534080:30:43)
+    at AccuracyView (http://localhost:5173/src/views/AccuracyView.tsx?t=1780597571106:18:40)
+    at Suspense
+    at div
+    at SecPage (http://localhost:5173/src/App.tsx?t=1780597980993:1849:3)
+    at div
+    at section
+    at div
+    at div
+    at div
+    at App (http://localhost:5173/src/App.tsx?t=1780597980993:120:28)
+    at AuthGate (http://localhost:5173/src/auth/AuthGate.tsx:120:28)
+    at AuthProvider (http://localhost:5173/src/auth/AuthProvider.tsx:116:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:14032)
+[renderer:error] Uncaught (in promise) ReferenceError: evaluateShotForTargetMap is not defined (http://localhost:5173/src/features/shot-iq/components/ShotIQDashboard.tsx?t=1780601534080:1031)
+[2m2:32:21 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m2:32:37 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m2:32:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m2:33:05 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[renderer:log] [vite] hot updated: /src/features/shot-iq/components/ShotIQDashboard.tsx (http://localhost:5173/@vite/client:223)
+[2m2:41:26 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[2m2:42:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:error] Uncaught ReferenceError: openTab is not defined (http://localhost:5173/src/App.tsx?t=1780602179587:1907)
+[renderer:error] Uncaught ReferenceError: openTab is not defined (http://localhost:5173/src/App.tsx?t=1780602179587:1907)
+[renderer:error] The above error occurred in the <SecPage> component:
+
+    at SecPage (http://localhost:5173/src/App.tsx?t=1780602179587:1849:3)
+    at div
+    at section
+    at div
+    at div
+    at div
+    at App (http://localhost:5173/src/App.tsx?t=1780602179587:120:28)
+    at AuthGate (http://localhost:5173/src/auth/AuthGate.tsx:120:28)
+    at AuthProvider (http://localhost:5173/src/auth/AuthProvider.tsx:116:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:14032)
+[renderer:error] Uncaught (in promise) ReferenceError: openTab is not defined (http://localhost:5173/src/App.tsx?t=1780602179587:1907)
+[2m2:43:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m2:44:11 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m2:44:24 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m2:44:39 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[renderer:log] [vite] hot updated: /src/styles.css (http://localhost:5173/@vite/client:223)
+[2m2:45:11 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[2m3:00:19 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
+[2m3:01:58 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
+[2m3:02:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
+[renderer:log] [vite] hot updated: /src/views/ProgressView.tsx (http://localhost:5173/@vite/client:223)
+[renderer:error] [2026-06-04T22:46:38.810Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e10 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:46:45.491Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e11 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:04.167Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e12 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:04.168Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e09 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:10.813Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e14 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:10.814Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e13 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:28.542Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e16 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:28.543Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e15 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:35.971Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e18 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:35.972Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e17 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:48.654Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e19 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:48.654Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e1a transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:55.304Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e1b transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:47:55.304Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e1c transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:01.962Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e1d transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:05.289Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e1e transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:14.619Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e1f transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:17.945Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e20 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:21.274Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e21 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:40.153Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e22 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:48:47.156Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e23 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:49:11.488Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e24 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:49:26.588Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Write' stream 0x35633e25 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[renderer:error] [2026-06-04T22:49:29.924Z]  @firebase/firestore: Firestore (12.11.0): WebChannelConnection RPC 'Listen' stream 0x35633e26 transport errored. Name: undefined Message: undefined (http://localhost:5173/node_modules/.vite/deps/chunk-TEJE2HUV.js?v=28d9f503:1083)
+[SHOT] speed=35.6mph VLA=26.5° → TM match: speed=61.3mph VLA=28.9° err=-2.4°
+[SHOT] speed=43.4mph VLA=36.6° → TM match: speed=63.2mph VLA=33.9° err=2.7°
+[SHOT] speed=39mph VLA=22.1° → TM match: speed=62.7mph VLA=27.4° err=-5.3°
+[SHOT] speed=89.5mph VLA=14.5° → TM match: speed=89.6mph VLA=14.6° err=-0.1°
+[SHOT] speed=82.9mph VLA=18.1° → TM match: speed=82.9mph VLA=18.2° err=-0.1°
+[SHOT] speed=40.9mph VLA=24.9° → TM match: speed=61.3mph VLA=28.9° err=-4.0°
+[SHOT] speed=37.8mph VLA=27.6° → TM match: speed=61.3mph VLA=28.9° err=-1.3°
+[SHOT] speed=37.9mph VLA=21.6° → TM match: speed=62.7mph VLA=27.4° err=-5.8°
+[SHOT] speed=36.2mph VLA=25.5° → TM match: speed=61.3mph VLA=28.9° err=-3.4°
+[SHOT] speed=42.1mph VLA=14.2° → TM match: speed=67.8mph VLA=23.8° err=-9.6°
+[SHOT] speed=45.6mph VLA=12.1° → TM match: speed=72.3mph VLA=20.4° err=-8.3°
+[SHOT] speed=45.7mph VLA=28.5° → TM match: speed=61.3mph VLA=28.9° err=-0.4°
+[SHOT] speed=105.3mph VLA=3.9° → TM match: speed=104.1mph VLA=7.4° err=-3.5°
+[SHOT] speed=64.1mph VLA=20.3° → TM match: speed=67.8mph VLA=23.8° err=-3.5°
+[SHOT] speed=124.6mph VLA=4.3° → TM match: speed=122.7mph VLA=6.7° err=-2.4°
+[SHOT] speed=97.7mph VLA=14.1° → TM match: speed=97.6mph VLA=14.1° err=0.0°
+[SHOT] speed=95mph VLA=12.5° → TM match: speed=95.1mph VLA=12.6° err=-0.1°
+[SHOT] speed=81.4mph VLA=7° → TM match: speed=92mph VLA=9.7° err=-2.7°
+[SHOT] speed=88.7mph VLA=18.4° → TM match: speed=89mph VLA=18.3° err=0.1°
+[SHOT] speed=104.6mph VLA=23.9° → TM match: speed=104.4mph VLA=23.9° err=0.0°
+[SHOT] speed=66.2mph VLA=18.9° → TM match: speed=72.3mph VLA=20.4° err=-1.5°
+[SHOT] speed=87.5mph VLA=20.7° → TM match: speed=87.4mph VLA=20.5° err=0.2°
+[SHOT] speed=98.6mph VLA=17.4° → TM match: speed=98.3mph VLA=17.5° err=-0.1°
+[SHOT] speed=189.6mph VLA=4.1° → TM match: speed=186.1mph VLA=5.3° err=-1.2°
+[SHOT] speed=32.6mph VLA=23.8° → TM match: speed=61.3mph VLA=28.9° err=-5.1°
+[SHOT] speed=131.9mph VLA=5.5° → TM match: speed=133.1mph VLA=6.4° err=-0.9°
+[SHOT] speed=95.1mph VLA=19.4° → TM match: speed=95.4mph VLA=19.5° err=-0.1°
+[SHOT] speed=93.1mph VLA=19.9° → TM match: speed=93.3mph VLA=19.9° err=0.0°
+[SHOT] speed=76.9mph VLA=27.8° → TM match: speed=76.9mph VLA=27.8° err=0.0°
+[SHOT] speed=74.1mph VLA=18.2° → TM match: speed=76.2mph VLA=19.3° err=-1.1°
+[SHOT] speed=135.8mph VLA=18.7° → TM match: speed=131.9mph VLA=17.6° err=1.1°
+[SHOT] speed=203.3mph VLA=17.6° → TM match: speed=188.8mph VLA=9.2° err=8.4°
+[SHOT] speed=115.7mph VLA=36.5° → TM match: speed=100.6mph VLA=30.8° err=5.7°
+[SHOT] speed=125.1mph VLA=35.6° → TM match: speed=109.9mph VLA=25.8° err=9.8°
+[2m2:33:26 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ShotLogView.tsx[22m
+[2m2:33:43 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ShotLogView.tsx[22m
+[2m2:33:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ShotLogView.tsx[22m
+[2m2:40:25 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m2:40:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m2:42:51 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m2:55:17 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m2:55:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m2:55:43 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m2:55:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m2:56:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m2:56:51 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m3:43:19 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m3:43:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m3:51:21 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m3:51:39 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m3:52:10 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m3:58:07 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m3:58:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m3:58:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m3:59:40 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m4:00:00 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m4:00:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m4:06:25 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m4:06:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m4:06:43 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/components/ShotIQDashboard.tsx[22m
+[2m4:06:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
+[2m4:17:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m4:19:12 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m4:20:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m4:20:55 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m8:06:05 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m8:06:24 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:08:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m8:08:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:08:55 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:17:28 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m8:17:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m8:17:58 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:19:34 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m8:20:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:21:07 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m
+[2m8:23:08 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CompareView.tsx[22m

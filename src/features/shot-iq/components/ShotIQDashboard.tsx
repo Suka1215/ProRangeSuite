@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { METRIC_META } from "../../../constants";
 import { calcSessionStats } from "../../../utils/stats";
 import type { MetricKey, Session, Shot } from "../../../types";
+import { recommendShotIqDrills, type DrillRecommendation } from "../drillLibrary";
 import {
   baselineGoodRadius,
   getClubBaseline,
@@ -77,11 +78,13 @@ interface TargetScatterData {
   biasLabel: string;
 }
 
-const FOCUS_METRICS: MetricKey[] = ["carry", "speed", "vla", "spin", "hla"];
+const FOCUS_METRICS: MetricKey[] = ["carry", "speed", "vla", "hla"];
+const SUMMARY_METRICS: MetricKey[] = ["carry", "speed", "vla", "spin", "hla"];
 const TARGET_SCATTER_LIMIT = 30;
 
 export default function ShotIQDashboard({ sessions, activeSessionId }: ShotIQDashboardProps) {
   const [focusMetric, setFocusMetric] = useState<MetricKey>("carry");
+  const [drillRecommendations, setDrillRecommendations] = useState<DrillRecommendation[] | null>(null);
   const sortedSessions = useMemo(
     () =>
       [...sessions].sort(
@@ -120,6 +123,14 @@ export default function ShotIQDashboard({ sessions, activeSessionId }: ShotIQDas
   const targetScatter = useMemo(() => buildTargetScatter(analysisShots), [analysisShots]);
   const focusRow = data.metricRows.find((row) => row.key === focusMetric) ?? data.metricRows[0];
   const selectedBaseline = getClubBaseline(targetScatter.targetClub || data.clubLabel);
+
+  useEffect(() => {
+    setDrillRecommendations(null);
+  }, [selectedSession?.id]);
+
+  function handleGenerateDrills() {
+    setDrillRecommendations(recommendShotIqDrills(targetScatter, analysisShots));
+  }
 
   return (
     <div className="shotiq-shell">
@@ -244,7 +255,6 @@ export default function ShotIQDashboard({ sessions, activeSessionId }: ShotIQDas
                 <span className="shotiq-mini-badge is-neutral">{formatRange(selectedBaseline.launchRange, "°")}</span>
                 <span className="shotiq-mini-badge is-neutral">HLA ±{selectedBaseline.hlaOkayMax.toFixed(1)}°</span>
               </div>
-              <span className="shotiq-floating-ai">{selectedBaseline.label}</span>
             </div>
           </div>
 
@@ -267,21 +277,6 @@ export default function ShotIQDashboard({ sessions, activeSessionId }: ShotIQDas
               <div className="shotiq-drift-caption">
                 <span>Session target</span>
                 <strong>{targetScatter.biasLabel}</strong>
-                <em>{targetScatter.bullseyeHits}/{targetScatter.targetLimit} hit the target · showing latest {targetScatter.evaluatedShotCount} shots</em>
-                <div className="shotiq-drift-legend">
-                  <span className="is-good">
-                    <i className="shotiq-drift-legend-dot is-good" />
-                    Good shot
-                  </span>
-                  <span className="is-okay">
-                    <i className="shotiq-drift-legend-dot is-okay" />
-                    Okay shot
-                  </span>
-                  <span className="is-bad">
-                    <i className="shotiq-drift-legend-dot is-bad" />
-                    Bad shot
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -294,18 +289,44 @@ export default function ShotIQDashboard({ sessions, activeSessionId }: ShotIQDas
             </div>
           </div>
 
-          <div className="shotiq-prompt-card">
-            <button className="shotiq-prompt-close" aria-label="Collapse insight">×</button>
+          <div className={`shotiq-prompt-card ${drillRecommendations?.length ? "is-drill-mode" : ""}`}>
             <div className="shotiq-prompt-head">
               <strong>ShotIQ Insight</strong>
               <span>{selectedSession ? selectedSession.version : "Session target"}</span>
             </div>
             <p>{data.prompt}</p>
             <div className="shotiq-prompt-subcopy">{data.focusNote}</div>
+            {drillRecommendations?.length ? (
+              <div className="shotiq-drill-stack">
+                <div className="shotiq-drill-stack-head">
+                  <span>Top drills</span>
+                  <strong>{drillRecommendations[0].pattern}</strong>
+                </div>
+                {drillRecommendations.map((drill, index) => (
+                  <article key={drill.id} className="shotiq-drill-card">
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <div>
+                      <strong>{drill.title}</strong>
+                      <p>{drill.why}</p>
+                      <em>{drill.cue}</em>
+                      <small>{drill.setup} / {drill.reps}</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : null}
             <div className="shotiq-prompt-footer">
               <span className={`shotiq-status-dot is-${data.trendTone}`} />
               <span>{data.previewMode ? "Waiting for a saved session" : "Session target active"}</span>
-              <button className="shotiq-prompt-send" aria-label="Send prompt">↗</button>
+              <button
+                className="shotiq-prompt-send is-drill"
+                aria-label="Generate recommended drills"
+                disabled={data.previewMode}
+                onClick={handleGenerateDrills}
+              >
+                <span>{drillRecommendations?.length ? "Refresh drills" : "Generate drills"}</span>
+                <strong>↗</strong>
+              </button>
             </div>
           </div>
         </main>
@@ -315,6 +336,20 @@ export default function ShotIQDashboard({ sessions, activeSessionId }: ShotIQDas
             <div className="shotiq-panel-head">
               <span>Session target</span>
               <strong>{targetScatter.bullseyeHits}/{targetScatter.targetLimit}</strong>
+            </div>
+            <div className="shotiq-panel-legend" aria-label="Shot color key">
+              <span className="is-good">
+                <i className="shotiq-drift-legend-dot is-good" />
+                Good
+              </span>
+              <span className="is-okay">
+                <i className="shotiq-drift-legend-dot is-okay" />
+                Okay
+              </span>
+              <span className="is-bad">
+                <i className="shotiq-drift-legend-dot is-bad" />
+                Bad
+              </span>
             </div>
             <div className="shotiq-target-metric-grid">
               <div className="shotiq-target-metric-card">
@@ -441,7 +476,6 @@ function ShotTargetScatter({ map, showPoints }: { map: TargetScatterData; showPo
 
 function buildTargetScatter(shots: Shot[]): TargetScatterData {
   const visibleShots = shots.slice(-TARGET_SCATTER_LIMIT);
-  const firstVisibleShotNumber = shots.length - visibleShots.length + 1;
   const profile = getClubTargetProfile(visibleShots[visibleShots.length - 1]?.club ?? "7-Iron");
   const centerX = 210;
   const centerY = 160;
@@ -449,21 +483,23 @@ function buildTargetScatter(shots: Shot[]): TargetScatterData {
   const spreadY = 88;
   const points = visibleShots.map((shot, index, list) => {
     const shotProfile = getClubTargetProfile(shot.club);
-    const evaluation = evaluateShotForClub(shot);
-    const normalizedX = clamp(shot.pr.hla / Math.max(shotProfile.hlaOkayMax * 1.15, 0.001), -1.15, 1.15);
-    const normalizedY = clamp((shot.pr.vla - shotProfile.launchCenter) / Math.max(shotProfile.launchOkayRadius * 1.15, 0.001), -1.15, 1.15);
+    const launchDelta = shot.pr.vla - shotProfile.launchCenter;
+    const lineDelta = shot.pr.hla;
+    const normalizedX = lineDelta / Math.max(shotProfile.hlaOkayMax * 1.15, 0.001);
+    const normalizedY = launchDelta / Math.max(shotProfile.launchOkayRadius * 1.15, 0.001);
+    const evaluation = evaluateShotForTargetMap(normalizedX, normalizedY);
 
-    const shotNumber = firstVisibleShotNumber + index;
+    const shotNumber = shot.shotNumber ?? shots.length - (shots.length - visibleShots.length + index);
 
     return {
       key: String(shot.id),
-      x: centerX + normalizedX * spreadX,
-      y: centerY - normalizedY * spreadY,
+      x: centerX + clamp(normalizedX, -1.15, 1.15) * spreadX,
+      y: centerY - clamp(normalizedY, -1.15, 1.15) * spreadY,
       latest: index === list.length - 1,
       grade: evaluation.grade,
       label: String(shotNumber),
       tooltipTitle: `Shot ${shotNumber} · ${shot.club} · ${evaluation.grade.toUpperCase()}`,
-      tooltipLines: formatShotTooltipLines(shot),
+      tooltipLines: formatShotTooltipLines(shot, launchDelta, lineDelta, evaluation.targetDistance),
     };
   });
 
@@ -505,6 +541,7 @@ function sessionToShots(session: Session): Shot[] {
   return session.shots.map((shot, index) => ({
     id: shot.id,
     club: session.club,
+    shotNumber: session.shots.length - index,
     timestamp: new Date(session.createdAt + index * 45000).toISOString(),
     pr: shot.pr,
     tm: shot.tm,
@@ -516,7 +553,7 @@ function buildDashboardData(shots: Shot[]): DashboardData {
   const effectiveShots = shots.slice(-30);
   const previewMode = !effectiveShots.length;
   const clubLabel = effectiveShots[effectiveShots.length - 1]?.club ?? "7-Iron";
-  const metricRows = FOCUS_METRICS.map((metric) => summarizeMetric(metric, effectiveShots));
+  const metricRows = SUMMARY_METRICS.map((metric) => summarizeMetric(metric, effectiveShots));
   const scoreWeights = getMetricWeights(clubLabel);
   const weightedScoreTotal = metricRows.reduce((sum, row) => sum + row.score * scoreWeights[row.key], 0);
   const weightTotal = metricRows.reduce((sum, row) => sum + scoreWeights[row.key], 0);
@@ -760,8 +797,11 @@ function formatSessionStamp(createdAt: number) {
   return `${day} · ${time}`;
 }
 
-function formatShotTooltipLines(shot: Shot) {
+function formatShotTooltipLines(shot: Shot, launchDelta: number, lineDelta: number, targetDistance: number) {
   return [
+    `Target: ${targetDistance.toFixed(2)} from center`,
+    `Launch miss: ${launchDelta > 0 ? "+" : ""}${launchDelta.toFixed(1)} deg`,
+    `Line miss: ${lineDelta > 0 ? "+" : ""}${lineDelta.toFixed(1)} deg`,
     `Speed: ${shot.pr.speed.toFixed(1)} mph`,
     `VLA: ${shot.pr.vla.toFixed(1)}°`,
     `HLA: ${shot.pr.hla.toFixed(1)}°`,
@@ -774,37 +814,18 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function evaluateShotForClub(shot: Shot) {
-  const target = getClubTargetProfile(shot.club);
-  const launchGood = Math.abs(shot.pr.vla - target.launchCenter) <= target.launchGoodRadius;
-  const launchOkay = Math.abs(shot.pr.vla - target.launchCenter) <= target.launchOkayRadius;
-  const lineGood = Math.abs(shot.pr.hla) <= target.hlaGoodMax;
-  const lineOkay = Math.abs(shot.pr.hla) <= target.hlaOkayMax;
+function evaluateShotForTargetMap(normalizedX: number, normalizedY: number) {
+  const targetDistance = Math.sqrt(normalizedX ** 2 + normalizedY ** 2);
 
-  if (target.scoring === "control") {
-    if (launchGood && lineGood) return { grade: "good" as ShotGrade };
-    if (launchOkay && lineOkay) return { grade: "okay" as ShotGrade };
-    return { grade: "bad" as ShotGrade };
+  if (targetDistance <= 0.45) {
+    return { grade: "good" as ShotGrade, targetDistance };
   }
 
-  const checks = [
-    Math.abs(shot.pr.carry - target.carryCenter) <= target.carryGoodRadius,
-    launchGood,
-    lineGood,
-    Math.abs(shot.pr.speed - target.speedCenter) <= target.speedGoodRadius,
-    Math.abs(shot.pr.spin - target.spinCenter) <= target.spinGoodRadius,
-  ];
-  const okayChecks = [
-    Math.abs(shot.pr.carry - target.carryCenter) <= target.carryOkayRadius,
-    launchOkay,
-    lineOkay,
-    Math.abs(shot.pr.speed - target.speedCenter) <= target.speedOkayRadius,
-    Math.abs(shot.pr.spin - target.spinCenter) <= target.spinOkayRadius,
-  ];
+  if (targetDistance <= 1) {
+    return { grade: "okay" as ShotGrade, targetDistance };
+  }
 
-  if (checks.every(Boolean)) return { grade: "good" as ShotGrade };
-  if (okayChecks.every(Boolean)) return { grade: "okay" as ShotGrade };
-  return { grade: "bad" as ShotGrade };
+  return { grade: "bad" as ShotGrade, targetDistance };
 }
 
 function getClubTargetProfile(club: string) {
