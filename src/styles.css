@@ -2037,6 +2037,7 @@ svg {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  min-width: 0;
 }
 
 .pr-side-column h2 {
@@ -2047,7 +2048,7 @@ svg {
 
 .pr-action-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 12px;
   align-content: start;
@@ -2056,7 +2057,7 @@ svg {
 .pr-action-tile {
   position: relative;
   min-height: 0;
-  padding: 12px 12px 14px;
+  padding: 12px 12px 13px;
   border-radius: 22px;
   border: 1px solid var(--pr-line);
   background: var(--pr-surface-strong);
@@ -2084,38 +2085,27 @@ svg {
   height: 18px;
 }
 
-.pr-action-ghost {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: rgba(24, 26, 32, 0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.4;
-}
-
-.pr-action-ghost svg {
-  width: 22px;
-  height: 22px;
-}
-
 .pr-action-tile h3 {
-  margin-top: 14px;
-  font-size: 16px;
-  line-height: 1.05;
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.08;
 }
 
 .pr-action-tile strong {
   display: inline-block;
-  margin-top: 8px;
+  margin-top: 7px;
   font-family: "Outfit", sans-serif;
-  font-size: 20px;
+  font-size: 19px;
   letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+.pr-action-tile p {
+  margin: 8px 0 0;
+  max-width: 16ch;
+  color: var(--pr-muted);
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 .pr-filter-pager {

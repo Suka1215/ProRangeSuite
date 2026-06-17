@@ -136,14 +136,24 @@ function normalizeShot(shot: Shot): Shot {
       ...pr,
       total: pr.total ?? pr.carry,
       clubSpeed: pr.clubSpeed,
+      clubHeadSpeedMph: pr.clubHeadSpeedMph,
       smashFactor: pr.smashFactor,
+      spinAxisDeg: pr.spinAxisDeg,
+      clubPathDeg: pr.clubPathDeg,
+      faceAngleDeg: pr.faceAngleDeg,
+      faceToPathDeg: pr.faceToPathDeg,
     },
     tm: shot.tm
       ? {
           ...shot.tm,
           total: shot.tm.total ?? shot.tm.carry,
           clubSpeed: shot.tm.clubSpeed,
+          clubHeadSpeedMph: shot.tm.clubHeadSpeedMph,
           smashFactor: shot.tm.smashFactor,
+          spinAxisDeg: shot.tm.spinAxisDeg,
+          clubPathDeg: shot.tm.clubPathDeg,
+          faceAngleDeg: shot.tm.faceAngleDeg,
+          faceToPathDeg: shot.tm.faceToPathDeg,
         }
       : null,
   };
@@ -685,10 +695,19 @@ function HomeView({
   const overviewSpin = latestShot?.pr.spin ?? average(recentSpin, 6820);
   const overviewCarry = latestShot?.pr.carry ?? average(recentCarry, 172);
   const overviewTotal = latestShot?.pr.total ?? average(recentTotal, overviewCarry);
-  const overviewClubSpeed = latestShot?.pr.clubSpeed ?? latestShot?.tm?.clubSpeed ?? null;
+  const overviewClubSpeed =
+    latestShot?.pr.clubSpeed
+    ?? latestShot?.tm?.clubSpeed
+    ?? latestShot?.pr.clubHeadSpeedMph
+    ?? latestShot?.tm?.clubHeadSpeedMph
+    ?? null;
   const overviewSmashFactor = latestShot?.pr.smashFactor
     ?? latestShot?.tm?.smashFactor
     ?? ((overviewClubSpeed && overviewClubSpeed > 0) ? overviewSpeed / overviewClubSpeed : null);
+  const overviewSpinAxis = latestShot?.pr.spinAxisDeg ?? latestShot?.tm?.spinAxisDeg ?? null;
+  const overviewClubPath = latestShot?.pr.clubPathDeg ?? latestShot?.tm?.clubPathDeg ?? null;
+  const overviewFaceAngle = latestShot?.pr.faceAngleDeg ?? latestShot?.tm?.faceAngleDeg ?? null;
+  const overviewFaceToPath = latestShot?.pr.faceToPathDeg ?? latestShot?.tm?.faceToPathDeg ?? null;
   const [heroAnimationProgress, setHeroAnimationProgress] = useState(1);
   const [isSpeedAnimating, setIsSpeedAnimating] = useState(false);
   const lastAnimatedEventId = useRef(shotEventId);
@@ -700,6 +719,10 @@ function HomeView({
   const animatedTotal = overviewTotal * heroAnimationProgress;
   const animatedClubSpeed = overviewClubSpeed != null ? overviewClubSpeed * heroAnimationProgress : null;
   const animatedSmashFactor = overviewSmashFactor;
+  const animatedSpinAxis = overviewSpinAxis != null ? overviewSpinAxis * heroAnimationProgress : null;
+  const animatedClubPath = overviewClubPath != null ? overviewClubPath * heroAnimationProgress : null;
+  const animatedFaceAngle = overviewFaceAngle != null ? overviewFaceAngle * heroAnimationProgress : null;
+  const animatedFaceToPath = overviewFaceToPath != null ? overviewFaceToPath * heroAnimationProgress : null;
   const activeSessionBucket = sessionBuckets.find((bucket) => bucket.id === activeSessionId && bucket.kind === "session") ?? null;
   const currentSessionClub = activeSessionBucket?.club ?? club;
   const flightTwinRawShots = activeSessionBucket?.shots ?? [];
@@ -1003,6 +1026,42 @@ function HomeView({
     },
     {
       index: "08",
+      title: "Spin Axis",
+      value: animatedSpinAxis != null ? `${formatSigned(animatedSpinAxis, "Â°")}` : "--",
+      subtitle: "deg spin axis",
+      accent: BRAND_INK,
+      icon: <IconSpinAxis />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "09",
+      title: "Club Path",
+      value: animatedClubPath != null ? `${formatSigned(animatedClubPath, "°")}` : "--",
+      subtitle: "deg club path",
+      accent: BRAND_INK,
+      icon: <IconClubPath />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "10",
+      title: "Face Angle",
+      value: animatedFaceAngle != null ? `${formatSigned(animatedFaceAngle, "°")}` : "--",
+      subtitle: "deg face angle",
+      accent: BRAND_GREEN,
+      icon: <IconFaceAngle />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "11",
+      title: "Face To Path",
+      value: animatedFaceToPath != null ? `${formatSigned(animatedFaceToPath, "°")}` : "--",
+      subtitle: "deg face to path",
+      accent: BRAND_INK,
+      icon: <IconFaceToPath />,
+      onClick: () => onOpenTab("shots"),
+    },
+    {
+      index: "12",
       title: "Smash",
       value: animatedSmashFactor != null ? `${animatedSmashFactor.toFixed(2)}` : "--",
       subtitle: "smash factor",
@@ -1102,11 +1161,11 @@ function HomeView({
 
           <div className="pr-side-column">
             <h2>Shot Overview</h2>
-            <p>Latest capture metrics from the active shot feed, staged as a clean eight-card summary.</p>
+            <p>Latest capture metrics from the active shot feed, staged as a clean twelve-card summary.</p>
 
             <div className="pr-action-grid">
               {actionTiles.map((tile) => (
-                <ActionTile key={tile.index} tile={tile} />
+                <ActionTile key={`${tile.index}-${tile.title}`} tile={tile} />
               ))}
             </div>
           </div>
@@ -1161,17 +1220,10 @@ function InsightCard({ card }: { card: InsightCardData }) {
 }
 
 function ActionTile({ tile }: { tile: ActionTileData }) {
-  const ghostIcon = React.isValidElement(tile.icon)
-    ? React.cloneElement(tile.icon as React.ReactElement)
-    : tile.icon;
-
   return (
     <button className="pr-action-tile" onClick={tile.onClick}>
       <span className="pr-action-icon" style={{ color: tile.accent }}>
         {tile.icon}
-      </span>
-      <span className="pr-action-ghost" style={{ color: tile.accent }} aria-hidden="true">
-        {ghostIcon}
       </span>
       <h3>{tile.title}</h3>
       <strong>{tile.value}</strong>
@@ -1896,6 +1948,47 @@ function IconClubSpeed({ className }: IconProps) {
       <path d="m10 10 2.6-3.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <circle cx="10" cy="10" r="1.2" fill="currentColor" />
       <path d="M13.8 4.8 16 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSpinAxis({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="5.1" stroke="currentColor" strokeWidth="1.5" opacity=".35" />
+      <path d="M7.1 12.9c1.2 1 3.2 1.3 4.9.6 1.6-.7 2.7-2.2 2.9-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="m12.7 6.2 2.4-.3-.5 2.2" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconClubPath({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.75 13.75c1.5-2.5 3.5-4.4 6.4-6" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" />
+      <path d="m10.5 7.75 3 .1-.9 2.8" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.25 6.75c1.15 0 2.1.26 3.05.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity=".5" />
+    </svg>
+  );
+}
+
+function IconFaceAngle({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.5 14.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity=".45" />
+      <path d="M7 13.2 13.8 6.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12.8 6.4h2.1v2.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconFaceToPath({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.5 13.5 9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".5" />
+      <path d="M9 9 15.5 12.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="9" cy="9" r="1.4" fill="currentColor" />
+      <path d="M13.1 11.5h2.4M14.3 10.3v2.4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }

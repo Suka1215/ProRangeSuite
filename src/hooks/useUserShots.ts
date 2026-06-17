@@ -7,6 +7,17 @@ import { findTMRef, loadTMIndex } from "../utils/tmMatcher";
 interface CloudBallData {
   Speed?: number;
   BallSpeed?: number;
+  ClubHeadSpeed?: number;
+  clubHeadSpeed?: number;
+  clubHeadSpeedMPH?: number;
+  SpinAxis?: number;
+  spinAxis?: number;
+  ClubPath?: number;
+  clubPath?: number;
+  FaceAngle?: number;
+  faceAngle?: number;
+  FaceToPath?: number;
+  faceToPath?: number;
   TotalSpin?: number;
   BackSpin?: number;
   HLA?: number;
@@ -52,6 +63,12 @@ interface CloudShotPayload {
     carry?: unknown;
     spin?: unknown;
     total?: unknown;
+    clubHeadSpeedMph?: unknown;
+    clubHeadSpeedMPH?: unknown;
+    spinAxisDeg?: unknown;
+    clubPathDeg?: unknown;
+    faceAngleDeg?: unknown;
+    faceToPathDeg?: unknown;
   };
   tm?: {
     speed?: unknown;
@@ -60,7 +77,20 @@ interface CloudShotPayload {
     carry?: unknown;
     spin?: unknown;
     total?: unknown;
+    clubHeadSpeedMph?: unknown;
+    clubHeadSpeedMPH?: unknown;
+    spinAxisDeg?: unknown;
+    clubPathDeg?: unknown;
+    faceAngleDeg?: unknown;
+    faceToPathDeg?: unknown;
   } | null;
+  clubHeadSpeedMPH?: unknown;
+  clubHeadSpeedMph?: unknown;
+  spinAxisDeg?: unknown;
+  spinAxis?: unknown;
+  clubPathDeg?: unknown;
+  faceAngleDeg?: unknown;
+  faceToPathDeg?: unknown;
 }
 
 interface CloudShotDoc {
@@ -229,7 +259,12 @@ function mapCloudShot(doc: CloudShotDoc, tmRows: Awaited<ReturnType<typeof loadT
           spin: asNumber(appTm.spin),
           total: asNumber(appTm.total, asNumber(appTm.carry)),
           clubSpeed: asOptionalNumber(appTm.clubSpeed),
+          clubHeadSpeedMph: asOptionalNumber(firstPresent(appTm.clubHeadSpeedMph, appTm.clubHeadSpeedMPH)),
           smashFactor: asOptionalNumber(appTm.smashFactor),
+          spinAxisDeg: asOptionalNumber(firstPresent(appTm.spinAxisDeg, appTm.spinAxis)),
+          clubPathDeg: asOptionalNumber(appTm.clubPathDeg),
+          faceAngleDeg: asOptionalNumber(appTm.faceAngleDeg),
+          faceToPathDeg: asOptionalNumber(appTm.faceToPathDeg),
         }
       : tmRows.length
         ? findTMRef(speed, vla, tmRows)
@@ -248,7 +283,12 @@ function mapCloudShot(doc: CloudShotDoc, tmRows: Awaited<ReturnType<typeof loadT
       spin,
       total,
       clubSpeed: asOptionalNumber(firstPresent(appPr.clubSpeed, payload.clubSpeed, payload.clubSpeedMPH, ball.ClubSpeed, ball.clubSpeed)),
+      clubHeadSpeedMph: asOptionalNumber(firstPresent(appPr.clubHeadSpeedMph, appPr.clubHeadSpeedMPH, data.clubHeadSpeedMPH, payload.clubHeadSpeedMph, payload.clubHeadSpeedMPH, ball.ClubHeadSpeed, ball.clubHeadSpeed, ball.clubHeadSpeedMPH)),
       smashFactor: asOptionalNumber(firstPresent(appPr.smashFactor, payload.smashFactor, ball.SmashFactor, ball.smashFactor)),
+      spinAxisDeg: asOptionalNumber(firstPresent(appPr.spinAxisDeg, data.spinAxisDeg, payload.spinAxisDeg, payload.spinAxis, ball.SpinAxis, ball.spinAxis)),
+      clubPathDeg: asOptionalNumber(firstPresent(appPr.clubPathDeg, data.clubPathDeg, payload.clubPathDeg, payload.clubPath, ball.ClubPath, ball.clubPath)),
+      faceAngleDeg: asOptionalNumber(firstPresent(appPr.faceAngleDeg, data.faceAngleDeg, payload.faceAngleDeg, payload.faceAngle, ball.FaceAngle, ball.faceAngle)),
+      faceToPathDeg: asOptionalNumber(firstPresent(appPr.faceToPathDeg, data.faceToPathDeg, payload.faceToPathDeg, payload.faceToPath, ball.FaceToPath, ball.faceToPath)),
     },
     tm,
     trackPts: asNullableNumber(firstPresent(

@@ -20,7 +20,12 @@ export interface MetricSet {
   spin: number;
   total?: number;
   clubSpeed?: number;
+  clubHeadSpeedMph?: number;
   smashFactor?: number;
+  spinAxisDeg?: number;
+  clubPathDeg?: number;
+  faceAngleDeg?: number;
+  faceToPathDeg?: number;
 }
 
 export interface TrajectoryPoint {

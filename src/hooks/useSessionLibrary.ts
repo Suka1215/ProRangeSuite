@@ -52,14 +52,24 @@ function normalizeShot(shot: Shot): Shot {
       ...pr,
       total: pr.total ?? pr.carry,
       clubSpeed: pr.clubSpeed,
+      clubHeadSpeedMph: pr.clubHeadSpeedMph,
       smashFactor: pr.smashFactor,
+      spinAxisDeg: pr.spinAxisDeg,
+      clubPathDeg: pr.clubPathDeg,
+      faceAngleDeg: pr.faceAngleDeg,
+      faceToPathDeg: pr.faceToPathDeg,
     },
     tm: shot.tm
       ? {
           ...shot.tm,
           total: shot.tm.total ?? shot.tm.carry,
           clubSpeed: shot.tm.clubSpeed,
+          clubHeadSpeedMph: shot.tm.clubHeadSpeedMph,
           smashFactor: shot.tm.smashFactor,
+          spinAxisDeg: shot.tm.spinAxisDeg,
+          clubPathDeg: shot.tm.clubPathDeg,
+          faceAngleDeg: shot.tm.faceAngleDeg,
+          faceToPathDeg: shot.tm.faceToPathDeg,
         }
       : null,
   };
@@ -129,7 +139,12 @@ function serializeFirestoreShot(shot: Shot) {
     spin: cleanNumber(normalizedShot.pr.spin),
     total: cleanNumber(normalizedShot.pr.total, cleanNumber(normalizedShot.pr.carry)),
     clubSpeed: cleanOptionalNumber(normalizedShot.pr.clubSpeed),
+    clubHeadSpeedMph: cleanOptionalNumber(normalizedShot.pr.clubHeadSpeedMph),
     smashFactor: cleanOptionalNumber(normalizedShot.pr.smashFactor),
+    spinAxisDeg: cleanOptionalNumber(normalizedShot.pr.spinAxisDeg),
+    clubPathDeg: cleanOptionalNumber(normalizedShot.pr.clubPathDeg),
+    faceAngleDeg: cleanOptionalNumber(normalizedShot.pr.faceAngleDeg),
+    faceToPathDeg: cleanOptionalNumber(normalizedShot.pr.faceToPathDeg),
   };
   const tm = normalizedShot.tm
     ? {
@@ -140,7 +155,12 @@ function serializeFirestoreShot(shot: Shot) {
         spin: cleanOptionalNumber(normalizedShot.tm.spin),
         total: cleanOptionalNumber(normalizedShot.tm.total),
         clubSpeed: cleanOptionalNumber(normalizedShot.tm.clubSpeed),
+        clubHeadSpeedMph: cleanOptionalNumber(normalizedShot.tm.clubHeadSpeedMph),
         smashFactor: cleanOptionalNumber(normalizedShot.tm.smashFactor),
+        spinAxisDeg: cleanOptionalNumber(normalizedShot.tm.spinAxisDeg),
+        clubPathDeg: cleanOptionalNumber(normalizedShot.tm.clubPathDeg),
+        faceAngleDeg: cleanOptionalNumber(normalizedShot.tm.faceAngleDeg),
+        faceToPathDeg: cleanOptionalNumber(normalizedShot.tm.faceToPathDeg),
       }
     : null;
 
@@ -173,6 +193,52 @@ async function deleteNamedSessionShotDocs(uid: string, bucketId: string, shotIds
       deleteDoc(doc(db, "users", uid, "dashboard-sessions", bucketId, "shots", encodeURIComponent(shotId)))
     )
   );
+}
+
+function candidateShotKeys(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") {
+    const normalized = String(value);
+    return normalized ? [normalized] : [];
+  }
+  return [];
+}
+
+function cloudShotDocKeys(data: Record<string, unknown>, docId: string) {
+  const metadata = data.metadata && typeof data.metadata === "object" ? data.metadata as Record<string, unknown> : {};
+  const legacyMetadata = data.Metadata && typeof data.Metadata === "object" ? data.Metadata as Record<string, unknown> : {};
+  return new Set([
+    ...candidateShotKeys(docId),
+    ...candidateShotKeys(data.id),
+    ...candidateShotKeys(data.shotID),
+    ...candidateShotKeys(data.shotId),
+    ...candidateShotKeys(metadata.shotID),
+    ...candidateShotKeys(metadata.shotId),
+    ...candidateShotKeys(metadata.ShotID),
+    ...candidateShotKeys(legacyMetadata.shotID),
+    ...candidateShotKeys(legacyMetadata.shotId),
+    ...candidateShotKeys(legacyMetadata.ShotID),
+  ]);
+}
+
+async function deleteUserShotDocs(uid: string, shotIds: string[]) {
+  if (!shotIds.length) return;
+  const matchIds = new Set(shotIds.map(String).filter(Boolean));
+  if (!matchIds.size) return;
+
+  const shotsCollection = collection(db, "users", uid, "shots");
+  const snapshot = await getDocs(shotsCollection);
+  if (snapshot.empty) return;
+
+  const docsToDelete = snapshot.docs.filter((snapshotDoc) => {
+    const keys = cloudShotDocKeys(snapshotDoc.data() as Record<string, unknown>, snapshotDoc.id);
+    for (const key of keys) {
+      if (matchIds.has(key)) return true;
+    }
+    return false;
+  });
+
+  if (!docsToDelete.length) return;
+  await Promise.all(docsToDelete.map((snapshotDoc) => deleteDoc(snapshotDoc.ref)));
 }
 
 function sessionUpdatedAt(bucket: Partial<SessionLibraryBucket>) {
@@ -466,6 +532,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
 
   const clearBucketShots = useCallback(async (bucketId: string) => {
     let bucketToSync: SessionLibraryBucket | null = null;
+    let deletedShotIds: string[] = [];
 
     setState((current) => {
       const nextBuckets = normalizeBuckets(current.buckets, activeClub, current.activeSessionId);
@@ -473,6 +540,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       if (targetIndex < 0) return current;
 
       const targetBucket = nextBuckets[targetIndex];
+      deletedShotIds = targetBucket.shots.map((shot) => String(shot.id)).filter(Boolean);
       const clearedBucket: SessionLibraryBucket = {
         ...targetBucket,
         shotCount: 0,
@@ -489,10 +557,16 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       };
     });
 
-    if (uid && bucketToSync) {
+    if (uid && deletedShotIds.length) {
       try {
-        await deleteSessionShotDocs(uid, bucketId);
-        await setDoc(doc(db, "users", uid, "dashboard-sessions", bucketId), serializeBucket(bucketToSync));
+        const writes: Promise<unknown>[] = [deleteUserShotDocs(uid, deletedShotIds)];
+        if (bucketToSync) {
+          writes.push(deleteSessionShotDocs(uid, bucketId));
+        }
+        await Promise.all(writes);
+        if (bucketToSync) {
+          await setDoc(doc(db, "users", uid, "dashboard-sessions", bucketId), serializeBucket(bucketToSync));
+        }
       } catch (writeError) {
         console.error("[SessionLibrary] Failed to clear dashboard session shots in Firestore:", writeError);
         setError("We couldn't clear the shots from that session.");
@@ -536,10 +610,16 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       };
     });
 
-    if (uid && bucketToSync) {
+    if (uid && deletedSessionShotIds.length) {
       try {
-        await deleteNamedSessionShotDocs(uid, bucketId, deletedSessionShotIds);
-        await setDoc(doc(db, "users", uid, "dashboard-sessions", bucketId), serializeBucket(bucketToSync));
+        const writes: Promise<unknown>[] = [deleteUserShotDocs(uid, deletedSessionShotIds)];
+        if (bucketToSync) {
+          writes.push(deleteNamedSessionShotDocs(uid, bucketId, deletedSessionShotIds));
+        }
+        await Promise.all(writes);
+        if (bucketToSync) {
+          await setDoc(doc(db, "users", uid, "dashboard-sessions", bucketId), serializeBucket(bucketToSync));
+        }
       } catch (writeError) {
         console.error("[SessionLibrary] Failed to delete selected dashboard session shots in Firestore:", writeError);
         setError("We couldn't delete the selected shots from that session.");
@@ -548,6 +628,9 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
   }, [activeClub, uid]);
 
   const deleteBucket = useCallback(async (bucketId: string) => {
+    const existingBucket = normalizeBuckets(state.buckets, activeClub, activeSessionIdRef.current).find((bucket) => bucket.id === bucketId) ?? null;
+    const deletedShotIds = existingBucket?.shots.map((shot) => String(shot.id)).filter(Boolean) ?? [];
+
     if (bucketId !== MISC_BUCKET_ID && activeSessionIdRef.current === bucketId) {
       activeSessionIdRef.current = null;
     }
@@ -575,16 +658,23 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       };
     });
 
-    if (uid && bucketId !== MISC_BUCKET_ID) {
+    if (uid) {
       try {
-        await deleteSessionShotDocs(uid, bucketId);
-        await deleteDoc(doc(db, "users", uid, "dashboard-sessions", bucketId));
+        const writes: Promise<unknown>[] = [];
+        if (deletedShotIds.length) {
+          writes.push(deleteUserShotDocs(uid, deletedShotIds));
+        }
+        if (bucketId !== MISC_BUCKET_ID) {
+          writes.push(deleteSessionShotDocs(uid, bucketId));
+          writes.push(deleteDoc(doc(db, "users", uid, "dashboard-sessions", bucketId)));
+        }
+        await Promise.all(writes);
       } catch (deleteError) {
         console.error("[SessionLibrary] Failed to delete dashboard session from Firestore:", deleteError);
         setError("We couldn't delete that dashboard session.");
       }
     }
-  }, [activeClub, uid]);
+  }, [activeClub, state.buckets, uid]);
 
   const recordShot = useCallback((shot: Shot) => {
     const normalizedShot = normalizeShot(shot);

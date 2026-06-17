@@ -22,6 +22,7 @@ export function generateSyntheticShot(club: string = "7-Iron", addNoise = true):
   const vla   = Math.max(1,  randn(tm_s.vla[0],   tm_s.vla[1]));
   const hla   = randn(tm_s.hla[0], tm_s.hla[1]);
   const spin  = Math.max(500, randn(tm_s.spin[0],  tm_s.spin[1]));
+  const spinAxis = randn(hla * -0.45, 1.8);
   const smashFactor = speed / clubSpeed;
 
   // Carry: no carry column in TM data — estimate with loft-adjusted factor
@@ -54,7 +55,9 @@ export function generateSyntheticShot(club: string = "7-Iron", addNoise = true):
       spin:  +(spin  + noise.spin ).toFixed(0),
       total: +(trueTotal + noise.carry).toFixed(0),
       clubSpeed: +clubSpeed.toFixed(1),
+      clubHeadSpeedMph: +clubSpeed.toFixed(1),
       smashFactor: +smashFactor.toFixed(2),
+      spinAxisDeg: +spinAxis.toFixed(1),
     },
     tm: {
       speed: +speed.toFixed(1),
@@ -64,7 +67,9 @@ export function generateSyntheticShot(club: string = "7-Iron", addNoise = true):
       spin:  +spin.toFixed(0),
       total: +trueTotal.toFixed(0),
       clubSpeed: +clubSpeed.toFixed(1),
+      clubHeadSpeedMph: +clubSpeed.toFixed(1),
       smashFactor: +smashFactor.toFixed(2),
+      spinAxisDeg: +spinAxis.toFixed(1),
     },
     trackPts:  Math.floor(rand(10, 16)),
     trajectory: simulateFlight(speed + noise.speed, degreesToRadians(vla + noise.vla), spin + noise.spin),
@@ -117,6 +122,7 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
     const launchAngle  = parseFloat(vals[col["Launch Angle"]]);
     const launchDir    = parseFloat(vals[col["Launch Direction"]]);
     const spinRate     = parseFloat(vals[col["Spin Rate"]]);
+    const spinAxis     = col["Spin Axis"] !== undefined ? parseFloat(vals[col["Spin Axis"]]) : Number.NaN;
 
     if ([ballSpeed, launchAngle, spinRate].some(isNaN)) { skipped++; return; }
 
@@ -131,7 +137,7 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
       timestamp: `TM #${i + 1}`,
       capturedAt: Date.now() + i,
       source:    "trackman-import",
-      pr:        { speed:0, vla:0, hla:0, carry:0, spin:0, clubSpeed: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1), smashFactor: isNaN(smashFactor) ? undefined : +smashFactor.toFixed(2) }, // no ProRange data yet
+      pr:        { speed:0, vla:0, hla:0, carry:0, spin:0, clubSpeed: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1), clubHeadSpeedMph: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1), smashFactor: isNaN(smashFactor) ? undefined : +smashFactor.toFixed(2), spinAxisDeg: isNaN(spinAxis) ? undefined : +spinAxis.toFixed(1) }, // no ProRange data yet
       tm: {
         speed: +ballSpeed.toFixed(1),
         vla:   +launchAngle.toFixed(1),
@@ -140,7 +146,9 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
         spin:  +spinRate.toFixed(0),
         total: carry,
         clubSpeed: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1),
+        clubHeadSpeedMph: isNaN(clubSpeed) ? undefined : +clubSpeed.toFixed(1),
         smashFactor: isNaN(smashFactor) ? undefined : +smashFactor.toFixed(2),
+        spinAxisDeg: isNaN(spinAxis) ? undefined : +spinAxis.toFixed(1),
       },
       trackPts: 0,
     } as unknown as Shot);
@@ -152,12 +160,12 @@ export function importTrackManCSV(text: string, filterClub?: string): TMImportRe
 // ─── CSV EXPORTER ─────────────────────────────────────────────────────────────
 
 export function exportShotsToCSV(shots: Shot[]): void {
-  const header = "shot,club,timestamp,pr_speed,pr_vla,pr_hla,pr_carry,pr_total,pr_spin,tm_speed,tm_vla,tm_hla,tm_carry,tm_total,tm_spin";
+  const header = "shot,club,timestamp,pr_speed,pr_vla,pr_hla,pr_carry,pr_total,pr_spin,pr_spin_axis,tm_speed,tm_vla,tm_hla,tm_carry,tm_total,tm_spin,tm_spin_axis";
   const rows = shots.map((s, i) =>
     [
       i + 1, s.club, s.timestamp,
-      s.pr.speed, s.pr.vla, s.pr.hla, s.pr.carry, s.pr.total ?? s.pr.carry, s.pr.spin,
-      s.tm?.speed ?? "", s.tm?.vla ?? "", s.tm?.hla ?? "", s.tm?.carry ?? "", s.tm?.total ?? s.tm?.carry ?? "", s.tm?.spin ?? "",
+      s.pr.speed, s.pr.vla, s.pr.hla, s.pr.carry, s.pr.total ?? s.pr.carry, s.pr.spin, s.pr.spinAxisDeg ?? "",
+      s.tm?.speed ?? "", s.tm?.vla ?? "", s.tm?.hla ?? "", s.tm?.carry ?? "", s.tm?.total ?? s.tm?.carry ?? "", s.tm?.spin ?? "", s.tm?.spinAxisDeg ?? "",
     ].join(",")
   );
   downloadCSV([header, ...rows].join("\n"), `prorange-shots-${Date.now()}.csv`);
@@ -199,6 +207,7 @@ export function makeSeedSessions(): Session[] {
         const tmVla   = Math.max(10, randn(tm7.vla[0],   tm7.vla[1]));
         const tmHla   = randn(0, 1.5);
         const tmSpin  = Math.max(3000, randn(tm7.spin[0], tm7.spin[1]));
+        const tmSpinAxis = randn(tmHla * -0.45, 1.8);
         const carryF  = 1.55 + (tmVla / 40) * 0.35;
         const tmCarry = tmSpeed * carryF;
 
@@ -211,6 +220,7 @@ export function makeSeedSessions(): Session[] {
             hla:   +(tmHla + randn(0, 0.4)).toFixed(1),
             carry: +(tmCarry + randn(0, 5)).toFixed(0),
             spin:  +(tmSpin  + randn(0, 200)).toFixed(0),
+            spinAxisDeg: +(tmSpinAxis + randn(0, 0.7)).toFixed(1),
           },
           tm: {
             speed: +tmSpeed.toFixed(1),
@@ -218,6 +228,7 @@ export function makeSeedSessions(): Session[] {
             hla:   +tmHla.toFixed(1),
             carry: +tmCarry.toFixed(0),
             spin:  +tmSpin.toFixed(0),
+            spinAxisDeg: +tmSpinAxis.toFixed(1),
           },
           trackPts: 10 + Math.floor(Math.random() * 6),
         };

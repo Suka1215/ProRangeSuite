@@ -1141,6 +1141,7 @@ export async function startBridgeServer(options = {}) {
         const prVla = +(ball.VLA ?? 0).toFixed(1);
         const prHla = +(ball.HLA ?? 0).toFixed(1);
         const prSpin = +(ball.TotalSpin ?? ball.BackSpin ?? 0).toFixed(0);
+        const prSpinAxis = +(ball.SpinAxis ?? 0).toFixed(1);
         const prCarry = +(ball.CarryDistance ?? estimateCarry(prSpeed, prVla)).toFixed(0);
 
         if (prSpeed === 0 && prVla === 0) {
@@ -1158,7 +1159,7 @@ export async function startBridgeServer(options = {}) {
           timestamp: new Date().toLocaleTimeString(),
           capturedAt,
           source: "live",
-          pr: { speed: prSpeed, vla: prVla, hla: prHla, carry: prCarry, spin: prSpin },
+          pr: { speed: prSpeed, vla: prVla, hla: prHla, carry: prCarry, spin: prSpin, spinAxisDeg: prSpinAxis },
           tm: tmRef ? { speed: tmRef.speed, vla: tmRef.vla, hla: tmRef.hla, carry: tmRef.carry, spin: tmRef.spin } : null,
           trackPts: gspro.TrackPointsCount ?? (Array.isArray(gspro.TrackPoints) ? gspro.TrackPoints.length : null),
           trajectory: buildTrajectory(gspro.TrackPoints, prSpeed, prVla),
