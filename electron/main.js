@@ -1,9 +1,12 @@
 import { app, BrowserWindow, dialog } from "electron";
+import electronUpdater from "electron-updater";
+import log from "electron-log";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DEFAULT_HTTP_PORT, startBridgeServer } from "../server.js";
 
+const { autoUpdater } = electronUpdater;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const LOOPBACK_HOST = "localhost";
@@ -16,6 +19,26 @@ const BRIDGE_PORT_CANDIDATES = [
 let bridge = null;
 let mainWindow = null;
 let quitting = false;
+let installingUpdate = false;
+
+function resolveUpdateConfig() {
+  const configPath = path.join(rootDir, "electron", "update-config.json");
+
+  try {
+    const raw = fs.readFileSync(configPath, "utf8");
+    const parsed = JSON.parse(raw);
+    const url = typeof parsed?.url === "string" ? parsed.url.trim() : "";
+    if (!url) return null;
+
+    return {
+      provider: parsed?.provider === "generic" ? "generic" : "generic",
+      url,
+    };
+  } catch (error) {
+    console.warn("[updater] Failed to read update-config.json:", error);
+    return null;
+  }
+}
 
 function resolveBundledGsproScript() {
   const candidates = [
@@ -145,9 +168,84 @@ async function stopBridge() {
   await currentBridge.stop();
 }
 
+function registerAutoUpdates() {
+  if (!app.isPackaged) {
+    console.log("[updater] Skipping auto-update checks in development.");
+    return;
+  }
+
+  const updateConfig = resolveUpdateConfig();
+  if (!updateConfig) {
+    console.log("[updater] Auto-updates disabled: electron/update-config.json is missing a URL.");
+    return;
+  }
+
+  autoUpdater.logger = log;
+  log.transports.file.level = "info";
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.setFeedURL(updateConfig);
+
+  autoUpdater.on("checking-for-update", () => {
+    log.info("[updater] Checking for updates.");
+  });
+
+  autoUpdater.on("update-available", (info) => {
+    log.info("[updater] Update available:", info.version);
+  });
+
+  autoUpdater.on("update-not-available", () => {
+    log.info("[updater] No update available.");
+  });
+
+  autoUpdater.on("error", (error) => {
+    log.error("[updater] Update failed:", error);
+  });
+
+  autoUpdater.on("update-downloaded", async (info) => {
+    log.info("[updater] Update downloaded:", info.version);
+
+    if (!mainWindow) {
+      installingUpdate = true;
+      await stopBridge().catch((error) => {
+        log.error("[updater] Failed to stop bridge before install:", error);
+      });
+      autoUpdater.quitAndInstall();
+      return;
+    }
+
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      buttons: ["Restart and install", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      title: "Update ready",
+      message: `Version ${info.version} has been downloaded.`,
+      detail: "Restart Spivot Desktop now to install the update, or keep working and install it on your next launch.",
+    });
+
+    if (response !== 0) return;
+
+    installingUpdate = true;
+    try {
+      await stopBridge();
+    } catch (error) {
+      log.error("[updater] Failed to stop bridge before install:", error);
+    }
+    autoUpdater.quitAndInstall();
+  });
+
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch((error) => {
+      log.error("[updater] Failed to check for updates:", error);
+    });
+  }, 10_000);
+}
+
 app.whenReady().then(async () => {
   try {
     await createMainWindow();
+    registerAutoUpdates();
 
     app.on("activate", async () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -168,6 +266,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", (event) => {
+  if (installingUpdate) return;
   if (quitting) return;
   quitting = true;
   event.preventDefault();

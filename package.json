@@ -1,7 +1,7 @@
 {
   "name": "spivot-suite",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Electron desktop wrapper for the Spivot desktop suite.",
   "author": "Spivot",
   "main": "electron/main.js",
@@ -24,6 +24,8 @@
     "desktop:dist:win": "npm run build && electron-builder --win nsis zip"
   },
   "dependencies": {
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.9",
     "firebase": "^12.11.0",
     "qrcode": "^1.5.4",
     "react": "^18.2.0",

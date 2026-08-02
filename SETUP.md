@@ -1,6 +1,6 @@
-# ProRange Live Setup Guide
+# Spivot Desktop Setup Guide
 
-Connect your iPhone ProRange app to the browser test suite over WiFi.
+Connect your iPhone Spivot app to the browser test suite over WiFi.
 Every shot you hit updates the dashboard in real time.
 
 ---
@@ -8,7 +8,7 @@ Every shot you hit updates the dashboard in real time.
 ## How It Works
 
 ```
-iPhone (ProRange app)
+iPhone (Spivot app)
         │
         │  HTTP POST /shot  (GSPro protocol, port 9210)
         │  same WiFi network
@@ -34,7 +34,7 @@ node --version   # needs v18+
 
 ### 2. Install dependencies
 ```bash
-cd prorange-test-suite   # the folder you unzipped
+cd spivot-suite   # the folder you unzipped
 npm install
 ```
 
@@ -55,7 +55,7 @@ npm run server
 You'll see something like:
 ```
 ╔═══════════════════════════════════════════════════════╗
-║         ProRange Live Bridge Server — RUNNING         ║
+║          Spivot Bridge Server — RUNNING               ║
 ╠═══════════════════════════════════════════════════════╣
 ║  Browser:  http://localhost:3000                      ║
 ║  LAN:      http://192.168.1.42:3000                   ║
@@ -68,8 +68,8 @@ You'll see something like:
 ### Step 2 — Open the dashboard
 Go to **http://localhost:3000** in your browser.
 
-### Step 3 — Configure ProRange on your iPhone
-In the ProRange iOS app settings:
+### Step 3 — Configure Spivot on your iPhone
+In the Spivot iOS app settings:
 - **GSPro IP Address** → your Mac's IP shown in the terminal (e.g. `192.168.1.42`)
 - **GSPro Port** → `9210`
 - Make sure your iPhone and Mac are on the **same WiFi network**
@@ -139,6 +139,41 @@ npm run desktop:dist:win
 This produces an NSIS installer `.exe` and a `.zip` in `release/`.
 For the smoothest Windows result, run this command on a Windows machine.
 
+### Enable in-app desktop updates
+
+This repo is now wired for Electron auto-updates, but it is intentionally disabled until you add a real update feed URL.
+
+1. Use the live HTTPS desktop release folder at `https://spinfactor-a7e07.web.app/downloads`.
+2. Keep that same URL in [electron/update-config.json](/Users/jmmiller/Projects/spivot-suite/electron/update-config.json:1).
+3. Build signed release artifacts with:
+
+```bash
+npm run desktop:dist:mac
+npm run desktop:dist:win
+```
+
+4. Upload the generated metadata and installers from `release/` to that HTTPS folder.
+
+Windows needs:
+- `latest.yml`
+- the NSIS installer `.exe`
+- the installer `.blockmap`
+
+macOS needs:
+- `latest-mac.yml`
+- the `.zip`
+- the `.zip.blockmap`
+
+You can still upload the `.dmg` for first-time installs, but the updater uses the `.zip` metadata path for installed macOS apps.
+
+Important notes:
+- macOS auto-updates require a signed app.
+- Windows auto-updates work best with a signed NSIS installer.
+- The app checks for updates about 10 seconds after launch.
+- When an update finishes downloading, the app prompts the user to restart and install it.
+
+If you want to test the updater before pointing at production, publish a test build to a separate folder like `https://spinfactor-a7e07.web.app/downloads-beta` and temporarily use that URL in `electron/update-config.json`.
+
 ### Smoke-test the packaged app layout without making an installer
 ```bash
 npm run desktop:pack
@@ -168,11 +203,11 @@ If you want one-click GSPro setup in the downloadable app, bundle `gspro_bridge.
 
 ## Shot Data Format
 
-ProRange sends standard GSPro JSON — the bridge translates it:
+Spivot sends standard GSPro JSON — the bridge translates it:
 
 ```json
 {
-  "DeviceID": "ProRange",
+  "DeviceID": "Spivot",
   "Units": "Yards",
   "ShotNumber": 42,
   "Club": "7Iron",
