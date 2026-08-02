@@ -7,16 +7,17 @@
 > vite --host localhost
 
 
-  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m212[22m[2m[0m ms[22m
+  VITE v5.4.21  ready in 763 ms
 
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
-[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+  ➜  Local:   http://localhost:5173/
+  ➜  press h + enter to show help
 
 [TM-DB] Loaded 10000 shots from CSV (matching by speed+VLA)
 [renderer:log] [vite] connecting... (http://localhost:5173/@vite/client:495)
 [renderer:log] [vite] connected. (http://localhost:5173/@vite/client:618)
 [renderer:warn] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold (http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=28d9f503:21551)
 [renderer:warn] [TM] Loading 10k reference database… (http://localhost:5173/src/utils/tmMatcher.ts:8)
+[renderer:warn] [TM] Loaded 10000 shots (matching by speed+VLA) (http://localhost:5173/src/utils/tmMatcher.ts:29)
 [renderer:error] %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
   Policy set or a policy with "unsafe-eval" enabled. This exposes users of
   this app to unnecessary security risks.
@@ -25,4 +26,75 @@ For more information and help, consult
 https://electronjs.org/docs/tutorial/security.
 This warning will not show up
 once the app is packaged. (node:electron/js2c/renderer_init:2)
-[renderer:warn] [TM] Loaded 10000 shots (matching by speed+VLA) (http://localhost:5173/src/utils/tmMatcher.ts:29)
+[SHOT] speed=139.9mph VLA=13.1° → TM match: speed=139.9mph VLA=13.2° err=-0.1°
+[SHOT] speed=115.8mph VLA=6.4° → TM match: speed=117.8mph VLA=7.4° err=-1.0°
+[SHOT] speed=128.1mph VLA=9.3° → TM match: speed=127.9mph VLA=9.4° err=-0.1°
+[SHOT] speed=48.9mph VLA=10° → TM match: speed=72.3mph VLA=20.4° err=-10.4°
+[SHOT] speed=54.5mph VLA=13.3° → TM match: speed=72.3mph VLA=20.4° err=-7.1°
+[SHOT] speed=37.5mph VLA=21° → TM match: speed=62.7mph VLA=27.4° err=-6.4°
+[SHOT] speed=23.9mph VLA=3.7° → TM match: speed=72.3mph VLA=20.4° err=-16.7°
+[SHOT] speed=15.3mph VLA=0° → TM match: speed=72.3mph VLA=20.4° err=-20.4°
+[SHOT] speed=147.1mph VLA=17.8° → TM match: speed=145.9mph VLA=13.7° err=4.1°
+[SHOT] speed=110.6mph VLA=12.7° → TM match: speed=110.4mph VLA=12.7° err=0.0°
+[SHOT] speed=58.7mph VLA=2.7° → TM match: speed=82mph VLA=15.5° err=-12.8°
+[SHOT] speed=134.7mph VLA=12.7° → TM match: speed=135mph VLA=12.8° err=-0.1°
+[SHOT] speed=93mph VLA=8.9° → TM match: speed=92mph VLA=9.7° err=-0.8°
+[SHOT] speed=78.8mph VLA=1.6° → TM match: speed=92mph VLA=9.7° err=-8.1°
+[SHOT] speed=131mph VLA=12.1° → TM match: speed=130.9mph VLA=12.1° err=0.0°
+[SHOT] speed=50.1mph VLA=8.7° → TM match: speed=72.3mph VLA=20.4° err=-11.7°
+[SHOT] speed=63.4mph VLA=3.6° → TM match: speed=82mph VLA=15.5° err=-11.9°
+[SHOT] speed=84.9mph VLA=0° → TM match: speed=92mph VLA=9.7° err=-9.7°
+[SHOT] speed=43mph VLA=19.1° → TM match: speed=65.3mph VLA=25.3° err=-6.2°
+[SHOT] speed=77.7mph VLA=5.3° → TM match: speed=92mph VLA=9.7° err=-4.4°
+[SHOT] speed=66mph VLA=0° → TM match: speed=92mph VLA=9.7° err=-9.7°
+[SHOT] speed=58mph VLA=0° → TM match: speed=92mph VLA=9.7° err=-9.7°
+5:11:01 PM [vite] hmr update /src/App.tsx
+5:11:01 PM [vite] hmr update /src/App.tsx
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[renderer:log] [vite] hot updated: /src/App.tsx (http://localhost:5173/@vite/client:223)
+[SHOT] speed=44.7mph VLA=12.6° → TM match: speed=72.3mph VLA=20.4° err=-7.8°
+[SHOT] speed=80.5mph VLA=17.5° → TM match: speed=80.7mph VLA=17.3° err=0.2°
+[SHOT] speed=85.3mph VLA=28.4° → TM match: speed=85.1mph VLA=28.4° err=0.0°
+[SHOT] speed=102mph VLA=15° → TM match: speed=102.1mph VLA=15° err=0.0°
+[SHOT] speed=94.8mph VLA=15.9° → TM match: speed=94.8mph VLA=15.9° err=0.0°
+[SHOT] speed=93.1mph VLA=13.5° → TM match: speed=93.2mph VLA=13.4° err=0.1°
+[SHOT] speed=32.8mph VLA=17.3° → TM match: speed=62.7mph VLA=27.4° err=-10.1°
+[SHOT] speed=38.1mph VLA=22° → TM match: speed=62.7mph VLA=27.4° err=-5.4°
+[SHOT] speed=105.4mph VLA=13.9° → TM match: speed=105.2mph VLA=13.9° err=0.0°
+[SHOT] speed=107.9mph VLA=6.8° → TM match: speed=108.8mph VLA=8.1° err=-1.3°
+[SHOT] speed=123.9mph VLA=21° → TM match: speed=123mph VLA=20.7° err=0.3°
+[SHOT] speed=9.5mph VLA=0° → TM match: speed=72.3mph VLA=20.4° err=-20.4°
+[SHOT] speed=8.4mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=12.4mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=29.8mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=23.7mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=11.9mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=17.3mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=6.2mph VLA=0.5° → TM match: speed=65.3mph VLA=25.3° err=-24.8°
+[SHOT] speed=40.4mph VLA=38.2° → TM match: speed=63.2mph VLA=33.9° err=4.3°
+[SHOT] speed=74.2mph VLA=47.4° → TM match: speed=63.2mph VLA=33.9° err=13.5°
+[SHOT] speed=105.3mph VLA=15.8° → TM match: speed=105.3mph VLA=15.8° err=0.0°
+[SHOT] speed=99.8mph VLA=9.4° → TM match: speed=98.6mph VLA=9.7° err=-0.3°
+[SHOT] speed=25.1mph VLA=20.6° → TM match: speed=61.3mph VLA=28.9° err=-8.3°
+[SHOT] speed=14.5mph VLA=0.5° → TM match: speed=72.3mph VLA=20.4° err=-19.9°
+[SHOT] speed=11.4mph VLA=71.7° → TM match: speed=63.2mph VLA=33.9° err=37.8°
+[SHOT] speed=37.9mph VLA=19.5° → TM match: speed=62.7mph VLA=27.4° err=-7.9°
+[SHOT] speed=99.9mph VLA=10.5° → TM match: speed=100.2mph VLA=10.3° err=0.2°
+[SHOT] speed=89.9mph VLA=5.1° → TM match: speed=92mph VLA=9.7° err=-4.6°
+[SHOT] speed=86.8mph VLA=13.8° → TM match: speed=87.2mph VLA=14.3° err=-0.5°
+[SHOT] speed=98.6mph VLA=15.9° → TM match: speed=98.4mph VLA=15.9° err=0.0°
+[SHOT] speed=84.8mph VLA=15.4° → TM match: speed=85.4mph VLA=15.3° err=0.1°
+[SHOT] speed=119.1mph VLA=14.6° → TM match: speed=118.8mph VLA=14.6° err=0.0°
+[SHOT] speed=26.9mph VLA=18.9° → TM match: speed=62.7mph VLA=27.4° err=-8.5°
+[SHOT] speed=23.7mph VLA=28.4° → TM match: speed=61.3mph VLA=28.9° err=-0.5°
+[SHOT] speed=19.5mph VLA=62.1° → TM match: speed=63.2mph VLA=33.9° err=28.2°
+9:34:36 AM [vite] hmr update /src/App.tsx
+9:34:41 AM [vite] hmr update /src/App.tsx
+9:34:47 AM [vite] hmr update /src/App.tsx
+9:34:53 AM [vite] hmr update /src/App.tsx
+9:50:44 AM [vite] hmr update /src/App.tsx
+9:51:18 AM [vite] hmr update /src/App.tsx
+9:54:57 AM [vite] hmr update /src/App.tsx
+9:55:04 AM [vite] hmr update /src/features/crushed-it/CrushedItPopup.tsx
+9:55:40 AM [vite] hmr update /src/App.tsx
+9:55:47 AM [vite] hmr update /src/features/crushed-it/CrushedItPopup.tsx

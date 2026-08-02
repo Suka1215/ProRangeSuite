@@ -35,11 +35,8 @@ function authErrorMessage(error: unknown) {
 }
 
 export default function LoginView({ onBack }: { onBack?: () => void } = {}) {
-  const { authDebug, authError, clearAuthError, signInWithApple, signInWithEmail, signInWithGoogle } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(true);
-  const [submitting, setSubmitting] = useState<null | "apple" | "google" | "email">(null);
+  const { authError, clearAuthError, signInWithApple, signInWithGoogle } = useAuth();
+  const [submitting, setSubmitting] = useState<null | "apple" | "google">(null);
   const [error, setError] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -47,23 +44,18 @@ export default function LoginView({ onBack }: { onBack?: () => void } = {}) {
     setError(authErrorMessage(authError));
   }, [authError]);
 
-  async function runSignIn(kind: "apple" | "google" | "email") {
+  async function runSignIn(kind: "apple" | "google") {
     setSubmitting(kind);
     setError(null);
     clearAuthError();
 
     try {
       if (kind === "apple") {
-        await signInWithApple(remember);
+        await signInWithApple(true);
         return;
       }
 
-      if (kind === "google") {
-        await signInWithGoogle(remember);
-        return;
-      }
-
-      await signInWithEmail(email.trim(), password, remember);
+      await signInWithGoogle(true);
     } catch (authError) {
       setError(authErrorMessage(authError));
     } finally {
@@ -84,7 +76,7 @@ export default function LoginView({ onBack }: { onBack?: () => void } = {}) {
 
         <div className="pr-auth-copy">
           <h1>Welcome back</h1>
-          <p>Sign in with the same Apple, Google, or email account you use in the app.</p>
+          <p>Sign in with the same Apple or Google account you use in the app.</p>
         </div>
 
         <div className="pr-auth-provider-row">
@@ -94,7 +86,7 @@ export default function LoginView({ onBack }: { onBack?: () => void } = {}) {
             onClick={() => void runSignIn("apple")}
           >
             <span className="pr-auth-provider-icon is-apple">A</span>
-            <span>{submitting === "apple" ? "Connecting…" : "Apple"}</span>
+            <span>{submitting === "apple" ? "Connecting..." : "Apple"}</span>
           </button>
 
           <button
@@ -103,73 +95,11 @@ export default function LoginView({ onBack }: { onBack?: () => void } = {}) {
             onClick={() => void runSignIn("google")}
           >
             <span className="pr-auth-provider-icon is-google">G</span>
-            <span>{submitting === "google" ? "Connecting…" : "Google"}</span>
+            <span>{submitting === "google" ? "Connecting..." : "Google"}</span>
           </button>
         </div>
 
-        <div className="pr-auth-divider">
-          <span>or</span>
-        </div>
-
-        <form
-          className="pr-auth-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void runSignIn("email");
-          }}
-        >
-          <label className="pr-auth-field">
-            <span>Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              disabled={submitting !== null}
-            />
-          </label>
-
-          <label className="pr-auth-field">
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              disabled={submitting !== null}
-            />
-          </label>
-
-          <label className="pr-auth-remember">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(event) => setRemember(event.target.checked)}
-              disabled={submitting !== null}
-            />
-            <span>Keep me signed in</span>
-          </label>
-
-          {error && <div className="pr-auth-error">{error}</div>}
-
-          {authDebug && (
-            <details className="pr-auth-debug" open>
-              <summary>Auth debug details</summary>
-              <p>Paste this back if Apple still fails. The browser console also logs the same snapshot.</p>
-              <pre>{JSON.stringify(authDebug, null, 2)}</pre>
-            </details>
-          )}
-
-          <button
-            className="pr-auth-submit"
-            type="submit"
-            disabled={submitting !== null || !email.trim() || !password}
-          >
-            {submitting === "email" ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+        {error && <div className="pr-auth-error">{error}</div>}
 
         <div className="pr-auth-footnote">
           Account creation, password changes, and recovery stay in the app.

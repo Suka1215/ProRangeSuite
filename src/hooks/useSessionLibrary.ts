@@ -203,6 +203,122 @@ function candidateShotKeys(value: unknown) {
   return [];
 }
 
+function firstPresent(...values: unknown[]) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
+
+function readNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function readNullableNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function readOptionalNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function toMillis(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    const date = value.toDate();
+    return date instanceof Date && !Number.isNaN(date.getTime()) ? date.getTime() : null;
+  }
+  return null;
+}
+
+function metricFingerprint(shot: Shot) {
+  const normalizedShot = normalizeShot(shot);
+  return [
+    normalizedShot.club.trim().toLowerCase(),
+    normalizedShot.pr.speed.toFixed(1),
+    normalizedShot.pr.vla.toFixed(1),
+    normalizedShot.pr.hla.toFixed(1),
+    Math.round(normalizedShot.pr.carry),
+    Math.round(normalizedShot.pr.total ?? normalizedShot.pr.carry),
+    Math.round(normalizedShot.pr.spin),
+    normalizedShot.trackPts ?? "",
+  ].join("|");
+}
+
+function cloudDocAsComparableShot(data: Record<string, unknown>, docId: string): Shot {
+  const metadata = data.metadata && typeof data.metadata === "object" ? data.metadata as Record<string, unknown> : {};
+  const legacyMetadata = data.Metadata && typeof data.Metadata === "object" ? data.Metadata as Record<string, unknown> : {};
+  const ball = data.BallData && typeof data.BallData === "object" ? data.BallData as Record<string, unknown> : data.ballData && typeof data.ballData === "object" ? data.ballData as Record<string, unknown> : {};
+  const pr = data.pr && typeof data.pr === "object" ? data.pr as Record<string, unknown> : {};
+  const payload = data as Record<string, unknown>;
+  const capturedAt = firstPresent(
+    data.capturedAt,
+    payload.createdAt,
+    payload.CreatedAt,
+    data.timestamp,
+    payload.Timestamp,
+    metadata.timestamp,
+    metadata.Timestamp,
+    metadata.createdAt,
+    metadata.CreatedAt,
+    legacyMetadata.timestamp,
+    legacyMetadata.Timestamp,
+    legacyMetadata.createdAt,
+    legacyMetadata.CreatedAt
+  );
+
+  return normalizeShot({
+    id: String(firstPresent(data.id, data.shotID, data.shotId, metadata.shotID, metadata.shotId, metadata.ShotID, legacyMetadata.shotID, legacyMetadata.shotId, legacyMetadata.ShotID, docId)),
+    club: String(firstPresent(metadata.club, metadata.Club, legacyMetadata.club, legacyMetadata.Club, data.club, payload.Club, "7-Iron")),
+    timestamp: typeof data.timestamp === "string" ? data.timestamp : "",
+    capturedAt: toMillis(capturedAt) ?? undefined,
+    pr: {
+      speed: readNumber(firstPresent(pr.speed, pr.ballSpeed, data.ballSpeedMPH, payload.ballSpeedMph, payload.ballSpeed, ball.Speed, ball.BallSpeed, ball.speed, ball.ballSpeed)),
+      vla: readNumber(firstPresent(pr.vla, data.launchAngleDeg, payload.launchAngle, payload.vla, ball.VLA, ball.LaunchAngle, ball.launchAngle, ball.vla)),
+      hla: readNumber(firstPresent(pr.hla, data.launchDirectionDeg, payload.launchDirection, payload.hla, ball.HLA, ball.LaunchDirection, ball.launchDirection, ball.hla)),
+      carry: readNumber(firstPresent(pr.carry, data.carryYards, payload.carryDistance, payload.carry, ball.CarryDistance, ball.Carry, ball.carryDistance, ball.carry)),
+      spin: readNumber(firstPresent(pr.spin, data.spinRPM, payload.spin, payload.spinRate, payload.totalSpin, ball.TotalSpin, ball.BackSpin, ball.SpinRate, ball.spin, ball.spinRate)),
+      total: readOptionalNumber(firstPresent(pr.total, data.totalYards, payload.totalDistance, payload.total, ball.TotalDistance, ball.Total, ball.totalDistance, ball.total)),
+      clubSpeed: readOptionalNumber(firstPresent(pr.clubSpeed, payload.clubSpeed, payload.clubSpeedMPH, ball.ClubSpeed, ball.clubSpeed)),
+      clubHeadSpeedMph: readOptionalNumber(firstPresent(pr.clubHeadSpeedMph, pr.clubHeadSpeedMPH, data.clubHeadSpeedMPH, payload.clubHeadSpeedMph, payload.clubHeadSpeedMPH, ball.ClubHeadSpeed, ball.clubHeadSpeed, ball.clubHeadSpeedMPH)),
+      smashFactor: readOptionalNumber(firstPresent(pr.smashFactor, payload.smashFactor, ball.SmashFactor, ball.smashFactor)),
+      spinAxisDeg: readOptionalNumber(firstPresent(pr.spinAxisDeg, data.spinAxisDeg, payload.spinAxisDeg, payload.spinAxis, ball.SpinAxis, ball.spinAxis)),
+      clubPathDeg: readOptionalNumber(firstPresent(pr.clubPathDeg, data.clubPathDeg, payload.clubPathDeg, payload.clubPath, ball.ClubPath, ball.clubPath)),
+      faceAngleDeg: readOptionalNumber(firstPresent(pr.faceAngleDeg, data.faceAngleDeg, payload.faceAngleDeg, payload.faceAngle, ball.FaceAngle, ball.faceAngle)),
+      faceToPathDeg: readOptionalNumber(firstPresent(pr.faceToPathDeg, data.faceToPathDeg, payload.faceToPathDeg, payload.faceToPath, ball.FaceToPath, ball.faceToPath)),
+    },
+    tm: null,
+    trackPts: readNullableNumber(firstPresent(metadata.framesCaptured, metadata.trackPts, data.framesCaptured, data.trackPts, payload.TrackPointsCount)),
+  });
+}
+
+function shotsMatchForDeletion(left: Shot, right: Shot) {
+  if (sameShotIdentity(left, right)) return true;
+  if (metricFingerprint(left) !== metricFingerprint(right)) return false;
+
+  if (left.capturedAt && right.capturedAt) {
+    return Math.abs(left.capturedAt - right.capturedAt) <= 60_000;
+  }
+
+  return true;
+}
+
 function cloudShotDocKeys(data: Record<string, unknown>, docId: string) {
   const metadata = data.metadata && typeof data.metadata === "object" ? data.metadata as Record<string, unknown> : {};
   const legacyMetadata = data.Metadata && typeof data.Metadata === "object" ? data.Metadata as Record<string, unknown> : {};
@@ -220,22 +336,53 @@ function cloudShotDocKeys(data: Record<string, unknown>, docId: string) {
   ]);
 }
 
-async function deleteUserShotDocs(uid: string, shotIds: string[]) {
-  if (!shotIds.length) return;
-  const matchIds = new Set(shotIds.map(String).filter(Boolean));
-  if (!matchIds.size) return;
+async function deleteUserShotDocs(uid: string, shots: Shot[]) {
+  const targets = shots.map(normalizeShot);
+  if (!targets.length) return;
 
   const shotsCollection = collection(db, "users", uid, "shots");
   const snapshot = await getDocs(shotsCollection);
   if (snapshot.empty) return;
 
+  const consumedTargetIndexes = new Set<number>();
   const docsToDelete = snapshot.docs.filter((snapshotDoc) => {
-    const keys = cloudShotDocKeys(snapshotDoc.data() as Record<string, unknown>, snapshotDoc.id);
-    for (const key of keys) {
-      if (matchIds.has(key)) return true;
+    const data = snapshotDoc.data() as Record<string, unknown>;
+    const keys = cloudShotDocKeys(data, snapshotDoc.id);
+    let matchedTargetIndex = -1;
+
+    for (let index = 0; index < targets.length; index += 1) {
+      if (consumedTargetIndexes.has(index)) continue;
+      if (keys.has(String(targets[index].id))) {
+        matchedTargetIndex = index;
+        break;
+      }
     }
+
+    if (matchedTargetIndex < 0) {
+      const comparableShot = cloudDocAsComparableShot(data, snapshotDoc.id);
+      for (let index = 0; index < targets.length; index += 1) {
+        if (consumedTargetIndexes.has(index)) continue;
+        if (shotsMatchForDeletion(targets[index], comparableShot)) {
+          matchedTargetIndex = index;
+          break;
+        }
+      }
+    }
+
+    if (matchedTargetIndex >= 0) {
+      consumedTargetIndexes.add(matchedTargetIndex);
+      return true;
+    }
+
     return false;
   });
+
+  if (docsToDelete.length !== targets.length) {
+    console.warn("[SessionLibrary] Firestore shot delete matched fewer docs than requested.", {
+      requested: targets.length,
+      matched: docsToDelete.length,
+    });
+  }
 
   if (!docsToDelete.length) return;
   await Promise.all(docsToDelete.map((snapshotDoc) => deleteDoc(snapshotDoc.ref)));
@@ -532,6 +679,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
 
   const clearBucketShots = useCallback(async (bucketId: string) => {
     let bucketToSync: SessionLibraryBucket | null = null;
+    let deletedShots: Shot[] = [];
     let deletedShotIds: string[] = [];
 
     setState((current) => {
@@ -540,6 +688,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       if (targetIndex < 0) return current;
 
       const targetBucket = nextBuckets[targetIndex];
+      deletedShots = targetBucket.shots.map((shot) => normalizeShot(shot));
       deletedShotIds = targetBucket.shots.map((shot) => String(shot.id)).filter(Boolean);
       const clearedBucket: SessionLibraryBucket = {
         ...targetBucket,
@@ -557,9 +706,9 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       };
     });
 
-    if (uid && deletedShotIds.length) {
+    if (uid && deletedShots.length) {
       try {
-        const writes: Promise<unknown>[] = [deleteUserShotDocs(uid, deletedShotIds)];
+        const writes: Promise<unknown>[] = [deleteUserShotDocs(uid, deletedShots)];
         if (bucketToSync) {
           writes.push(deleteSessionShotDocs(uid, bucketId));
         }
@@ -579,6 +728,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
     if (!normalizedIds.length) return;
 
     let bucketToSync: SessionLibraryBucket | null = null;
+    let deletedShots: Shot[] = [];
     let deletedSessionShotIds: string[] = [];
 
     setState((current) => {
@@ -590,9 +740,10 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       const nextShots = targetBucket.shots.filter((shot) => !normalizedIds.includes(String(shot.id)));
       if (nextShots.length === targetBucket.shots.length) return current;
 
-      deletedSessionShotIds = targetBucket.shots
+      deletedShots = targetBucket.shots
         .filter((shot) => normalizedIds.includes(String(shot.id)))
-        .map((shot) => String(shot.id));
+        .map((shot) => normalizeShot(shot));
+      deletedSessionShotIds = deletedShots.map((shot) => String(shot.id));
 
       const updatedBucket: SessionLibraryBucket = {
         ...targetBucket,
@@ -610,9 +761,9 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
       };
     });
 
-    if (uid && deletedSessionShotIds.length) {
+    if (uid && deletedShots.length) {
       try {
-        const writes: Promise<unknown>[] = [deleteUserShotDocs(uid, deletedSessionShotIds)];
+        const writes: Promise<unknown>[] = [deleteUserShotDocs(uid, deletedShots)];
         if (bucketToSync) {
           writes.push(deleteNamedSessionShotDocs(uid, bucketId, deletedSessionShotIds));
         }
@@ -629,6 +780,7 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
 
   const deleteBucket = useCallback(async (bucketId: string) => {
     const existingBucket = normalizeBuckets(state.buckets, activeClub, activeSessionIdRef.current).find((bucket) => bucket.id === bucketId) ?? null;
+    const deletedShots = existingBucket?.shots.map((shot) => normalizeShot(shot)) ?? [];
     const deletedShotIds = existingBucket?.shots.map((shot) => String(shot.id)).filter(Boolean) ?? [];
 
     if (bucketId !== MISC_BUCKET_ID && activeSessionIdRef.current === bucketId) {
@@ -661,8 +813,8 @@ export function useSessionLibrary(uid: string | null | undefined, activeClub: st
     if (uid) {
       try {
         const writes: Promise<unknown>[] = [];
-        if (deletedShotIds.length) {
-          writes.push(deleteUserShotDocs(uid, deletedShotIds));
+        if (deletedShots.length) {
+          writes.push(deleteUserShotDocs(uid, deletedShots));
         }
         if (bucketId !== MISC_BUCKET_ID) {
           writes.push(deleteSessionShotDocs(uid, bucketId));

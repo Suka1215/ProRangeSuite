@@ -110,7 +110,16 @@ async function createMainWindow() {
     },
   });
 
-  window.once("ready-to-show", () => window.show());
+  const revealWindow = () => {
+    if (window.isDestroyed()) return;
+    if (!window.isVisible()) window.show();
+    if (window.isMinimized()) window.restore();
+    window.focus();
+  };
+
+  window.once("ready-to-show", revealWindow);
+  window.webContents.once("did-finish-load", revealWindow);
+  setTimeout(revealWindow, 1500);
   window.on("closed", () => {
     if (mainWindow === window) mainWindow = null;
   });

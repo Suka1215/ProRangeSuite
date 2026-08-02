@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import type { Shot } from "../../types";
 import type { CrushedItData } from "./CrushedItPopup";
 
-const SPEED_THRESHOLD_MPH = 130;
+const SPEED_THRESHOLD_MPH = 160;
 const DEFAULT_CLUB_SPEED_MPH = 90;
 
 function average(values: number[]) {

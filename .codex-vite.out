@@ -3,43 +3,44 @@
 > vite --host 127.0.0.1 --port 5173
 
 
-  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m232[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m220[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
 [2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-[2m9:10:36 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
-[2m9:12:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
-[2m9:13:29 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
-[2m9:14:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m9:15:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m9:16:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
-[2m9:16:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m9:17:06 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
-[2m2:41:26 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
-[2m2:43:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m2:44:11 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m2:44:24 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m2:44:39 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m3:00:19 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
-[2m3:01:58 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mprogress-preview.html[22m
-[2m3:01:58 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/progress-preview.tsx[22m
-[2m3:02:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ProgressView.tsx[22m
-[2m2:40:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m2:42:51 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m2:56:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m3:51:39 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m3:52:10 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m3:58:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m3:58:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m3:59:40 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m4:00:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m4:06:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/shot-iq/shotiq.css[22m
-[2m4:20:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m8:06:05 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
-[2m8:06:24 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m8:08:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
-[2m8:08:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m8:08:55 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m8:17:58 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-[2m8:20:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
-Terminate batch job (Y/N)? 
+[2m9:21:14 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m9:23:54 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:29:11 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:29:12 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:32:05 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:32:28 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:33:22 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:34:29 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:37:06 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:39:16 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:40:33 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m12:35:07 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m12:36:26 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:26:49 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:28:57 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:32:58 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:33:11 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:34:19 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:34:33 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m8:36:05 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m8:39:54 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m9:19:51 AM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/main.tsx[22m
+[2m9:19:52 AM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m10:39:52 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/LoginView.tsx[22m
+[2m10:47:53 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/LoginView.tsx[22m
+[2m10:47:53 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/LoginView.tsx[22m
+[2m11:08:32 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:09:10 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:31:39 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:31:59 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:32:12 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:32:42 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:50:07 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m11:52:55 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m11:53:12 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m12:04:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m12:04:30 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m

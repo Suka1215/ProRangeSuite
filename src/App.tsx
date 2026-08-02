@@ -174,6 +174,7 @@ export default function App() {
   const [newSessionModalOpen, setNewSessionModalOpen] = useState(false);
   const [newSessionError, setNewSessionError] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
+  const [ipadDashboardStage, setIpadDashboardStage] = useState(false);
 
   const {
     sessions: legacySessions,
@@ -295,6 +296,27 @@ export default function App() {
   }, [sessionLibraryError, notify]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncIpadDashboardStage = () => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const shortSide = Math.min(viewportWidth, viewportHeight);
+      const longSide = Math.max(viewportWidth, viewportHeight);
+      const tabletViewport = shortSide >= 744 && longSide <= 1366;
+
+      setIpadDashboardStage(tabletViewport);
+    };
+
+    syncIpadDashboardStage();
+    window.addEventListener("resize", syncIpadDashboardStage);
+
+    return () => {
+      window.removeEventListener("resize", syncIpadDashboardStage);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!shots.length) {
       setActiveShot(null);
       return;
@@ -400,7 +422,6 @@ export default function App() {
   const sectionCopy = TAB_COPY[tab];
   const isBridgeStage = tab === "bridge";
   const isImmersiveStage = tab === "accuracy" || tab === "shots" || tab === "progress" || tab === "compare" || isBridgeStage;
-
   return (
     <div className="pr-page">
       <NotificationToast notification={notification} />
@@ -426,50 +447,83 @@ export default function App() {
         ) : null}
 
         <div className="pr-frame">
-          <HeaderBar
-            tab={tab}
-            primaryNav={primaryNav}
-            onOpenTab={openTab}
-            profileName={profileName}
-            profileSubtitle={profileSubtitle}
-            onSignOut={() => {
-              if (user) {
-                void logOut();
-                return;
-              }
+          {!(tab === "dashboard" && ipadDashboardStage) && (
+            <HeaderBar
+              tab={tab}
+              primaryNav={primaryNav}
+              onOpenTab={openTab}
+              profileName={profileName}
+              profileSubtitle={profileSubtitle}
+              onSignOut={() => {
+                if (user) {
+                  void logOut();
+                  return;
+                }
 
-              void desktopBridge.clearOfflineAccess();
-            }}
-          />
+                void desktopBridge.clearOfflineAccess();
+              }}
+            />
+          )}
 
           {tab === "dashboard" ? (
-            <HomeView
-              filter={homeFilter}
-              club={club}
-              shots={shots}
-              sessions={sessions}
-              sessionBuckets={sessionBuckets}
-              activeSessionId={activeSessionId}
-              weekPage={weekPage}
-              activeShot={activeShot}
-              incomingShot={homeIncomingShot}
-              liveStatus={liveStatus}
-              liveShotCount={liveShotCount}
-              animatedShotKey={homeAnimatedShotKey}
-              shotEventId={homeShotEventId}
-              onShotAnimationHandled={setHomeAnimatedShotKey}
-              onFilterChange={setHomeFilter}
-              onOpenTab={openTab}
-              onPrevWeek={() => setWeekPage((current) => current + 1)}
-              onNextWeek={() => setWeekPage((current) => Math.max(current - 1, 0))}
-              onAddShot={addShot}
-              onNewSession={openNewSessionModal}
-              onExport={() => {
-                exportShotsToCSV(shots);
-                notify("CSV exported");
-              }}
-              onToggleLive={toggleLive}
-            />
+            ipadDashboardStage ? (
+              <TabletHomeView
+                primaryNav={primaryNav}
+                profileName={profileName}
+                profileSubtitle={profileSubtitle}
+                club={club}
+                shots={shots}
+                shotCount={desktopRuntime ? flattenBucketShots(sessionBuckets).length : shots.length}
+                sessionBuckets={sessionBuckets}
+                activeSessionId={activeSessionId}
+                weekPage={weekPage}
+                activeShot={activeShot}
+                incomingShot={homeIncomingShot}
+                liveStatus={liveStatus}
+                liveShotCount={liveShotCount}
+                shotEventId={homeShotEventId}
+                onOpenTab={openTab}
+                onPrevWeek={() => setWeekPage((current) => current + 1)}
+                onNextWeek={() => setWeekPage((current) => Math.max(current - 1, 0))}
+                onNewSession={openNewSessionModal}
+                onSignOut={() => {
+                  if (user) {
+                    void logOut();
+                    return;
+                  }
+
+                  void desktopBridge.clearOfflineAccess();
+                }}
+              />
+            ) : (
+              <HomeView
+                filter={homeFilter}
+                club={club}
+                shots={shots}
+                sessions={sessions}
+                sessionBuckets={sessionBuckets}
+                activeSessionId={activeSessionId}
+                weekPage={weekPage}
+                activeShot={activeShot}
+                incomingShot={homeIncomingShot}
+                liveStatus={liveStatus}
+                liveShotCount={liveShotCount}
+                animatedShotKey={homeAnimatedShotKey}
+                shotEventId={homeShotEventId}
+                onShotAnimationHandled={setHomeAnimatedShotKey}
+                onFilterChange={setHomeFilter}
+                onOpenTab={openTab}
+                onPrevWeek={() => setWeekPage((current) => current + 1)}
+                onNextWeek={() => setWeekPage((current) => Math.max(current - 1, 0))}
+                onAddShot={addShot}
+                onNewSession={openNewSessionModal}
+                onExport={() => {
+                  exportShotsToCSV(shots);
+                  notify("CSV exported");
+                }}
+                onToggleLive={toggleLive}
+              />
+            )
           ) : (
             <section className={`pr-secondary-stage ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""} ${tab === "compare" ? "is-compare" : ""}`}>
               {!isImmersiveStage && (
@@ -724,7 +778,9 @@ function HomeView({
   const animatedFaceAngle = overviewFaceAngle != null ? overviewFaceAngle * heroAnimationProgress : null;
   const animatedFaceToPath = overviewFaceToPath != null ? overviewFaceToPath * heroAnimationProgress : null;
   const activeSessionBucket = sessionBuckets.find((bucket) => bucket.id === activeSessionId && bucket.kind === "session") ?? null;
+  const hasActiveSession = Boolean(activeSessionBucket);
   const currentSessionClub = activeSessionBucket?.club ?? club;
+  const visibleSessionClub = activeSessionBucket?.club ?? "";
   const flightTwinRawShots = activeSessionBucket?.shots ?? [];
   const flightTwinShots = flightTwinRawShots.slice(-18);
   const flightTwinSessionLabel = activeSessionBucket?.title ?? "No session";
@@ -774,7 +830,7 @@ function HomeView({
 
   const filterCopy = {
     all: {
-      eyebrow: "Live practice command center",
+      eyebrow: "",
       heading: "SPIVOT Shot Lab",
       detail: "Track ball speed, launch, spin, and carry inside a premium golf cockpit built for practice sessions, live capture, and calibration.",
       sideTitle: "Shot Overview",
@@ -820,7 +876,9 @@ function HomeView({
         owner: "Reference",
         role: "matched",
         title: "Carry window",
-        meta: `${carryAverage} yd center line for ${club}`,
+        meta: hasActiveSession
+          ? `${carryAverage} yd center line for ${visibleSessionClub}`
+          : `${carryAverage} yd center line ready once a session is active`,
         accent: BRAND_INK,
         series: recentCarry,
         variant: "trackman" as const,
@@ -1091,7 +1149,7 @@ function HomeView({
       <div className="pr-home-stage">
         <div className="pr-home-layout">
           <div className="pr-copy-column">
-            <span className="pr-home-eyebrow">{filterCopy.eyebrow}</span>
+            {filterCopy.eyebrow ? <span className="pr-home-eyebrow">{filterCopy.eyebrow}</span> : null}
             {filter === "all" ? (
               <h1 className="pr-home-title-brand">
                 <span>Shot Lab</span>
@@ -1138,7 +1196,9 @@ function HomeView({
                 <span className="pr-hero-speed-meta">
                   {liveStatus === "connected"
                     ? `${liveShotCount} live shots in the feed`
-                    : `${club} profile active`}
+                    : hasActiveSession
+                      ? `${visibleSessionClub} profile active`
+                      : "No session active"}
                 </span>
               </div>
 
@@ -1152,7 +1212,13 @@ function HomeView({
                   <span>sessions</span>
                 </span>
                 <span className="pr-stat-pill">
-                  <strong>{liveStatus === "connected" ? liveShotCount : club}</strong>
+                  <strong>
+                    {liveStatus === "connected"
+                      ? liveShotCount
+                      : hasActiveSession
+                        ? visibleSessionClub
+                        : "Not locked"}
+                  </strong>
                   <span>{liveStatus === "connected" ? "live" : "club"}</span>
                 </span>
               </div>
@@ -1180,6 +1246,292 @@ function HomeView({
         onNewSession={onNewSession}
       />
     </section>
+  );
+}
+
+interface TabletHomeViewProps {
+  primaryNav: readonly { id: TabId; label: string; icon: IconComponent }[];
+  profileName: string;
+  profileSubtitle: string;
+  club: string;
+  shots: Shot[];
+  shotCount: number;
+  sessionBuckets: SessionLibraryBucket[];
+  activeSessionId: string | null;
+  weekPage: number;
+  activeShot: Shot | null;
+  incomingShot: Shot | null;
+  liveStatus: LiveStatus;
+  liveShotCount: number;
+  shotEventId: number;
+  onOpenTab: (tab: TabId) => void;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  onNewSession: () => void;
+  onSignOut: () => void;
+}
+
+function TabletHomeView({
+  primaryNav,
+  profileName,
+  profileSubtitle,
+  club,
+  shots,
+  shotCount,
+  sessionBuckets,
+  activeSessionId,
+  weekPage,
+  activeShot,
+  incomingShot,
+  liveStatus,
+  liveShotCount,
+  shotEventId,
+  onOpenTab,
+  onPrevWeek,
+  onNextWeek,
+  onNewSession,
+  onSignOut,
+}: TabletHomeViewProps) {
+  const savedSessionBuckets = sessionBuckets.filter((bucket) => bucket.kind === "session");
+  const latestShot = incomingShot ?? (shots.length ? shots[shots.length - 1] : activeShot);
+  const schedule = buildScheduleWeek(savedSessionBuckets, activeSessionId, weekPage);
+  const activeSessionBucket = sessionBuckets.find((bucket) => bucket.id === activeSessionId && bucket.kind === "session") ?? null;
+  const clubLabel = activeSessionBucket?.club ? formatClubLabel(activeSessionBucket.club) : "Not locked";
+  const recentSpeed = lastValues(shots, (shot) => shot.pr.speed, [92, 95, 98, 101, 103, 100]);
+  const recentVla = lastValues(shots, (shot) => shot.pr.vla, [18.8, 19.4, 20.2, 20.8, 19.9, 20.4]);
+  const recentHla = lastValues(shots, (shot) => shot.pr.hla, [-0.8, -0.2, 0.4, 0.7, 0.1, -0.1]);
+  const recentCarry = lastValues(shots, (shot) => shot.pr.carry, [154, 161, 166, 170, 173, 168]);
+  const recentSpin = lastValues(shots, (shot) => shot.pr.spin, [6580, 6700, 6900, 6760, 6885, 7020]);
+  const recentTotal = lastValues(shots, (shot) => shot.pr.total ?? shot.pr.carry, [165, 171, 177, 182, 185, 180]);
+
+  const overviewSpeed = latestShot?.pr.speed ?? average(recentSpeed, 100);
+  const overviewVla = latestShot?.pr.vla ?? average(recentVla, 20.1);
+  const overviewHla = latestShot?.pr.hla ?? average(recentHla, 0.2);
+  const overviewSpin = latestShot?.pr.spin ?? average(recentSpin, 6820);
+  const overviewCarry = latestShot?.pr.carry ?? average(recentCarry, 172);
+  const overviewTotal = latestShot?.pr.total ?? average(recentTotal, overviewCarry);
+  const overviewClubSpeed =
+    latestShot?.pr.clubSpeed
+    ?? latestShot?.tm?.clubSpeed
+    ?? latestShot?.pr.clubHeadSpeedMph
+    ?? latestShot?.tm?.clubHeadSpeedMph
+    ?? null;
+  const overviewSmashFactor = latestShot?.pr.smashFactor
+    ?? latestShot?.tm?.smashFactor
+    ?? ((overviewClubSpeed && overviewClubSpeed > 0) ? overviewSpeed / overviewClubSpeed : null);
+  const overviewSpinAxis = latestShot?.pr.spinAxisDeg ?? latestShot?.tm?.spinAxisDeg ?? null;
+  const overviewClubPath = latestShot?.pr.clubPathDeg ?? latestShot?.tm?.clubPathDeg ?? null;
+  const overviewFaceAngle = latestShot?.pr.faceAngleDeg ?? latestShot?.tm?.faceAngleDeg ?? null;
+  const overviewFaceToPath = latestShot?.pr.faceToPathDeg ?? latestShot?.tm?.faceToPathDeg ?? null;
+
+  const tabletMetricTiles: Array<{ title: string; value: string; subtitle: string; icon: React.ReactNode; accent: string }> = [
+    { title: "Speed", value: overviewSpeed.toFixed(1), subtitle: "mph ball speed", icon: <IconSpeed />, accent: BRAND_GREEN },
+    { title: "VLA", value: `${overviewVla.toFixed(1)}°`, subtitle: "vertical launch", icon: <IconVla />, accent: BRAND_INK },
+    { title: "HLA", value: formatSigned(overviewHla, "°"), subtitle: "horizontal launch", icon: <IconHla />, accent: BRAND_GREEN },
+    { title: "Spin", value: Math.round(overviewSpin).toLocaleString(), subtitle: "rpm back spin", icon: <IconSpinMetric />, accent: BRAND_INK },
+    { title: "Carry", value: `${Math.round(overviewCarry)}`, subtitle: "yd carry distance", icon: <IconCarryMetric />, accent: BRAND_GREEN },
+    { title: "Total", value: `${Math.round(overviewTotal)}`, subtitle: "yd total distance", icon: <IconTotalMetric />, accent: BRAND_INK },
+    { title: "Club Speed", value: overviewClubSpeed != null ? overviewClubSpeed.toFixed(1) : "--", subtitle: "mph club speed", icon: <IconClubSpeed />, accent: BRAND_GREEN },
+    { title: "Spin Axis", value: overviewSpinAxis != null ? `${formatSigned(overviewSpinAxis, "°")}` : "--", subtitle: "deg spin axis", icon: <IconSpinAxis />, accent: BRAND_INK },
+    { title: "Club Path", value: overviewClubPath != null ? `${formatSigned(overviewClubPath, "°")}` : "--", subtitle: "deg club path", icon: <IconClubPath />, accent: BRAND_INK },
+    { title: "Face Angle", value: overviewFaceAngle != null ? `${formatSigned(overviewFaceAngle, "°")}` : "--", subtitle: "deg face angle", icon: <IconFaceAngle />, accent: BRAND_GREEN },
+    { title: "Face To Path", value: overviewFaceToPath != null ? `${formatSigned(overviewFaceToPath, "°")}` : "--", subtitle: "deg face to path", icon: <IconFaceToPath />, accent: BRAND_INK },
+    { title: "Smash", value: overviewSmashFactor != null ? overviewSmashFactor.toFixed(2) : "--", subtitle: "smash factor", icon: <IconSmashFactor />, accent: BRAND_INK },
+  ];
+
+  const sessionStatusLabel = activeSessionBucket ? "Session active" : liveStatus === "connected" ? "Live feed active" : "No session";
+  const elapsedLabel = formatElapsedClock(activeSessionBucket?.createdAt ?? null);
+  const keyShot = `${shotEventId}-${Math.round(overviewSpeed)}-${Math.round(overviewCarry)}`;
+  const liveBadgeLabel = liveStatus === "connected" ? "Live" : "Status";
+  const liveStatusValue = liveStatus === "connected" ? "Session active" : sessionStatusLabel;
+
+  return (
+    <section className="pr-tablet-home">
+      <div className="pr-tablet-canvas-shell">
+        <div className="pr-tablet-canvas">
+          <section className="pr-tablet-topstage">
+            <div className="pr-tablet-brandstack">
+              <button className="pr-tablet-brand" onClick={() => onOpenTab("dashboard")} aria-label="SpinVOT home">
+                <BrandMark />
+              </button>
+            </div>
+
+            <div className="pr-tablet-nav">
+              {primaryNav.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    className={`pr-tablet-nav-btn ${item.id === "dashboard" ? "is-active" : ""}`}
+                    onClick={() => onOpenTab(item.id)}
+                    title={item.label}
+                  >
+                    <Icon />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pr-tablet-header-actions">
+              <div className="pr-tablet-profile">
+                <span className="pr-tablet-profile-copy">
+                  <strong>{profileName}</strong>
+                  <span>{profileSubtitle}</span>
+                </span>
+                <span className="pr-tablet-avatar">{initials(profileName)}</span>
+              </div>
+
+              <button className="pr-tablet-signout" onClick={onSignOut}>
+                Log out
+              </button>
+            </div>
+
+            <TabletMetricDeck tiles={tabletMetricTiles} />
+          </section>
+
+          <div className="pr-tablet-statusbar">
+            <div className="pr-tablet-status-items">
+              <div className="pr-tablet-status-item is-accent">
+                <span>Current session</span>
+                <strong>{activeSessionBucket?.title ?? "No session"}</strong>
+              </div>
+              <div className="pr-tablet-status-item">
+                <span>Club</span>
+                <strong>{clubLabel}</strong>
+              </div>
+              <div className="pr-tablet-status-item">
+                <span>Shots</span>
+                <strong>{shotCount}</strong>
+              </div>
+              <div className="pr-tablet-status-item">
+                <span>Elapsed</span>
+                <strong>{elapsedLabel}</strong>
+              </div>
+              <div className="pr-tablet-status-item is-live">
+                <span>{liveBadgeLabel}</span>
+                <strong>
+                  {liveStatus === "connected" ? <i className="pr-tablet-status-pill">Live</i> : null}
+                  {liveStatus === "connected" ? `${liveShotCount} shots` : liveStatusValue}
+                </strong>
+              </div>
+            </div>
+
+            <div className="pr-tablet-status-actions">
+              <button className="pr-secondary-pill" onClick={() => onOpenTab("compare")}>
+                Compare
+              </button>
+              <button className="pr-primary-pill" onClick={onNewSession}>
+                New Session
+              </button>
+            </div>
+          </div>
+
+          <section className="pr-tablet-schedule">
+            <div className="pr-tablet-schedule-head">
+              <button className="pr-inline-icon" onClick={onPrevWeek} disabled={!schedule.canPrev}>
+                <IconChevronLeft />
+              </button>
+              <strong>{schedule.label}</strong>
+              <button className="pr-inline-icon" onClick={onNextWeek} disabled={!schedule.canNext}>
+                <IconChevronRight />
+              </button>
+            </div>
+
+            <div className="pr-tablet-week-labels">
+              {schedule.slots.map((slot) => (
+                <span key={slot.key} className={slot.isToday ? "is-today" : ""}>
+                  {slot.label}
+                </span>
+              ))}
+            </div>
+
+            <div className="pr-tablet-week-grid">
+              {schedule.slots.map((slot) => (
+                <button
+                  key={slot.key}
+                  className={`pr-tablet-week-card ${slot.isActive ? "is-active" : ""} ${slot.session ? "" : "is-empty"}`}
+                  onClick={() => {
+                    if (slot.session) {
+                      onOpenTab("compare");
+                    } else {
+                      onNewSession();
+                    }
+                  }}
+                >
+                  <div className="pr-tablet-week-card-top">
+                    <div className="pr-tablet-week-card-date">
+                      <span className={`pr-tablet-week-card-day ${slot.isToday ? "is-today" : ""}`}>
+                        {slot.label}
+                      </span>
+                      <strong>{slot.date.getDate()}</strong>
+                    </div>
+                    <span>open</span>
+                  </div>
+                  <div className="pr-tablet-week-card-body">
+                    <h3>{slot.session?.title ?? "New session"}</h3>
+                    <p>{slot.session ? `${formatClubLabel(slot.session.club)} · ${slot.session.shotCount} shots` : "Open slot"}</p>
+                    <em>{slot.session ? "Review session" : "Tap to create"}</em>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TabletMetricDeck({
+  tiles,
+}: {
+  tiles: Array<{ title: string; value: string; subtitle: string; icon: React.ReactNode; accent: string }>;
+}) {
+  const tabletOrder = [
+    "Speed",
+    "VLA",
+    "HLA",
+    "Spin",
+    "Carry",
+    "Total",
+    "Club Speed",
+    "Spin Axis",
+    "Club Path",
+    "Face Angle",
+    "Face To Path",
+    "Smash",
+  ];
+  const titleMap: Record<string, string> = {
+    Speed: "Ball Speed",
+    VLA: "Launch Angle",
+  };
+  const unitMap: Record<string, string> = {
+    Speed: "mph",
+    Carry: "yd",
+    Total: "yd",
+    VLA: "",
+    Spin: "rpm",
+    "Club Speed": "mph",
+  };
+
+  const tileMap = new Map(tiles.map((tile) => [tile.title, tile]));
+  const orderedTiles = tabletOrder
+    .map((title) => tileMap.get(title))
+    .filter((tile): tile is { title: string; value: string; subtitle: string; icon: React.ReactNode; accent: string } => Boolean(tile));
+
+  return (
+    <div className="pr-tablet-metric-grid">
+      {orderedTiles.map((tile, index) => (
+        <div key={tile.title} className={`pr-tablet-metric-card ${index === 0 ? "is-accent" : ""}`}>
+          <span className="pr-tablet-metric-icon" style={{ color: tile.accent }}>
+            {tile.icon}
+          </span>
+          <h3>{titleMap[tile.title] ?? tile.title}</h3>
+          <strong>{tile.value}</strong>
+          <p>{unitMap[tile.title] ?? tile.subtitle}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -1647,6 +1999,14 @@ function lastValues<T>(items: T[], getValue: (item: T) => number, fallback: numb
 
 function formatSigned(value: number, suffix = "") {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}${suffix}`;
+}
+
+function formatElapsedClock(startedAt: number | null) {
+  if (!startedAt) return "00:00";
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function buildScheduleWeek(

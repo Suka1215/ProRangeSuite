@@ -1,0 +1,5 @@
+npm notice
+npm notice New major version of npm available! 10.8.3 -> 11.18.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.18.0
+npm notice To update run: npm install -g npm@11.18.0
+npm notice

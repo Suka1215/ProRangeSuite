@@ -236,6 +236,11 @@ export function useSessions(currentVersion = "v22.86") {
   }, []);
 
   const clearLiveShots = () => setLiveShots([]);
+  const deleteLiveShots = useCallback((shotIds: string[]) => {
+    const normalizedIds = new Set(shotIds.map(String).filter(Boolean));
+    if (!normalizedIds.size) return;
+    setLiveShots((prev) => prev.filter((shot) => !normalizedIds.has(String(shot.id))));
+  }, []);
 
   const addSession = (session: Session) =>
     setSessions(prev => [...prev.filter(s => s.id !== LIVE_SESSION_ID), session]);
@@ -263,6 +268,7 @@ export function useSessions(currentVersion = "v22.86") {
     resetToSeed,
     addLiveShot,
     clearLiveShots,
+    deleteLiveShots,
     getStats: calcSessionStats,
   };
 }

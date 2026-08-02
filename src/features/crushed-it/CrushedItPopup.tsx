@@ -229,7 +229,7 @@ export default function CrushedItPopup({
           </div>
 
           <h1 className="ci-title">Crushed it</h1>
-          <p className="ci-subtitle">Ball speed cleared 130 mph - {data.club} profile</p>
+          <p className="ci-subtitle">Ball speed cleared 160 mph - {data.club} profile</p>
 
           <div className="ci-speed-wrap">
             <span className="ci-speed-num">{data.ballSpeedMph.toFixed(1)}</span>
