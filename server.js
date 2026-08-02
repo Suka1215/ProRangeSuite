@@ -1,5 +1,5 @@
 /**
- * ProRange Live Bridge Server
+ * Spivot Live Bridge Server
  * - Loads pga_precision_10k_v8.csv at startup (10k TM reference shots)
  * - Matches each live shot by SPEED + VLA distance (club ignored)
  * - Exposes /api/tm-lookup so browser can retroactively enrich stored shots
@@ -1196,7 +1196,7 @@ export async function startBridgeServer(options = {}) {
   const ip = getLocalIP();
   if (!options.silent) {
     console.log("\n╔════════════════════════════════════════════╗");
-    console.log("║    ProRange Bridge Server — RUNNING        ║");
+    console.log("║     Spivot Bridge Server — RUNNING         ║");
     console.log("╠════════════════════════════════════════════╣");
     console.log(`║  Browser : http://localhost:${httpPort}             ║`);
     console.log(`║  LAN     : http://${ip}:${httpPort}         ║`);

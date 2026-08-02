@@ -156,7 +156,7 @@ app.whenReady().then(async () => {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    dialog.showErrorBox("ProRange Desktop failed to start", message);
+    dialog.showErrorBox("Spivot Desktop failed to start", message);
     app.exit(1);
   }
 });
