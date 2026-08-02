@@ -24,12 +24,14 @@ const AccuracyView = lazy(() => import("./views/AccuracyView"));
 const ShotLogView = lazy(() => import("./views/ShotLogView"));
 const ProgressView = lazy(() => import("./views/ProgressView"));
 const CompareView = lazy(() => import("./views/CompareView"));
+const LiveView = lazy(() => import("./views/LiveView"));
 const PRIMARY_NAV = [
   { id: "dashboard", label: "Home", icon: IconCluster },
   { id: "accuracy", label: "Accuracy", icon: IconTarget },
   { id: "shots", label: "Shot Log", icon: IconSheets },
   { id: "compare", label: "Compare", icon: IconCompare },
   { id: "progress", label: "Progress", icon: IconTrend },
+  { id: "live", label: "Live View", icon: IconOrbit },
 ] as const satisfies { id: TabId; label: string; icon: IconComponent }[];
 
 
@@ -75,6 +77,11 @@ const TAB_COPY: Record<TabId, { eyebrow: string; title: string; description: str
     eyebrow: "Trends",
     title: "Progress View",
     description: "See how recent work stacks up over time without leaving the redesigned shell.",
+  },
+  live: {
+    eyebrow: "Bay Display",
+    title: "Live View",
+    description: "Full-screen shot mirror for the suite — numbers, tracer replay, and dispersion the moment a shot fires.",
   },
   bridge: {
     eyebrow: "Connector",
@@ -421,7 +428,7 @@ export default function App() {
 
   const sectionCopy = TAB_COPY[tab];
   const isBridgeStage = tab === "bridge";
-  const isImmersiveStage = tab === "accuracy" || tab === "shots" || tab === "progress" || tab === "compare" || isBridgeStage;
+  const isImmersiveStage = tab === "accuracy" || tab === "shots" || tab === "progress" || tab === "compare" || tab === "live" || isBridgeStage;
   return (
     <div className="pr-page">
       <NotificationToast notification={notification} />
@@ -543,6 +550,7 @@ export default function App() {
               <div className={`pr-secondary-stage-inner ${isImmersiveStage ? "is-immersive" : ""} ${isBridgeStage ? "is-bridge" : ""} ${tab === "compare" ? "is-compare" : ""}`}>
                 <SecPage
                   tab={tab}
+                  liveUid={user?.uid ?? null}
                   shots={shots}
                   sessions={sessions}
                   active={activeShot}
@@ -1873,6 +1881,7 @@ interface SecProps {
   onClearBucket: (bucketId: string) => void;
   onDeleteShots: (bucketId: string, shotIds: string[]) => void;
   bridgeDesktop: ReturnType<typeof useDesktopBridge>;
+  liveUid: string | null;
 }
 
 function SecPage({
@@ -1901,6 +1910,7 @@ function SecPage({
   onClearBucket,
   onDeleteShots,
   bridgeDesktop,
+  liveUid,
 }: SecProps) {
   return (
     <div className={`pr-secondary-content ${tab === "bridge" ? "is-bridge-scroll" : ""}`}>
@@ -1923,6 +1933,7 @@ function SecPage({
           />
         )}
         {tab === "progress" && <ProgressView sessions={sessions} onOpenTab={onOpenTab} />}
+        {tab === "live" && <LiveView uid={liveUid} />}
         {tab === "compare" && (
           <CompareView sessions={sessions} selectedIds={sessions.map((session) => session.id)} onToggleSession={() => {}} />
         )}

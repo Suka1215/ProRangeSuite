@@ -1,0 +1,307 @@
+/* ── Spivot Suite Live View (bay display, light) ───────────────────────────
+   Uses the dashboard design tokens from styles.css (:root --pr-*). */
+
+.lv-root {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  grid-template-rows: 58px 1fr 172px;
+  grid-template-areas:
+    "header header"
+    "stage  rail"
+    "strip  rail";
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  min-height: 640px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, var(--pr-bg-strong, #f4f8f5) 100%);
+  border-radius: var(--pr-radius-lg, 30px);
+  color: var(--pr-ink, #262930);
+  font-family: "Manrope", sans-serif;
+  overflow: hidden;
+}
+
+.lv-root:fullscreen {
+  border-radius: 0;
+  min-height: 100vh;
+  padding: 22px;
+}
+
+.lv-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pr-muted, rgba(38, 41, 48, 0.62));
+}
+
+/* header */
+.lv-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 22px;
+  background: var(--pr-surface-strong, rgba(255, 255, 255, 0.98));
+  border: 1px solid var(--pr-line, rgba(38, 41, 48, 0.08));
+  border-radius: var(--pr-radius-sm, 18px);
+  box-shadow: var(--pr-shadow-soft, 0 16px 36px rgba(38, 41, 48, 0.07));
+}
+
+.lv-header-club {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--pr-green, #6ad87c);
+  min-width: 120px;
+}
+
+.lv-header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: var(--pr-ink, #262930);
+}
+
+.lv-header-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--pr-muted-soft, rgba(38, 41, 48, 0.42));
+}
+
+.lv-header-status .lv-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pr-line-strong, rgba(38, 41, 48, 0.16));
+}
+
+.lv-header-status.is-live {
+  color: var(--pr-muted, rgba(38, 41, 48, 0.62));
+}
+
+.lv-header-status.is-live .lv-dot {
+  background: var(--pr-green, #6ad87c);
+  box-shadow: 0 0 8px rgba(106, 216, 124, 0.8);
+}
+
+.lv-fullscreen {
+  background: var(--pr-green-soft, rgba(106, 216, 124, 0.16));
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--pr-ink, #262930);
+  font-size: 15px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lv-fullscreen:hover {
+  background: var(--pr-green, #6ad87c);
+  color: #ffffff;
+}
+
+/* center stage */
+.lv-stage {
+  grid-area: stage;
+  position: relative;
+  border-radius: var(--pr-radius-md, 24px);
+  overflow: hidden;
+  border: 1px solid var(--pr-line, rgba(38, 41, 48, 0.08));
+  background: #f6fbf7;
+  box-shadow: var(--pr-shadow-soft, 0 16px 36px rgba(38, 41, 48, 0.07));
+}
+
+.lv-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* right metrics rail */
+.lv-rail {
+  grid-area: rail;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.lv-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--pr-surface-strong, rgba(255, 255, 255, 0.98));
+  border: 1px solid var(--pr-line, rgba(38, 41, 48, 0.08));
+  border-radius: var(--pr-radius-sm, 18px);
+  box-shadow: var(--pr-shadow-soft, 0 16px 36px rgba(38, 41, 48, 0.07));
+  padding: 10px;
+}
+
+.lv-metric-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  color: var(--pr-green, #6ad87c);
+}
+
+.lv-metric-value {
+  font-size: clamp(34px, 4.2vw, 58px);
+  font-weight: 800;
+  line-height: 1.02;
+  color: var(--pr-ink, #262930);
+  font-variant-numeric: tabular-nums;
+}
+
+.lv-metric-unit {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--pr-muted-soft, rgba(38, 41, 48, 0.42));
+}
+
+/* bottom strip */
+.lv-strip {
+  grid-area: strip;
+  display: grid;
+  grid-template-columns: 1.5fr repeat(5, 1fr);
+  gap: 14px;
+}
+
+.lv-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--pr-surface-strong, rgba(255, 255, 255, 0.98));
+  border: 1px solid var(--pr-line, rgba(38, 41, 48, 0.08));
+  border-radius: var(--pr-radius-sm, 18px);
+  box-shadow: var(--pr-shadow-soft, 0 16px 36px rgba(38, 41, 48, 0.07));
+  padding: 12px;
+}
+
+.lv-tile-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--pr-muted-soft, rgba(38, 41, 48, 0.42));
+  text-align: center;
+}
+
+.lv-tile-value {
+  font-size: clamp(20px, 2.2vw, 30px);
+  font-weight: 800;
+  color: var(--pr-ink, #262930);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.lv-tile-value em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--pr-green, #6ad87c);
+  letter-spacing: 1px;
+}
+
+.lv-tile-dispersion {
+  padding: 8px;
+}
+
+.lv-dispersion-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── virtual-range stage overlays + shot shape + sliders ─────────────────── */
+
+.lv-header-club {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lv-dot-ready {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pr-green, #6ad87c);
+  box-shadow: 0 0 8px rgba(106, 216, 124, 0.7);
+}
+
+.lv-stage-btns {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.lv-stage-btn {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--pr-line, rgba(38, 41, 48, 0.08));
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: "Manrope", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--pr-ink, #262930);
+  cursor: pointer;
+  box-shadow: var(--pr-shadow-soft, 0 16px 36px rgba(38, 41, 48, 0.07));
+  transition: background 0.15s ease;
+}
+
+.lv-stage-btn:hover {
+  background: var(--pr-green, #6ad87c);
+  color: #ffffff;
+}
+
+.lv-stage-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.lv-tile-shape {
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 10px 8px 6px;
+}
+
+.lv-shape-canvas {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: block;
+}
+
+.lv-slider {
+  position: relative;
+  width: 70%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--pr-line, rgba(38, 41, 48, 0.08));
+}
+
+.lv-slider i {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--pr-green, #6ad87c);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(38, 41, 48, 0.25);
+}

@@ -8,6 +8,7 @@ export type TabId =
   | "shots"
   | "progress"
   | "compare"
+  | "live"
   | "bridge";
 
 // ─── SHOT DATA ────────────────────────────────────────────────────────────────
